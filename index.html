@@ -424,9 +424,11 @@ const TR={
  ZH   :{code:"中文",      name:"Tiếng Trung",          short:"Trung",   color:"#B03A48", ico:"汉"},
  MACRO:{code:"Macro",    name:"Macro & Equity Thinking",short:"Macro", color:"#8A6A1F", ico:"🧭"},
  BASE :{code:"Nền",      name:"Nền & sức khoẻ",       short:"Nền",     color:"#5C7A52", ico:"🌱"},
+ SOC  :{code:"Bạn bè",   name:"Bạn bè & kết nối",     short:"Bạn bè",  color:"#B0577F", ico:"🤝"},
  LIFE :{code:"Khác",     name:"Khác",                 short:"Khác",    color:"#7E888F", ico:"•"}
 };
 const TKEYS=Object.keys(TR);
+const DA_HOW="Cách học với AI (3 bước, ~2h): ① Gemini ~15' — tải record buổi học lên, xin tóm tắt theo mốc thời gian + danh sách đoạn code/ví dụ thầy làm. ② Claude hoặc ChatGPT ~30' — hỏi lại chỗ chưa hiểu, nhờ giải thích từng dòng code; cần chạy thử dữ liệu / vẽ biểu đồ thì dùng ChatGPT (có chạy Python). ③ Tự làm lại bài thực hành từ đầu, không nhìn note ~75'. Không để AI làm hộ bước ③ — Final Project ~20h cần kỹ năng thật.";
 
 /* ---------- date helpers ---------- */
 function D(s){const[y,m,d]=String(s).split("-").map(Number);return new Date(y,m-1,d)}
@@ -456,7 +458,7 @@ const MACRO_WEEKS=[{"n":1,"d":"2026-09-14","m":"M1","p":"A","f":"Ba câu hỏi t
 /* ================================ SEED ================================ */
 function seed(){return {
 v:6, rev:1, dlog:{}, plans:[], people:[], energy:{}, review:{}, top:{},
-settings:{dayStart:"06:00", dayEnd:"23:00", aim:7, hideDone:false},
+settings:{dayStart:"07:30", dayEnd:"23:00", aim:7, hideDone:false},
 macro:{start:"2026-09-14", time:"17:00", dur:30, on:true},
 
 assess:[
@@ -520,50 +522,46 @@ tasks:[
 ],
 
 /* weekly repeating template */
-routine:{tplV:2, tpl:{
- 1:[{id:"r11",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
-    {id:"r12",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+routine:{tplV:3, tpl:{
+ 1:[{id:"r12",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
     {id:"r13",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r14",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
+    {id:"r14",from:"09:30",to:"11:30",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"},
     {id:"r15",from:"14:00",to:"16:00",label:"Banking — làm bài tính toán",track:"BF"},
-    {id:"r16",from:"19:00",to:"20:30",label:"IELTS · Writing (1 bài có chấm)",track:"IELTS"}],
- 2:[{id:"r21",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
-    {id:"r22",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r16",from:"19:30",to:"22:00",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}],
+ 2:[{id:"r22",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
     {id:"r23",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r24",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
-    {id:"r25",from:"14:00",to:"15:00",label:"Banking — đọc chương trước",track:"BF"},
+    {id:"r24",from:"09:30",to:"11:00",label:"IELTS · Writing (1 bài có chấm)",track:"IELTS"},
+    {id:"r25",from:"14:00",to:"15:30",label:"Banking — đọc chương / Report",track:"BF"},
     {id:"r26",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
  3:[{id:"r31",from:"09:00",to:"10:00",label:"Tiếng Trung",track:"ZH"},
     {id:"r32",from:"10:00",to:"10:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r33",from:"11:00",to:"12:00",label:"Banking — tính toán",track:"BF"},
-    {id:"r34",from:"14:00",to:"16:00",label:"Ôn IF (cumulative)",track:"IF"},
-    {id:"r35",from:"19:00",to:"20:30",label:"IELTS · Reading + error log",track:"IELTS"}],
- 4:[{id:"r41",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
-    {id:"r42",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r34",from:"10:30",to:"12:00",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"},
+    {id:"r35",from:"14:00",to:"15:30",label:"IELTS · Reading + error log",track:"IELTS"},
+    {id:"r36",from:"19:00",to:"21:00",label:"Bài tập DA — Gemini → Claude/ChatGPT → tự làm lại",track:"DA",note:DA_HOW}],
+ 4:[{id:"r42",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
     {id:"r43",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r44",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
-    {id:"r45",from:"14:00",to:"16:00",label:"Banking / Report",track:"BF"},
+    {id:"r45",from:"09:30",to:"11:30",label:"Banking / Report",track:"BF"},
+    {id:"r48",from:"14:00",to:"16:00",label:"Tìm việc — CV, apply, luyện phỏng vấn",track:"LIFE"},
     {id:"r46",from:"16:00",to:"17:00",label:"IELTS · Listening + dictation",track:"IELTS"},
-    {id:"r47",from:"19:00",to:"21:00",label:"Bài tập DA (luật 48h)",track:"DA"}],
- 5:[{id:"r51",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
-    {id:"r52",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r53",from:"09:00",to:"11:00",label:"Đọc chương trước buổi Banking",track:"BF"},
+    {id:"r47",from:"19:00",to:"20:30",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"}],
+ 5:[{id:"r52",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r53",from:"09:00",to:"10:30",label:"Đọc chương trước buổi Banking",track:"BF"},
     {id:"r54",from:"12:00",to:"15:15",label:"LỚP FINC3022 · D402 · Lê Anh Tuấn",track:"BF",fixed:true},
-    {id:"r55",from:"19:00",to:"22:00",label:"Tối T6 để trống — nghỉ thật",track:"BASE",rest:true}],
+    {id:"r55",from:"19:00",to:"22:00",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}],
  6:[{id:"r61",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r62",from:"09:00",to:"11:00",label:"Đọc chương trước buổi IF",track:"IF"},
+    {id:"r62",from:"09:00",to:"10:30",label:"Đọc chương trước buổi IF",track:"IF"},
     {id:"r63",from:"12:00",to:"15:15",label:"LỚP ECON3014 · D102 · Bùi Hồng Mai",track:"IF",fixed:true},
     {id:"r64",from:"16:00",to:"17:00",label:"Nghỉ thật — ngày nặng nhất tuần",track:"BASE",rest:true},
     {id:"r65",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
  7:[{id:"r71",from:"09:00",to:"10:30",label:"IELTS · Full section mock + chấm",track:"IELTS"},
     {id:"r72",from:"10:30",to:"11:00",label:"Tiếng Trung",track:"ZH"},
     {id:"r73",from:"11:00",to:"12:00",label:"Review tuần: check Ultra, cập nhật deadline",track:"LIFE"},
-    {id:"r74",from:"14:00",to:"16:00",label:"Bài tập DA / Final Project",track:"DA"}]
+    {id:"r74",from:"14:00",to:"16:00",label:"Bài tập DA / Final Project — Gemini → Claude/ChatGPT → tự làm lại",track:"DA",note:DA_HOW},
+    {id:"r75",from:"18:30",to:"21:30",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}]
 }},
 
 habits:[
  {id:"hz",label:"Tiếng Trung",track:"ZH",rule:"Mỗi ngày, tối thiểu 15'. Rút ngắn được, đứt ngày thì không.",log:{}},
- {id:"hg",label:"GYM",track:"BASE",rule:"4 buổi/tuần, 06:00–07:15. Không tập sáng sau buổi DA (T4, CN).",log:{}},
  {id:"hn",label:"Đọc báo",track:"BASE",rule:"20'. Giữ đúng 3 nguồn: 1 quốc tế cho cơ chế · 1 bản tin sáng VN · lịch kinh tế sáng T2. Thời gian tiết kiệm được dồn vào Macro Journal.",log:{}}
 ],
 
@@ -636,7 +634,7 @@ rules:["✅ Nhận mặt chữ: bắt buộc — không có bản pinyin của b
        "Kênh chính: Tiếng Trung Cầm Xu. Bổ sung: Phạm Dương Châu, Thảo An, An Khả Hy. Chọn 1 kênh rồi bám hết lộ trình.",
        "Lợi thế Hán–Việt: 分析 phân tích · 投资 đầu tư · 证券 chứng khoán · 银行 ngân hàng. Học bằng kênh Việt để giữ lợi thế này."]},
 
-da:{note:"Giả định T3 + T7, 19:15–22:15. Có lịch chính thức thì sửa lại — và đảo luôn ngày ngủ bù + ngày gym.",
+da:{note:"Học T3 + T7, 19:15–22:15. Bài tập khoá 4h/tuần: T4 tối + CN chiều (trong 48h sau mỗi buổi). "+DA_HOW,
  sessions:[
  {n:1,d:"2026-09-05",t:"Khai giảng"},{n:2,d:"2026-09-08",t:"Python cơ bản (nhẹ — dùng khoảng này cày IF)"},
  {n:3,d:"2026-09-12",t:"Python cơ bản"},{n:4,d:"2026-09-15",t:"Python cơ bản"},
@@ -649,7 +647,7 @@ da:{note:"Giả định T3 + T7, 19:15–22:15. Có lịch chính thức thì s�
 
 confirm:[
  {id:"c1",t:"IF: present session mấy, problem nào?",done:true},
- {id:"c2",t:"MindX: cohort 5/9 là kỳ mấy, đúng 2 ngày nào trong tuần?",done:false},
+ {id:"c2",t:"MindX: cohort 5/9 là kỳ mấy, đúng 2 ngày nào trong tuần?",done:true},
  {id:"c3",t:"Banking: nhóm nào, topic gì, present session mấy?",done:false},
  {id:"c4",t:"Banking Report: đề bài / câu hỏi chính xác (outline mới chỉ có rubric)",done:false},
  {id:"c5",t:"IF Mid: exact date / time / location",done:false},
@@ -660,7 +658,7 @@ confirm:[
  {id:"c10",t:"CTV line còn giữ không, tốn bao nhiêu giờ/tuần?",done:false},
  {id:"c11",t:"Lịch thi CCHN UBCKNN 2027 + module cần cho vị trí ở LPBS",done:false}
 ],
-patches:["v6-base"]
+patches:["v6-base","v7-load40"]
 };}
 
 /* ============================ STATE / SYNC ============================ */
@@ -679,12 +677,19 @@ function upgrade(old){
     ["assess","tasks","habits","goals","confirm","plans","people"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
     ["energy","review","top"].forEach(k=>{ if(old[k]&&typeof old[k]==="object") s[k]=old[k]; });
     if(old.dlog) s.dlog=old.dlog; if(old.placed) s.placed=old.placed; if(old.macro) s.macro=Object.assign(s.macro,old.macro);
-    if(old.routine&&old.routine.tplV>=2) s.routine=old.routine;
+    if(old.routine&&old.routine.tplV>=3) s.routine=old.routine;
     if(old.ielts) s.ielts=Object.assign(s.ielts,old.ielts);
     if(old.zh&&old.zh.phases) s.zh.phases=old.zh.phases;
     if(old.da&&old.da.sessions) s.da=old.da;
     if(old.settings) s.settings=Object.assign(s.settings,old.settings);
     s.rev=old.rev||1; s.patches=old.patches||s.patches;
+    if(!s.patches.includes("v7-load40")){   // Oct 2026: ~40h/week, no gym (gout), friends T2/T6/CN, DA homework 4h
+      s.habits=s.habits.filter(x=>x.id!=="hg");
+      const c2=s.confirm.find(c=>c.id==="c2"); if(c2)c2.done=true;
+      s.da.note=seed().da.note; s.placed=false;
+      if(s.settings.dayStart==="06:00") s.settings.dayStart="07:30";   // the old gym hour is now sleep
+      s.patches=s.patches.concat("v7-load40"); patched=true;
+    }
     return s;
   }
   // v5 → v6: carry progress by id
@@ -731,7 +736,7 @@ async function initCloud(){
 }
 
 /* ========================= SCHEDULER ENGINE ========================= */
-function dayStart(){return mm(state.settings.dayStart||"06:00")}
+function dayStart(){return mm(state.settings.dayStart||"07:30")}
 function dayEnd(){return mm(state.settings.dayEnd||"23:00")}
 function routineOn(date){ return (state.routine.tpl[dow(date)]||[]).map(b=>({...b,kind:"rout",start:mm(b.from),end:mm(b.to)})); }
 function fixedOn(date){ const r=routineOn(date); const m=macroFor(date); if(m) r.push(m); return r; }
@@ -800,6 +805,14 @@ function reflow(){
   });
   return moved;
 }
+/* same day first, then up to 6 days earlier, then later — but never on/after the linked deadline */
+function placeNear(z){
+  const due=(z.link&&(state.assess.find(a=>a.id===z.link)||{}).due)||"9999", base=z.date, tries=[base];
+  for(let k=1;k<=6;k++)tries.push(addD(base,-k));
+  for(let k=1;k<=3;k++)tries.push(addD(base,k));
+  for(const d of tries){ if(d>=due&&d!==base)continue; const a=freeSlots(d,z.dur,z.id,0)[0]; if(a){z.date=d;z.start=a.start;return true} }
+  return false;
+}
 /* one-time: nudge any seeded task that lands on top of the weekly routine */
 function normalizeOnce(){
   if(state.placed) return false;
@@ -808,6 +821,13 @@ function normalizeOnce(){
     if(!conflictsAt(t.date,t.start,taskEnd(t),t.id).length) return;
     const same=freeSlots(t.date,t.dur,t.id,720)[0]||freeSlots(t.date,t.dur,t.id,0)[0];
     if(same){ t.start=same.start; moved++; return; }
+    // a long block with no gap that fits: split it in two halves on the same day (or the next free ones)
+    if(t.dur>=120){
+      const half=Math.round(t.dur/2/15)*15, y=Object.assign({},t,{id:t.id+"b",t:t.t+" (phần 2/2)",dur:t.dur-half});
+      t.t+=" (phần 1/2)"; t.dur=half; state.tasks.push(y);
+      [t,y].forEach(z=>placeNear(z));
+      moved++; return;
+    }
     const s2=nextFreeSlot(addD(t.date,1),0,t.dur,t.id);
     if(s2){ t.date=s2.date; t.start=s2.start; moved++; }
   });
@@ -879,8 +899,9 @@ function weekLoad(){
   let rest=0;
   for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{const hh=(mm(b.to)-mm(b.from))/60; if(b.rest){rest+=hh;return} o[b.track]=(o[b.track]||0)+hh});
   o.rest=rest;
+  o.fixed=0; for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{if(b.fixed)o.fixed+=(mm(b.to)-mm(b.from))/60});
   if(state.macro&&state.macro.on) o.MACRO=(o.MACRO||0)+state.macro.dur/60*7;
-  o.total=TKEYS.reduce((a,k)=>a+o[k],0);
+  o.total=TKEYS.reduce((a,k)=>a+o[k],0); o.self=o.total-o.fixed;
   return o;
 }
 function habitStreak(hb){
@@ -1027,12 +1048,12 @@ function renderToday(){
     return `<button class="hchip ${on?'on':''}" onclick="tgHabit('${hb.id}')"><span>${on?"✓":"○"} ${h(hb.label)}</span><span class="s">${st||0} ngày</span></button>`}).join("")}</div>
 
   <button class="foldline" style="margin-top:12px" onclick="toggleFold('loadBox')">
-    Tải tuần <b class="num" style="margin-left:auto">${hrs(load.total)}h</b>
-    <span class="chip ${load.total>55?'red':load.total>46?'amber':'green'}">${load.total>55?'quá tải':load.total>46?'nặng':'vừa'}</span></button>
+    Tải tuần <span class="small muted" style="margin-left:auto">tự học</span><b class="num">${hrs(load.self)}h</b><span class="small muted">+ lớp ${hrs(load.fixed)}h</span>
+    <span class="chip ${load.self>45?'red':load.self>40?'amber':'green'}">${load.self>45?'quá tải':load.self>40?'nặng':'vừa'}</span></button>
   <div id="loadBox" ${accState.loadBox?"":"hidden"}><div class="card" style="margin-top:8px">
     <div class="bar tall">${TKEYS.filter(k=>load[k]>0).map(k=>`<i style="width:${load[k]/load.total*100}%;background:${TR[k].color}"></i>`).join("")}</div>
     <div class="legend">${TKEYS.filter(k=>load[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(load[k])}h</span>`).join("")}</div>
-    <div class="note" style="margin-top:11px">Trong đó <b>12.5h cố định</b>: lớp 6.5h + DA 6h. Vỡ trận thì cắt theo thứ tự: đọc báo → 1 buổi gym → IELTS. Không cắt: ngủ, tiếng Trung 15', deadline.</div>
+    <div class="note" style="margin-top:11px">Mục tiêu ~40h tự học/tuần (chưa tính lớp). Việc có hạn và buổi của mục tiêu dài hạn nằm <b>ngoài</b> con số này — tuần nào nhiều deadline thì cắt theo thứ tự: đọc báo → Macro → 1 buổi IELTS. Không cắt: ngủ, tiếng Trung 15', deadline, giờ bạn bè.</div>
   </div></div>`;
   const q2=document.getElementById("qaIn"); if(q2&&prevQ){q2.value=prevQ; if(hadFocus)q2.focus()}
 }
@@ -1312,11 +1333,11 @@ function renderYear(){
   ];
   const RULES=[
    "Tiếng Trung mỗi ngày, kể cả 15 phút. Thứ này chết vì đứt quãng chứ không chết vì thiếu giờ.",
-   "Tối T6 và T7 để trống. Hai ngày đó đã kín từ sáng tới chiều — nhét việc vào là đuối ở tuần 6–7.",
+   "Tối T2, tối T6 và tối CN dành cho bạn bè — đã khoá. Nghỉ thật và gặp người kéo mình lên cũng là một phần kế hoạch (#6, #8).",
    "IF được dùng AI (có khai báo) · BFN cấm hoàn toàn · DA thì AI là nội dung học. Ba chế độ, đừng lẫn — đây là rủi ro academic misconduct thật.",
    "Đọc chương trước khi lên lớp. BFN nặng tính toán (repricing, duration, credit risk) — nghe chay không kịp.",
    "Report 40% là chỗ chốt điểm trước Final: từ 19/9 trở đi, tuần nào cũng phải chạm vào nó ít nhất một lần.",
-   "Vỡ trận thì cắt theo thứ tự: Free → Đọc báo → 1 buổi gym. KHÔNG cắt: giấc ngủ, tiếng Trung 15', deadline."
+   "Vỡ trận thì cắt theo thứ tự: Đọc báo → Macro → 1 buổi IELTS. KHÔNG cắt: giấc ngủ, tiếng Trung 15', deadline, giờ bạn bè."
   ];
   document.getElementById("v-year").innerHTML=`
   <div class="card">
@@ -1457,6 +1478,7 @@ function editBlock(day,id){
   const b=list.find(x=>x.id===id)||{id:"",from:"08:00",to:"09:30",label:"",track:"IF",fixed:false};
   const isNew=!b.id;
   openSheet(`<h3>${isNew?"Block lặp tuần":"Sửa block"}</h3><div class="sh-sub">${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][day]} · lặp mỗi tuần</div>
+   ${b.note?`<div class="mblk out"><span class="mlab">Cách làm</span>${h(b.note)}</div>`:""}
    <label class="fld"><span>Nội dung</span><input type="text" id="bL" value="${h(b.label)}"></label>
    <div class="two"><label class="fld"><span>Từ</span><input type="time" id="bF" value="${b.from}"></label>
      <label class="fld"><span>Đến</span><input type="time" id="bT" value="${b.to}"></label></div>
@@ -1590,7 +1612,7 @@ function openSettings(){
    <div class="row" style="gap:8px;margin:12px 0">
      <button class="btn sm grow" onclick="doReflow()">Dồn lại toàn bộ lịch</button>
      <button class="btn sm grow" onclick="exportJSON()">Xuất dữ liệu</button></div>
-   <div class="note">Session 1 = tuần ${fmtD(WEEK1_MON)}. T6 FINC3022 D402 · T7 ECON3014 D102, 12:00–15:15. DA MindX giả định T3 + T7 19:15–22:15.</div>
+   <div class="note">Session 1 = tuần ${fmtD(WEEK1_MON)}. T6 FINC3022 D402 · T7 ECON3014 D102, 12:00–15:15. DA MindX T3 + T7 19:15–22:15.</div>
    <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button>
      <button class="btn primary" onclick="state.settings.dayStart=v('sA');state.settings.dayEnd=v('sB');state.ielts.aim=+v('sAim')||7;closeSheet();save()">Lưu</button></div>
    <button class="btn danger" style="width:100%;margin-top:10px" onclick="if(confirm('Xoá hết và về bản gốc?')){const r=state.rev||1;state=seed();state.rev=r;normalizeOnce();save();closeSheet()}">Reset về bản gốc</button>`);
@@ -1746,7 +1768,7 @@ function openFix(){
 }
 
 /* ---------- quick add: "Gửi mail thầy mai 9h 30p #if !" ---------- */
-const QTAG={if:"IF",bf:"BF",bank:"BF",banking:"BF",da:"DA",ielts:"IELTS",trung:"ZH",zh:"ZH",tq:"ZH",macro:"MACRO",gym:"BASE",nen:"BASE",khac:"LIFE"};
+const QTAG={if:"IF",bf:"BF",bank:"BF",banking:"BF",da:"DA",ielts:"IELTS",trung:"ZH",zh:"ZH",tq:"ZH",macro:"MACRO",nen:"BASE",banbe:"SOC",ban:"SOC",khac:"LIFE",job:"LIFE",viec:"LIFE"};
 function parseQuick(raw){
   let s=" "+String(raw).replace(/\s+/g," ")+" ", date=null, start=null, dur=null, track=null, pri=3;
   const t=todayISO(), B="(^|\\s)", E="(?=\\s|$)";
