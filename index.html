@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D5C56">
 <title>Sơn Study OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -351,7 +357,26 @@ details.acc .acc-b{padding:0 15px 14px}
 .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 
 
+/* ---------- daily to-do (v7) ---------- */
+.qa{display:flex;gap:8px}
+.qa input{flex:1;font-size:16px;padding:11px 12px;border-radius:12px;background:var(--surface)}
+.qa .btn{font-size:20px;padding:6px 16px;border-radius:12px}
+.en-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.en-row .pill{min-width:38px;text-align:center}
+.fixline{display:flex;gap:9px;align-items:center;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:12.8px;color:var(--ink2);line-height:1.4;margin-top:10px}
+.wkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 11px;display:block;width:100%}
+.wk span{font-size:10.5px;color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.wk b{display:block;font-weight:700;line-height:1.35}
+.phase{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin:14px 0 2px}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:95;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:13px;font-weight:600;max-width:calc(100% - 32px);box-shadow:var(--shadow);transition:opacity .18s,transform .18s}
+#toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{color:inherit;text-decoration:underline;margin-left:8px;font-weight:800}
+@media(min-width:821px){#toast{bottom:28px}}
+button:disabled{opacity:.6;cursor:progress}
 </style>
+</head>
+<body>
 
 <header class="top">
   <div class="top-in">
@@ -373,6 +398,7 @@ details.acc .acc-b{padding:0 15px 14px}
 <main>
   <section class="view on" id="v-today"></section>
   <section class="view" id="v-cal"></section>
+  <section class="view" id="v-plans"></section>
   <section class="view" id="v-dead"></section>
   <section class="view" id="v-track"></section>
   <section class="view" id="v-year"></section>
@@ -429,7 +455,7 @@ const MACRO_WEEKS=[{"n":1,"d":"2026-09-14","m":"M1","p":"A","f":"Ba câu hỏi t
 
 /* ================================ SEED ================================ */
 function seed(){return {
-v:6, rev:1, dlog:{},
+v:6, rev:1, dlog:{}, plans:[], people:[], energy:{}, review:{}, top:{},
 settings:{dayStart:"06:00", dayEnd:"23:00", aim:7, hideDone:false},
 macro:{start:"2026-09-14", time:"17:00", dur:30, on:true},
 
@@ -650,7 +676,8 @@ function upgrade(old){
   if(!old) return s;
   if(old.v===6){
     // same shape: carry everything the user owns
-    ["assess","tasks","habits","goals","confirm"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
+    ["assess","tasks","habits","goals","confirm","plans","people"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
+    ["energy","review","top"].forEach(k=>{ if(old[k]&&typeof old[k]==="object") s[k]=old[k]; });
     if(old.dlog) s.dlog=old.dlog; if(old.placed) s.placed=old.placed; if(old.macro) s.macro=Object.assign(s.macro,old.macro);
     if(old.routine&&old.routine.tplV>=2) s.routine=old.routine;
     if(old.ielts) s.ielts=Object.assign(s.ielts,old.ielts);
@@ -874,9 +901,10 @@ const IC={
  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
  unlock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></svg>',
  more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
+ target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>',
  bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>'
 };
-const TABS=[["today","Hôm nay",IC.today],["cal","Lịch",IC.cal],["dead","Deadline",IC.dead],["track","Mảng",IC.track],["year","Năm",IC.year]];
+const TABS=[["today","Hôm nay",IC.today],["cal","Lịch",IC.cal],["plans","Mục tiêu",IC.target],["dead","Deadline",IC.dead],["track","Mảng",IC.track],["year","Năm",IC.year]];
 
 function go(t){tab=t;render();window.scrollTo({top:0,behavior:"instant"})}
 function render(){
@@ -884,7 +912,7 @@ function render(){
   TABS.forEach(([k])=>{const e=document.getElementById("v-"+k);if(e)e.classList.toggle("on",tab===k)});
   const t=todayISO(),s=sessOfWeek(mondayOf(t));
   document.getElementById("ctxLine").textContent=fmtFull(t)+" · "+(s?("Tuần "+s+" / Session "+s):"Ngoài kỳ học");
-  renderToday();renderCal();renderDead();renderTrack();renderYear();
+  renderToday();renderCal();renderPlans();renderDead();renderTrack();renderYear();
 }
 
 /* ============================== ITEM CARD ============================== */
@@ -894,7 +922,8 @@ function rowHTML(x,date){
   const mac=x.kind==="macro";
   const cls=[rout?(x.fixed?"cls":""):(x.emg?"emg":""), mac?"mac":"", done?"done":"", x.rest?"rest":"", x.status==="skipped"?"done":""].join(" ");
   const drag=(rout||mac)?"":`draggable="true" ondragstart="dragStart(event,'${x.id}')" ondragend="dragEnd(event)"`;
-  const sub=mac?[x.wk.m+" · "+x.se.o].join(""):[hrs((end-x.start)/60)+"h", c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
+  const pl=x.plan&&planById(x.plan), star=x.kind==="task"&&topTasks(date).some(y=>y.id===x.id);
+  const sub=mac?[x.wk.m+" · "+x.se.o].join(""):[star?"★ Top 3":"", hrs((end-x.start)/60)+"h", pl?"🎯 "+h(pl.name):c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
   return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${x.id}">
     <button class="tick" onclick="event.stopPropagation();${(rout||mac)?`tgDay('${x.id}','${date}')`:`tgDone('${x.id}')`}" aria-label="Đánh dấu xong">${IC.check}</button>
     <span class="tm">${hhmm(x.start)}</span>
@@ -918,18 +947,26 @@ function dayItems(date){
 /* ================================ TODAY ================================ */
 function renderToday(){
   const t=todayISO();
+  const qa=document.getElementById("qaIn"), prevQ=qa?qa.value:"", hadFocus=qa&&document.activeElement===qa;
   const items=dayItems(t).sort((a,b)=>a.start-b.start);
   const shown=state.settings.hideDone?items.filter(x=>!isDone(x,t)):items;
   const pg=dayProgress(t);
   const up=state.assess.filter(a=>!aDone(a)&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
   const load=weekLoad();
-  const late=state.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<t);
+  const late=state.tasks.filter(x=>isOpen(x)&&x.date<t);
   const cf=audit();
-  const dls=state.assess.filter(a=>a.due===t);
+  const dls=state.assess.filter(a=>a.due===t&&!aDone(a));
+  const top=topTasks(t), topDone=top.filter(x=>x.status==="done").length;
+  const half=state.tasks.filter(x=>isOpen(x)&&x.date<=t&&(x.progress||0)>0);
+  const en=(state.energy||{})[t];
+  const fx=FIX[((dbet("2026-01-05",t)%FIX.length)+FIX.length)%FIX.length];
+  const plansOn=(state.plans||[]).filter(p=>p.status!=="off");
+  const ppl=peopleDue(t).slice(0,3);
+  const eve=nowMin()>=19*60, reviewed=!!((state.review||{})[t]||{}).at;
 
   let hero="";
   if(up){ const dd=dbet(t,up.due), sv=dd<0?"red":dd<=3?"red":dd<=10?"amber":"green";
-    hero=`<button class="topline" onclick="openAssess('${up.id}')">
+    hero=`<button class="topline" onclick="openAssess('${up.id}')" style="margin-top:12px">
       <div><div class="big" style="color:var(--${sv})">${dd<0?"!":dd}</div>
         <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:3px">${dd<0?"quá hạn":"ngày nữa"}</div></div>
       <div class="grow">
@@ -940,9 +977,29 @@ function renderToday(){
   document.getElementById("v-today").innerHTML=`
   ${cf.length?`<div class="banner">${cf.length} việc chồng giờ<button class="btn sm" style="margin-left:auto" onclick="doReflow()">Dồn lại</button></div>`:""}
   ${late.length?`<div class="banner" style="background:var(--red-soft);border-color:var(--red)">${late.length} việc quá hạn<button class="btn sm" style="margin-left:auto" onclick="pullOverdue()">Kéo về hôm nay</button></div>`:""}
+
+  <div class="qa"><input id="qaIn" type="text" enterkeyhint="done" autocomplete="off" placeholder="Thêm việc: Gửi mail thầy mai 9h 30p #if"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();qaAdd()}"><button class="btn primary" onclick="qaAdd()" aria-label="Thêm việc">＋</button></div>
+  <div class="small muted" style="margin-top:5px">Hiểu: <b>mai · mốt · t2–cn · 12/10</b>, giờ <b>9h · 14:30 · 8h tối</b>, <b>30p · 2 tiếng</b>, <b>#if #bf #da #ielts #trung</b>, <b>!</b> = gấp. Không ghi giờ → tự xếp vào chỗ trống.</div>
+
   ${hero}
 
-  <div class="sec-h"><h2>Việc hôm nay</h2><div class="rule"></div>
+  <div class="card en-card" style="margin-top:12px;padding:12px 14px">
+    <div class="en-row"><b style="font-size:13.5px">⚡ Năng lượng sáng nay</b>
+      <div class="pill-row" style="margin-left:auto">${[1,2,3,4,5].map(n=>`<button class="pill ${en===n?"on":""}" onclick="setEnergy('${t}',${n})" aria-label="Năng lượng ${n}">${n}</button>`).join("")}</div></div>
+    ${en&&en<=2?`<div class="verdict warn" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Ngày yếu (#8): giữ Top 3 + nền, dời việc phụ.<button class="btn sm" style="margin-left:auto" onclick="deferLow('${t}')">Dời việc phụ</button></div>`:""}
+  </div>
+  <button class="fixline" onclick="openFix()"><span class="chip accent">#${fx.n} ${fx.k}</span><span class="grow">${h(fx.tip)}</span></button>
+
+  <div class="sec-h"><h2>★ Top 3 hôm nay</h2><div class="rule"></div><button class="act" onclick="openTopPick('${t}')">Chọn lại</button></div>
+  ${top.length?`<div class="list">${top.map(x=>rowHTML({...x,kind:"task"},t)).join("")}</div>
+    <div class="small ${topDone===top.length?"":"muted"}" style="margin-top:6px;${topDone===top.length?"color:var(--green);font-weight:700":""}">${topDone===top.length?"✓ Thắng ngày hôm nay. Phần còn lại là cộng thêm.":`${topDone}/${top.length} xong — làm xong Top 3 rồi mới mở việc khác (#3).`}</div>`
+   :`<div class="card small muted">Hôm nay chưa có việc nào có ngày giờ. Gõ vào ô ở trên, hoặc tạo mục tiêu dài hạn để app tự xếp việc mỗi ngày.</div>`}
+
+  ${half.length?`<div class="sec-h"><h2>Đang dở — làm nốt trước (#5)</h2><div class="rule"></div></div>
+   <div class="list">${half.map(x=>rowHTML({...x,kind:"task"},x.date).replace('<div class="sub">','<div class="sub">'+(x.date===t?"":fmtD(x.date)+" · ")+x.progress+"% · ")).join("")}</div>`:""}
+
+  <div class="sec-h"><h2>Lịch hôm nay</h2><div class="rule"></div>
     <button class="act" onclick="toggleHideDone()">${state.settings.hideDone?"Hiện việc đã xong":"Ẩn việc đã xong"}</button></div>
   <div class="list" ondragover="dragOver(event)" ondrop="dropDay(event,'${t}')">
     <div class="dprog"><b>${pg.d}/${pg.n}</b><div class="bar grow"><i style="width:${pg.n?pg.d/pg.n*100:0}%;background:var(--accent)"></i></div>
@@ -950,6 +1007,20 @@ function renderToday(){
     ${dls.map(a=>dlRowHTML(a)).join("")}
     ${shown.length?shown.map(x=>rowHTML(x,t)).join(""):'<div class="empty">Xong hết rồi.</div>'}
   </div>
+
+  <div class="sec-h"><h2>Mục tiêu dài hạn (#2)</h2><div class="rule"></div><button class="act" onclick="openPlanEdit('')">+ Mới</button></div>
+  ${plansOn.length?`<div class="list">${plansOn.map(p=>{const s=planStats(p), c=TR[p.track]||TR.LIFE, td=state.tasks.filter(x=>x.plan===p.id&&x.date===t);
+      const tdTxt=td.length?(td.every(x=>x.status==="done")?"✓ buổi hôm nay đã xong":"hôm nay: "+h(td[0].t)+" · "+hhmm(td[0].start)):(s.next?"buổi tới: "+fmtD(s.next.date):"chưa có buổi nào trên lịch");
+      return `<div class="rowit" style="--c:${c.color}"><span class="tm" style="font-size:16px">🎋</span>
+        <div class="rt" onclick="openPlanView('${p.id}')"><b>${h(p.name)}</b><div class="sub">${tdTxt} · tuần ${s.week} · tích luỹ ${hrs(s.doneMin/60)}h${s.missed?` · <span style="color:var(--red)">lỡ ${s.missed}</span>`:""}</div>
+        <div class="prog"><i style="width:${s.pct}%;background:${c.color}"></i></div></div></div>`}).join("")}</div>`
+   :`<button class="foldline" onclick="openPlanEdit('')">✨ Thêm mục tiêu dài hạn — app chia ra việc từng ngày<span style="margin-left:auto;color:var(--accent)">→</span></button>`}
+
+  ${ppl.length?`<div class="sec-h"><h2>Kết nối có chủ đích (#6)</h2><div class="rule"></div></div>
+   <div class="list">${ppl.map(p=>`<div class="rowit"><button class="tick" onclick="contacted('${p.id}')" aria-label="Đã liên hệ">${IC.check}</button>
+     <div class="rt" onclick="editPerson('${p.id}')"><b>${h(p.name)}</b><div class="sub">${h(p.role||"")}${p.role?" · ":""}${p.last?"lần cuối "+fmtD(p.last):"chưa liên hệ lần nào"}</div></div></div>`).join("")}</div>`:""}
+
+  <button class="btn ${eve&&!reviewed?"primary":""}" style="width:100%;margin-top:16px;padding:12px" onclick="openReview('${t}')">🌙 Chốt ngày${reviewed?" · đã chốt ✓":eve?" — 3 phút trước khi nghỉ":""}</button>
 
   <div class="sec-h"><h2>Giữ nếp</h2><div class="rule"></div></div>
   <div class="hchips">${state.habits.map(hb=>{const on=!!hb.log[t],st=habitStreak(hb);
@@ -963,6 +1034,7 @@ function renderToday(){
     <div class="legend">${TKEYS.filter(k=>load[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(load[k])}h</span>`).join("")}</div>
     <div class="note" style="margin-top:11px">Trong đó <b>12.5h cố định</b>: lớp 6.5h + DA 6h. Vỡ trận thì cắt theo thứ tự: đọc báo → 1 buổi gym → IELTS. Không cắt: ngủ, tiếng Trung 15', deadline.</div>
   </div></div>`;
+  const q2=document.getElementById("qaIn"); if(q2&&prevQ){q2.value=prevQ; if(hadFocus)q2.focus()}
 }
 function toggleHideDone(){state.settings.hideDone=!state.settings.hideDone;save()}
 function toggleFold(id){const e=document.getElementById(id);if(e){e.hidden=!e.hidden;accState[id]=!e.hidden}}
@@ -970,7 +1042,7 @@ function tgHabit(id){const hb=state.habits.find(x=>x.id===id);if(!hb)return;cons
   if(hb.log[t])delete hb.log[t];else hb.log[t]=true;save()}
 function tgDone(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
   x.status=x.status==="done"?"pending":"done"; x.progress=x.status==="done"?100:(x.progress||0);
-  x.doneAt=x.status==="done"?todayISO():null; save()}
+  x.doneAt=x.status==="done"?todayISO():null; syncStep(x); save()}
 function tgLock(id){const x=state.tasks.find(t=>t.id===id);if(x){x.locked=!x.locked;save()}}
 function doReflow(){const m=reflow();save();
   openSheet(`<h3>Đã dồn lại lịch</h3><div class="sh-sub">${m.length} việc được đẩy sang chỗ trống gần nhất</div>
@@ -1330,7 +1402,9 @@ function trackOpts(sel){return TKEYS.map(k=>`<option value="${k}" ${sel===k?"sel
 function quickAdd(){
   openSheet(`<h3>Thêm nhanh</h3><div class="sh-sub">Chọn loại</div>
    <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn primary" onclick="openPlanEdit('')">🎯 Mục tiêu dài hạn — AI chia ra từng ngày</button>
     <button class="btn" onclick="closeSheet();addTask({date:'${todayISO()}'})">📌 Việc có ngày giờ</button>
+    <button class="btn" onclick="editPerson('')">🤝 Người đáng đầu tư thời gian</button>
     <button class="btn" onclick="closeSheet();openAssess('')">🎯 Mốc chấm điểm / deadline</button>
     <button class="btn" onclick="closeSheet();editBlock(${dow(todayISO())},'')">🔁 Block lặp mỗi tuần</button>
     <button class="btn" onclick="closeSheet();editGoal('')">🏁 Goal mới</button>
@@ -1342,11 +1416,15 @@ function openTask(id,pre){
   const x=state.tasks.find(t=>t.id===id)||Object.assign({id:"",t:"",track:"IF",date:todayISO(),start:540,dur:60,pri:3,status:"pending",progress:0,note:"",link:"",locked:false},pre||{});
   const isNew=!x.id;
   openSheet(`<h3>${isNew?"Việc mới":"Chi tiết việc"}</h3><div class="sh-sub">${isNew?"Đặt ngày giờ để nó nằm trên lịch":fmtFull(x.date)+" · "+hhmm(x.start)+"–"+hhmm(taskEnd(x))}</div>
+   ${x.plan&&planById(x.plan)?`<button class="chip accent" style="margin-bottom:10px" onclick="openPlanView('${x.plan}')">🎯 ${h(planById(x.plan).name)}</button>`:""}
+   ${x.note?`<div class="mblk"><span class="mlab">Làm thế nào</span>${h(x.note)}</div>`:""}
+   ${x.out?`<div class="mblk out"><span class="mlab">Xong khi</span><b>${h(x.out)}</b></div>`:""}
    <label class="fld"><span>Nội dung</span><textarea id="xT">${h(x.t)}</textarea></label>
    <div class="two"><label class="fld"><span>Ngày</span><input type="date" id="xD" value="${x.date}"></label>
      <label class="fld"><span>Bắt đầu</span><input type="time" id="xS" value="${hhmm(x.start)}"></label></div>
    <div class="two"><label class="fld"><span>Dài (phút)</span><input type="number" id="xU" value="${x.dur}" step="15" min="15"></label>
      <label class="fld"><span>Mảng</span><select id="xK">${trackOpts(x.track)}</select></label></div>
+   <label class="fld"><span>Ưu tiên</span><select id="xPr">${[[5,"5 · gấp / quan trọng nhất"],[4,"4 · quan trọng"],[3,"3 · bình thường"],[2,"2 · phụ"],[1,"1 · làm nếu rảnh"]].map(([n,l])=>`<option value="${n}" ${(x.pri||3)===n?"selected":""}>${l}</option>`).join("")}</select></label>
    <label class="fld"><span>Gắn với mốc</span><select id="xL"><option value="">—</option>
      ${state.assess.map(a=>`<option value="${a.id}" ${x.link===a.id?"selected":""}>${TR[a.sub].short} · ${h(a.title)}</option>`).join("")}</select></label>
    ${!isNew?`<label class="fld"><span>Tiến độ: <b id="pgV">${x.progress||0}</b>%</span>
@@ -1364,12 +1442,13 @@ function saveTask(id){
   let x=state.tasks.find(t=>t.id===id);
   if(!x){x={id:"x"+uid(),status:"pending",progress:0};state.tasks.push(x)}
   x.t=v("xT")||"Việc mới"; x.date=v("xD")||todayISO(); x.start=mm(v("xS")||"09:00");
-  x.dur=+v("xU")||60; x.track=v("xK"); x.link=v("xL"); x.locked=ck("xLk");
+  x.dur=+v("xU")||60; x.track=v("xK"); x.link=v("xL"); x.locked=ck("xLk"); x.pri=+v("xPr")||3;
   const p=document.getElementById("xP"); if(p){x.progress=+p.value; if(x.progress===100){x.status="done";x.doneAt=x.doneAt||todayISO()} else if(x.status==="done"){x.status="pending";x.doneAt=null}}
+  syncStep(x);
   closeSheet(); save();
 }
 function delTask(id){state.tasks=state.tasks.filter(t=>t.id!==id);closeSheet();save()}
-function setStatus(id,s){const x=state.tasks.find(t=>t.id===id);if(x){x.status=x.status===s?"pending":s;closeSheet();save()}}
+function setStatus(id,s){const x=state.tasks.find(t=>t.id===id);if(x){x.status=x.status===s?"pending":s;syncStep(x);closeSheet();save()}}
 function pushNext(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
   const s=nextFreeSlot(x.date,x.start+15,x.dur,x.id); if(s){x.date=s.date;x.start=s.start} closeSheet(); save()}
 
@@ -1496,12 +1575,18 @@ function saveMock(id){
 function delMock(id){state.ielts.mocks=state.ielts.mocks.filter(x=>x.id!==id);closeSheet();save()}
 
 function openSettings(){
-  const c=audit().length;
+  const c=audit().length, ai=aiCfg();
   openSheet(`<h3>Cài đặt</h3><div class="sh-sub">${cloud?"Đang đồng bộ giữa điện thoại và máy tính":"Chỉ lưu trên máy này"}</div>
    <div class="two"><label class="fld"><span>Ngày bắt đầu lúc</span><input type="time" id="sA" value="${state.settings.dayStart}"></label>
      <label class="fld"><span>Kết thúc lúc</span><input type="time" id="sB" value="${state.settings.dayEnd}"></label></div>
    <label class="fld"><span>Mục tiêu IELTS</span><input type="number" step="0.5" id="sAim" value="${state.ielts.aim}"></label>
    <div class="kv"><span>Việc đang chồng giờ</span><b>${c}</b></div>
+   <div class="sec-h" style="margin:16px 0 8px"><h2>✨ AI chia mục tiêu</h2><div class="rule"></div></div>
+   <label class="fld"><span>Claude API key ${ai.key?"· đã lưu ✓":""}</span><input type="password" id="aiK" autocomplete="off" placeholder="${ai.key?"•••• "+h(ai.key.slice(-4))+" — dán key mới để thay":"sk-ant-…"}"></label>
+   <label class="fld"><span>Model</span><select id="aiM">${AI_MODELS.map(([k,l])=>`<option value="${k}" ${(ai.model||"claude-opus-5")===k?"selected":""}>${l}</option>`).join("")}</select></label>
+   <div class="note">Lấy key ở <b>console.anthropic.com</b> → API Keys (trả theo lượt dùng, mỗi lần chia mục tiêu tốn vài nghìn token). Key <b>chỉ lưu trong trình duyệt này</b>: không đồng bộ, không nằm trong "Xuất dữ liệu", chỉ gửi thẳng tới Anthropic. Đừng lưu trên máy dùng chung. Không có key vẫn dùng được nút 📋.</div>
+   <div class="row" style="gap:8px;margin:8px 0 4px"><button class="btn sm grow" onclick="saveAI();openSettings()">Lưu cài đặt AI</button>${ai.key?'<button class="btn sm danger grow" onclick="clearAI()">Xoá key</button>':""}</div>
+   ${pdraft?`<button class="btn sm primary" style="width:100%;margin-top:6px" onclick="saveAI();renderPlanSheet()">← Quay lại mục tiêu đang soạn</button>`:""}
    <div class="row" style="gap:8px;margin:12px 0">
      <button class="btn sm grow" onclick="doReflow()">Dồn lại toàn bộ lịch</button>
      <button class="btn sm grow" onclick="exportJSON()">Xuất dữ liệu</button></div>
@@ -1516,7 +1601,520 @@ function exportJSON(){
    <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Đóng</button></div>`);
 }
 
+/* ======================= DAILY TO-DO: focus · energy · review ======================= */
+/* the 5 habits being fixed (video "10 sai lầm") — #2 #3 #5 #6 #8 */
+const FIX=[
+ {n:2,k:"Kiên nhẫn",tip:"Tre cắm rễ 5 năm mới vươn lên. Hôm nay chỉ cần giữ nhịp, đừng đòi kết quả ngay.",
+  how:"Mỗi mục tiêu dài hạn đi theo buổi đều đặn. Đo bằng giờ tích luỹ và số ngày giữ nhịp, không đo bằng cảm giác 'sao chưa giỏi'."},
+ {n:3,k:"Tập trung",tip:"Xong Top 3 rồi mới mở việc khác. Làm từng việc một, điện thoại úp xuống.",
+  how:"Mỗi ngày tối đa 3 việc quan trọng nhất. Việc phụ chỉ làm khi Top 3 đã xong."},
+ {n:5,k:"Tới nơi tới chốn",tip:"Việc nào mở ra phải có đầu ra. Dở dang thì chốt: làm nốt, chia nhỏ, hoặc bỏ hẳn.",
+  how:"Mỗi buổi có 'xong khi…'. Cuối ngày Chốt ngày: không để việc nào treo lơ lửng."},
+ {n:6,k:"Chọn lọc quan hệ",tip:"Dành thời gian cho người kéo mình lên. Một tin nhắn có chủ đích hơn mười cuộc hẹn cho vui.",
+  how:"Danh sách người đáng đầu tư + nhịp liên hệ. App nhắc khi đến hạn."},
+ {n:8,k:"Giữ năng lượng",tip:"Ngủ đủ, nghỉ thật, không lướt mạng giữa các buổi. Ngày yếu thì giữ Top 3 và dời phần còn lại.",
+  how:"Chấm năng lượng mỗi sáng. Ngày ≤2/5 app đề nghị dời việc phụ. Chốt ngày ghi lại năng lượng rò rỉ vào đâu."}
+];
+function isOpen(x){return x.status!=="done"&&x.status!=="skipped"}
+function nowMin(){const n=new Date();return n.getHours()*60+n.getMinutes()}
+function autoTop(date){
+  const A=state.assess;
+  return tasksOn(date).filter(x=>x.status!=="skipped").map(x=>{
+    let s=(x.pri||3)*10+(x.emg?50:0)+(x.plan?4:0);
+    const a=x.link&&A.find(y=>y.id===x.link); if(a&&a.due){const dd=dbet(date,a.due); if(dd>=0&&dd<=14)s+=(14-dd)*2;}
+    return {x,s};
+  }).sort((a,b)=>b.s-a.s||a.x.start-b.x.start).slice(0,3).map(o=>o.x);
+}
+function topTasks(date){
+  const ids=(state.top||{})[date];
+  if(!ids) return autoTop(date);
+  return ids.map(id=>state.tasks.find(x=>x.id===id)).filter(x=>x&&x.date===date&&x.status!=="skipped");
+}
+function openTopPick(date){
+  const cur=new Set(topTasks(date).map(x=>x.id));
+  const list=tasksOn(date).filter(x=>x.status!=="skipped").sort((a,b)=>a.start-b.start);
+  openSheet(`<h3>★ Top 3 — ${fmtFull(date)}</h3><div class="sh-sub">Chọn tối đa 3 việc. Xong 3 việc này là ngày đã thắng.</div>
+   ${list.length?list.map(x=>`<label class="ck" style="cursor:pointer"><input type="checkbox" class="tpk" value="${x.id}" ${cur.has(x.id)?"checked":""} style="width:18px;height:18px;margin-top:2px">
+     <div class="grow"><div class="ck-t">${h(x.t)}</div><div class="ck-s">${hhmm(x.start)} · ${hrs((x.dur||60)/60)}h · ${(TR[x.track]||TR.LIFE).short}</div></div></label>`).join(""):'<div class="empty">Ngày này chưa có việc nào.</div>'}
+   <div class="sheet-foot"><button class="btn ghost" onclick="delete state.top['${date}'];closeSheet();save()">Để app tự chọn</button>
+     <button class="btn primary" onclick="saveTopPick('${date}')">Lưu</button></div>`);
+}
+function saveTopPick(date){
+  const ids=[...document.querySelectorAll(".tpk:checked")].map(e=>e.value);
+  if(ids.length>3){alert("Tối đa 3 việc — tập trung là dám bỏ bớt.");return}
+  state.top=state.top||{}; state.top[date]=ids; closeSheet(); save();
+}
+function setEnergy(date,n){state.energy=state.energy||{}; state.energy[date]=n; save()}
+function deferLow(date){
+  const top=new Set(topTasks(date).map(x=>x.id)); let n=0;
+  tasksOn(date).filter(x=>isOpen(x)&&!top.has(x.id)&&!x.locked&&!x.emg&&(x.pri||3)<=3).forEach(x=>{
+    const s=nextFreeSlot(addD(date,1),0,x.dur||60,x.id); if(s){x.date=s.date;x.start=s.start;n++}
+  });
+  save(); toast(n?`Đã dời ${n} việc phụ sang ngày sau`:"Không có việc phụ nào để dời");
+}
+
+/* ---------- evening review (Chốt ngày) ---------- */
+function openReview(date){
+  const top=topTasks(date), open=tasksOn(date).filter(isOpen).sort((a,b)=>a.start-b.start);
+  const r=(state.review||{})[date]||{}, en=(state.energy||{})[date];
+  openSheet(`<h3>🌙 Chốt ngày — ${fmtFull(date)}</h3><div class="sh-sub">3 phút. Không để việc nào treo lơ lửng sang ngày mai.</div>
+   <div class="mblk"><span class="mlab">Top 3</span>${top.length?top.map(x=>`<div class="kv"><span>${h(x.t)}</span><b style="color:var(--${x.status==="done"?"green":"red"})">${x.status==="done"?"✓":"✗"}</b></div>`).join(""):'<div class="small muted">Hôm nay không có Top 3.</div>'}</div>
+   <div class="mblk"><span class="mlab">Chưa xong — chốt từng việc (#5)</span>
+    ${open.length?open.map(x=>`<div class="kv" style="align-items:center"><span>${h(x.t)}<div class="small muted">${hrs((x.dur||60)/60)}h${x.progress?" · "+x.progress+"%":""}</div></span>
+      <span class="row" style="gap:5px;flex-shrink:0"><button class="btn sm" onclick="reviewAct('${x.id}','next','${date}')">Mai</button>
+      <button class="btn sm" onclick="reviewAct('${x.id}','split','${date}')">Chia đôi</button>
+      <button class="btn sm danger" onclick="reviewAct('${x.id}','drop','${date}')">Bỏ</button></span></div>`).join(""):'<div class="small" style="color:var(--green);font-weight:600">Không còn việc nào treo. Tốt.</div>'}</div>
+   <div class="mblk"><span class="mlab">Năng lượng cuối ngày (#8)</span><div class="pill-row">${[1,2,3,4,5].map(n=>`<button class="pill ${r.en===n?"on":""}" onclick="reviewEn('${date}',${n})">${n}</button>`).join("")}</div></div>
+   <label class="fld"><span>Năng lượng rò rỉ vào đâu hôm nay?</span><textarea id="rvLeak" placeholder="VD: lướt TikTok 40', ngồi cà phê 2 tiếng không mục đích">${h(r.leak||"")}</textarea></label>
+   <label class="fld"><span>Mai làm khác đi điều gì?</span><input type="text" id="rvNext" value="${h(r.next||"")}"></label>
+   ${en?`<div class="small muted">Sáng nay bạn chấm năng lượng ${en}/5.</div>`:""}
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn primary" onclick="saveReview('${date}')">Chốt</button></div>`);
+}
+function reviewEn(date,n){state.review=state.review||{};const r=state.review[date]=state.review[date]||{};
+  r.leak=v("rvLeak");r.next=v("rvNext");r.en=n;lsSave();openReview(date)}
+function reviewAct(id,act,date){
+  const x=state.tasks.find(t=>t.id===id); if(!x)return;
+  state.review=state.review||{}; const r=state.review[date]=state.review[date]||{}; r.leak=v("rvLeak"); r.next=v("rvNext");
+  if(act==="drop"){x.status="skipped"}
+  else if(act==="next"){const s=nextFreeSlot(addD(date,1),0,x.dur||60,x.id); if(s){x.date=s.date;x.start=s.start}}
+  else if(act==="split"){
+    const half=Math.max(15,Math.round((x.dur||60)/2/15)*15), base=x.t.replace(/ \(phần \d\/2\)$/,"");
+    const y=Object.assign({},x,{id:"x"+uid(),t:base+" (phần 2/2)",dur:half,progress:0});
+    x.t=base+" (phần 1/2)"; x.dur=half;
+    const s1=nextFreeSlot(addD(date,1),0,half,x.id); if(s1){x.date=s1.date;x.start=s1.start}
+    state.tasks.push(y);
+    const s2=nextFreeSlot(addD(x.date,1),0,half,y.id); if(s2){y.date=s2.date;y.start=s2.start}
+  }
+  save(); openReview(date);
+}
+function saveReview(date){state.review=state.review||{};const r=state.review[date]=state.review[date]||{};
+  r.leak=v("rvLeak");r.next=v("rvNext");r.at=new Date().toISOString();closeSheet();save();toast("Đã chốt ngày. Nghỉ thật đi.")}
+
+/* ---------- people worth investing in (#6) ---------- */
+function peopleDue(date){
+  return (state.people||[]).filter(p=>!p.last||dbet(p.last,date)>=(+p.every||14))
+    .sort((a,b)=>(a.last||"").localeCompare(b.last||""));
+}
+function contacted(id){const p=(state.people||[]).find(x=>x.id===id);if(!p)return;const t=todayISO();
+  p.last=t;p.log=(p.log||[]).concat(t);save();toast(`Đã ghi: liên hệ ${h(p.name)}`)}
+function editPerson(id){
+  const p=(state.people||[]).find(x=>x.id===id)||{id:"",name:"",role:"",every:14,note:""};
+  openSheet(`<h3>${p.id?"Sửa":"Thêm người đáng đầu tư"}</h3><div class="sh-sub">Người giỏi hơn, tích cực, kéo mình lên. App nhắc khi đến hạn liên hệ.</div>
+   <label class="fld"><span>Tên</span><input type="text" id="ppN" value="${h(p.name)}"></label>
+   <label class="fld"><span>Vì sao đáng đầu tư</span><input type="text" id="ppR" value="${h(p.role)}" placeholder="VD: anh mentor ngành IB · bạn học IELTS nghiêm túc"></label>
+   <label class="fld"><span>Liên hệ mỗi</span><select id="ppE">${[[7,"1 tuần"],[14,"2 tuần"],[30,"1 tháng"],[60,"2 tháng"]].map(([n,l])=>`<option value="${n}" ${+p.every===n?"selected":""}>${l}</option>`).join("")}</select></label>
+   <label class="fld"><span>Ghi chú (lần trước nói gì, lần tới hỏi gì)</span><textarea id="ppNo">${h(p.note||"")}</textarea></label>
+   ${p.log&&p.log.length?`<div class="small muted" style="margin-bottom:10px">Đã liên hệ ${p.log.length} lần · gần nhất ${fmtD(p.last)}</div>`:""}
+   <div class="sheet-foot">${p.id?`<button class="btn danger" onclick="state.people=state.people.filter(x=>x.id!=='${p.id}');closeSheet();save()">Xoá</button>`:""}
+    <button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn primary" onclick="savePerson('${p.id}')">Lưu</button></div>`);
+}
+function savePerson(id){
+  state.people=state.people||[]; let p=state.people.find(x=>x.id===id);
+  if(!p){p={id:"pp"+uid(),log:[],last:""};state.people.push(p)}
+  p.name=v("ppN")||"Người mới"; p.role=v("ppR"); p.every=+v("ppE")||14; p.note=v("ppNo"); closeSheet(); save();
+}
+
+/* ---------- week numbers for the 5 fixes ---------- */
+function weekStats(mon){
+  const t=todayISO(), days=[]; for(let i=0;i<7;i++){const d=addD(mon,i); if(d<=t)days.push(d)}
+  let topWin=0,topDays=0,done=0,all=0,planMin=0,planDays=0,en=0,enN=0,rev=0;
+  days.forEach(d=>{
+    const tp=topTasks(d); if(tp.length){topDays++; if(tp.every(x=>x.status==="done"))topWin++;}
+    const ts=tasksOn(d).filter(x=>x.status!=="skipped"); all+=ts.length; done+=ts.filter(x=>x.status==="done").length;
+    const pd=ts.filter(x=>x.plan&&x.status==="done"); if(pd.length)planDays++; planMin+=pd.reduce((s,x)=>s+(x.dur||0),0);
+    const e=(state.energy||{})[d]; if(e){en+=e;enN++}
+    if((state.review||{})[d]&&(state.review||{})[d].at)rev++;
+  });
+  const contacts=(state.people||[]).reduce((s,p)=>s+(p.log||[]).filter(d=>d>=mon&&d<=addD(mon,6)).length,0);
+  const half=state.tasks.filter(x=>isOpen(x)&&x.date<=t&&(x.progress||0)>0).length;
+  return {days:days.length,topWin,topDays,done,all,planMin,planDays,en:enN?en/enN:null,rev,contacts,half};
+}
+function fixMetric(n,w){
+  if(n===2) return `${w.planDays}/${w.days} ngày giữ nhịp mục tiêu dài hạn · tích luỹ ${hrs(w.planMin/60)}h`;
+  if(n===3) return `Thắng Top 3: ${w.topWin}/${w.topDays} ngày`;
+  if(n===5) return `Xong ${w.done}/${w.all} việc · ${w.half} việc đang dở · chốt ngày ${w.rev}/${w.days}`;
+  if(n===6) return `${w.contacts} lần liên hệ có chủ đích`;
+  if(n===8) return w.en?`Năng lượng TB ${w.en.toFixed(1)}/5`:"Chưa chấm năng lượng ngày nào";
+  return "";
+}
+function openFix(){
+  const w=weekStats(mondayOf(todayISO()));
+  openSheet(`<h3>5 điểm đang sửa</h3><div class="sh-sub">Chăm chỉ thôi chưa đủ — cần đúng cách. Số liệu tuần này:</div>
+   ${FIX.map(f=>`<div class="mblk"><span class="mlab">#${f.n} · ${f.k}</span>${h(f.tip)}<div class="small muted" style="margin-top:4px">${h(f.how)}</div>
+     <div class="small" style="margin-top:5px;font-weight:700;color:var(--accent)">${fixMetric(f.n,w)}</div></div>`).join("")}
+   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Đóng</button></div>`);
+}
+
+/* ---------- quick add: "Gửi mail thầy mai 9h 30p #if !" ---------- */
+const QTAG={if:"IF",bf:"BF",bank:"BF",banking:"BF",da:"DA",ielts:"IELTS",trung:"ZH",zh:"ZH",tq:"ZH",macro:"MACRO",gym:"BASE",nen:"BASE",khac:"LIFE"};
+function parseQuick(raw){
+  let s=" "+String(raw).replace(/\s+/g," ")+" ", date=null, start=null, dur=null, track=null, pri=3;
+  const t=todayISO(), B="(^|\\s)", E="(?=\\s|$)";
+  const take=(re,fn)=>{const m=s.match(re); if(m){fn(m); s=s.slice(0,m.index)+" "+s.slice(m.index+m[0].length)}};
+  take(/(^|\s)!+(?=\s|$)/,()=>pri=5);
+  take(/(^|\s)#([a-zA-Z]+)(?=\s|$)/,m=>track=QTAG[m[2].toLowerCase()]||"LIFE");
+  take(new RegExp(B+"(hôm nay|hnay)"+E,"i"),()=>date=t);
+  take(new RegExp(B+"(ngày kia|mốt)"+E),()=>date=addD(t,2));
+  take(new RegExp(B+"(ngày mai|mai)"+E),()=>date=addD(t,1));
+  take(new RegExp(B+"(thứ\\s?([2-7])|t([2-7])|cn|chủ nhật)"+E,"i"),m=>{
+    const w=m[3]||m[4]?+(m[3]||m[4])-1:7; let d=t; for(let i=0;i<7;i++){if(dow(d)===w)break; d=addD(d,1)} date=d});
+  take(/(^|\s)(\d{1,2})\/(\d{1,2})(?=\s|$)/,m=>{let y=+t.slice(0,4); let d=iso(new Date(y,+m[3]-1,+m[2]));
+    if(dbet(t,d)<-30)d=iso(new Date(y+1,+m[3]-1,+m[2])); date=d});
+  take(new RegExp(B+"(\\d{1,2})(?:h|:)(\\d{2})?(\\s*(sáng|trưa|chiều|tối))?"+E,"i"),m=>{
+    let hh=+m[2]; const mi=+(m[3]||0), p=(m[5]||"").toLowerCase();
+    if((p==="chiều"||p==="tối")&&hh<12)hh+=12; if(p==="trưa"&&hh<5)hh+=12;
+    if(hh<24&&mi<60)start=hh*60+mi});
+  take(new RegExp(B+"(\\d{1,3})\\s?(p|ph|phút)"+E,"i"),m=>dur=+m[2]);
+  take(new RegExp(B+"(\\d+(?:[.,]\\d+)?)\\s?(tiếng|giờ)"+E,"i"),m=>dur=Math.round(parseFloat(m[2].replace(",","."))*60));
+  const title=s.replace(/\s+/g," ").trim();
+  return {t:title||"Việc mới",date:date||t,start,dur:Math.max(5,dur||30),track:track||"LIFE",pri};
+}
+function qaAdd(){
+  const inp=document.getElementById("qaIn"); if(!inp||!inp.value.trim())return;
+  const q=parseQuick(inp.value), t=todayISO();
+  const x={id:"x"+uid(),t:q.t,track:q.track,date:q.date,start:q.start,dur:q.dur,pri:q.pri,status:"pending",progress:0};
+  if(x.start==null){
+    const from=x.date===t?Math.ceil(nowMin()/15)*15:0;
+    const s=nextFreeSlot(x.date,from,x.dur,null)||{date:x.date,start:Math.max(dayStart(),from)};
+    x.date=s.date; x.start=s.start;
+  }
+  state.tasks.push(x); inp.value=""; save();
+  toast(`✓ ${h(x.t)} · ${fmtFull(x.date).split(",")[0]} ${fmtD(x.date)} ${hhmm(x.start)} · ${x.dur}p <button onclick="openTask('${x.id}')">Sửa</button>`);
+}
+let toastT=null;
+function toast(html){let e=document.getElementById("toast");if(!e){e=document.createElement("div");e.id="toast";e.setAttribute("role","status");document.body.appendChild(e)}
+  e.innerHTML=html;e.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove("on"),4500)}
+
+/* ======================= LONG-TERM PLANS → daily sessions ======================= */
+const WD=["","T2","T3","T4","T5","T6","T7","CN"];
+function planById(id){return (state.plans||[]).find(p=>p.id===id)}
+function planStats(p){
+  const S=p.steps||[], all=S.reduce((s,x)=>s+(+x.min||0),0);
+  const pt=state.tasks.filter(t=>t.plan===p.id);
+  const doneMin=pt.filter(t=>t.status==="done").reduce((s,t)=>s+(t.dur||0),0);
+  const nd=S.filter(x=>x.done).length, t=todayISO();
+  const open=pt.filter(isOpen).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
+  const missed=open.filter(x=>x.date<t).length;
+  const next=open.find(x=>x.date>=t)||null;
+  const unplaced=S.filter(s=>!s.done&&!pt.some(x=>x.step===s.id&&isOpen(x))).length;
+  const eta=open.length?open[open.length-1].date:null;
+  const week=Math.max(1,Math.floor(dbet(p.from||p.created||t,t)/7)+1);
+  return {all,doneMin,nd,n:S.length,pct:S.length?Math.round(nd/S.length*100):0,missed,next,unplaced,eta,week};
+}
+/* free start closest to the preferred time; late-night endings (after 22:30) are penalised — sleep is part of the plan (#8) */
+function bestStart(d,dur,pref,after){
+  let best=null,score=1e9;
+  freeSlots(d,dur,null,after).forEach(sl=>{
+    const st=Math.min(Math.max(pref,sl.start),sl.end-dur), sc=Math.abs(st-pref)+(st+dur>22*60+30?180:0);
+    if(sc<score){score=sc;best=st}
+  });
+  return best;
+}
+/* place every unfinished step on the calendar: one session per allowed day, weekly cap, preferred time first */
+function schedulePlan(p,from){
+  state.tasks=state.tasks.filter(t=>!(t.plan===p.id&&t.status!=="done"));
+  const t=todayISO(), days=(p.days&&p.days.length)?p.days:[1,2,3,4,5,6,7];
+  const sess=Math.max(15,+p.sess||45), cap=Math.max(sess,Math.round((+p.hpw||3)*60)), pref=mm(p.time||"20:00");
+  const todo=(p.steps||[]).filter(s=>!s.done).map(s=>{
+    const doneMin=state.tasks.filter(x=>x.plan===p.id&&x.step===s.id&&x.status==="done").reduce((a,x)=>a+(x.dur||0),0);
+    return {s,left:Math.max(15,(+s.min||sess)-doneMin),parts:Math.max(1,Math.ceil(Math.max(15,(+s.min||sess)-doneMin)/sess)),k:0};
+  });
+  const used={}; let d=(from&&from>t)?from:t, i=0, guard=0, placed=0, last=null;
+  while(i<todo.length&&guard<400){
+    guard++;
+    if(days.includes(dow(d))){
+      const wk=mondayOf(d); used[wk]=used[wk]||0;
+      const cur=todo[i], allot=Math.min(cur.left,sess,cap-used[wk]);
+      if(allot>=15){
+        const after=d===t?Math.ceil(nowMin()/15)*15:0;
+        const st=bestStart(d,allot,pref,after);
+        if(st!=null){
+          cur.k++;
+          state.tasks.push({id:"p"+uid(),t:cur.s.t+(cur.parts>1||cur.k>1?` · phần ${cur.k}`:""),track:p.track,date:d,start:st,dur:allot,
+            pri:p.pri||4,status:"pending",progress:0,plan:p.id,step:cur.s.id,note:cur.s.how||"",out:cur.s.out||""});
+          used[wk]+=allot; cur.left-=allot; placed++; last=d;
+          if(cur.left<15) i++;
+        }
+      }
+    }
+    d=addD(d,1);
+  }
+  return {placed,last,unplaced:todo.length-i,late:!!(p.due&&last&&last>p.due)};
+}
+function syncStep(x){
+  const p=x&&x.plan&&planById(x.plan); if(!p)return; const s=(p.steps||[]).find(y=>y.id===x.step); if(!s)return;
+  const parts=state.tasks.filter(t=>t.plan===p.id&&t.step===s.id&&t.status!=="skipped");
+  s.done=parts.length>0&&parts.every(t=>t.status==="done"); s.at=s.done?todayISO():null;
+}
+function tgStep(pid,sid){
+  const p=planById(pid); if(!p)return; const s=(p.steps||[]).find(y=>y.id===sid); if(!s)return;
+  s.done=!s.done; s.at=s.done?todayISO():null;
+  state.tasks.filter(t=>t.plan===pid&&t.step===sid).forEach(t=>{t.status=s.done?"done":"pending";t.progress=s.done?100:0;t.doneAt=s.done?todayISO():null});
+  save(); openPlanView(pid);
+}
+function replan(pid){const p=planById(pid);if(!p)return;const r=schedulePlan(p,todayISO());save();
+  toast(`Đã xếp lại ${r.placed} buổi${r.last?" · xong dự kiến "+fmtD(r.last):""}${r.late?" · ⚠️ trễ hạn":""}`)}
+function planToggle(pid){const p=planById(pid);if(!p)return;
+  if(p.status==="off"){p.status="on";schedulePlan(p,todayISO())}
+  else{p.status="off";state.tasks=state.tasks.filter(t=>!(t.plan===pid&&t.status!=="done"))}
+  closeSheet();save()}
+function planDelete(pid){if(!confirm("Xoá mục tiêu này và các buổi chưa làm?"))return;
+  state.plans=(state.plans||[]).filter(p=>p.id!==pid);
+  state.tasks=state.tasks.filter(t=>!(t.plan===pid&&t.status!=="done"));closeSheet();save()}
+
+function planCardHTML(p){
+  const c=TR[p.track]||TR.LIFE, s=planStats(p), off=p.status==="off";
+  const verdict=off?{c:"warn",t:"Đang tạm dừng"}:s.missed?{c:"bad",t:`Lỡ ${s.missed} buổi — bấm Xếp lại để dồn về lịch mới`}
+    :s.unplaced?{c:"warn",t:`${s.unplaced} bước chưa có chỗ trên lịch — tăng giờ/tuần hoặc thêm ngày`}
+    :p.due&&s.eta&&s.eta>p.due?{c:"bad",t:`Với nhịp này xong ${fmtD(s.eta)} — trễ hạn ${fmtD(p.due)}. Tăng giờ/tuần hoặc thu hẹp mục tiêu.`}
+    :s.eta?{c:"ok",t:`Đúng nhịp · xong dự kiến ${fmtD(s.eta)}${p.due?" (hạn "+fmtD(p.due)+")":""}`}:null;
+  return `<div class="goal" style="${off?"opacity:.6":""}">
+    <div class="goal-h" onclick="openPlanView('${p.id}')" style="cursor:pointer">
+      <div class="ico" style="background:${c.color}22">🎯</div>
+      <div class="grow"><b style="font-size:14.5px">${h(p.name)}</b>
+        <div class="small muted">${c.short} · ${hrs(+p.hpw||0)}h/tuần · ${(p.days||[]).map(n=>WD[n]).join(" ")} · ${p.sess}'/buổi</div></div>
+      <button class="mini-btn" onclick="event.stopPropagation();openPlanEdit('${p.id}')">${IC.more}</button></div>
+    ${p.why?`<div class="small" style="font-style:italic;color:var(--ink2);margin:-2px 0 9px">“${h(p.why)}”</div>`:""}
+    <div class="bar tall"><i style="width:${s.pct}%;background:${c.color}"></i></div>
+    <div class="legend"><span>${s.nd}/${s.n} bước · ${s.pct}%</span><span>🎋 tuần ${s.week} · tích luỹ ${hrs(s.doneMin/60)}h</span></div>
+    ${s.next?`<div class="kv" style="margin-top:8px"><span>Buổi kế tiếp: <b style="font-family:var(--f-ui)">${h(s.next.t)}</b></span><b class="small">${fmtD(s.next.date)} ${hhmm(s.next.start)}</b></div>`:""}
+    ${verdict?`<div class="verdict ${verdict.c}">${verdict.t}</div>`:""}
+    ${!off&&(s.missed||s.unplaced)?`<button class="btn sm" style="margin-top:8px;width:100%" onclick="replan('${p.id}')">Xếp lại từ hôm nay</button>`:""}
+  </div>`;
+}
+function openPlanView(pid){
+  const p=planById(pid); if(!p)return; const s=planStats(p); let ph="";
+  const rows=(p.steps||[]).map((st,i)=>{
+    const head=st.phase&&st.phase!==ph?`<div class="phase">${h(st.phase)}</div>`:""; ph=st.phase||ph;
+    const tk=state.tasks.filter(t=>t.plan===pid&&t.step===st.id&&isOpen(t)).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    return head+`<div class="ck ${st.done?"done":""}" onclick="tgStep('${pid}','${st.id}')"><span class="box">${IC.check}</span>
+      <div class="grow"><div class="ck-t">${i+1}. ${h(st.t)}</div>
+      <div class="ck-s">${st.min}'${st.out?" · xong khi: "+h(st.out):""}${st.done&&st.at?" · ✓ "+fmtD(st.at):tk?" · 📅 "+fmtD(tk.date)+" "+hhmm(tk.start):st.done?"":" · chưa xếp lịch"}</div>
+      ${st.how?`<div class="ck-s" style="color:var(--ink2)">${h(st.how)}</div>`:""}</div></div>`;
+  }).join("");
+  openSheet(`<h3>🎯 ${h(p.name)}</h3><div class="sh-sub">${s.nd}/${s.n} bước · tích luỹ ${hrs(s.doneMin/60)}h · tuần ${s.week}${s.eta?" · xong dự kiến "+fmtD(s.eta):""}</div>
+   ${p.why?`<div class="mblk out"><span class="mlab">Vì sao</span>${h(p.why)}</div>`:""}
+   ${p.summary?`<div class="note" style="margin-bottom:10px">${h(p.summary)}</div>`:""}
+   ${(p.tips||[]).length?`<div class="mblk"><span class="mlab">Giữ nhịp</span>${p.tips.map(x=>"• "+h(x)).join("<br>")}</div>`:""}
+   <div class="row wrap" style="gap:7px;margin-bottom:8px">
+     <button class="btn sm grow" onclick="closeSheet();replan('${pid}')">Xếp lại từ hôm nay</button>
+     <button class="btn sm grow" onclick="openPlanEdit('${pid}')">Sửa / ✨ tạo tiếp</button>
+     <button class="btn sm grow" onclick="planToggle('${pid}')">${p.status==="off"?"Chạy lại":"Tạm dừng"}</button></div>
+   ${rows||'<div class="empty">Chưa có bước nào — bấm Sửa để chia.</div>'}
+   <div class="sheet-foot"><button class="btn danger" onclick="planDelete('${pid}')">Xoá</button><button class="btn primary" onclick="closeSheet()">Đóng</button></div>`);
+}
+
+/* ---------- plan editor (with AI breakdown) ---------- */
+let pdraft=null;
+function openPlanEdit(id){
+  const p=planById(id);
+  pdraft=p?JSON.parse(JSON.stringify(p)):{id:"",name:"",why:"",ctx:"",track:"LIFE",due:"",hpw:3,sess:45,time:"20:00",from:todayISO(),days:[1,2,3,4,5],steps:[],tips:[],summary:"",mode:""};
+  pdraft.mode=""; renderPlanSheet();
+}
+function readPlanForm(){
+  const d=pdraft; if(!d||!document.getElementById("pN"))return;
+  d.name=v("pN").trim(); d.why=v("pW"); d.ctx=v("pC"); d.track=v("pK"); d.due=v("pD");
+  d.hpw=Math.max(0.5,+v("pH")||3); d.sess=+v("pS")||45; d.time=v("pT")||"20:00"; d.from=v("pF")||todayISO();
+  document.querySelectorAll(".stT").forEach(e=>{const s=d.steps[+e.dataset.i]; if(s)s.t=e.value});
+  document.querySelectorAll(".stM").forEach(e=>{const s=d.steps[+e.dataset.i]; if(s)s.min=Math.max(5,+e.value||d.sess)});
+}
+function pDay(n){readPlanForm();const a=pdraft.days;const i=a.indexOf(n);if(i>=0)a.splice(i,1);else a.push(n);a.sort();renderPlanSheet()}
+function pDelStep(i){readPlanForm();pdraft.steps.splice(i,1);renderPlanSheet()}
+function sessionsAvail(d){
+  const perWk=Math.max(1,Math.min((d.days||[]).length||7,Math.floor((+d.hpw||3)*60/(+d.sess||45))||1));
+  const weeks=d.due?Math.max(1,Math.ceil(dbet(d.from&&d.from>todayISO()?d.from:todayISO(),d.due)/7)):10;
+  return {perWk,weeks,n:Math.min(80,Math.max(4,perWk*weeks))};
+}
+function renderPlanSheet(msg){
+  const d=pdraft, key=aiCfg().key, av=sessionsAvail(d);
+  const total=d.steps.reduce((s,x)=>s+(+x.min||0),0);
+  openSheet(`<h3>${d.id?"Sửa mục tiêu":"🎯 Mục tiêu dài hạn mới"}</h3><div class="sh-sub">Nhập mục tiêu → chia thành từng buổi → app tự xếp vào lịch mỗi ngày</div>
+   <label class="fld"><span>Mục tiêu</span><input type="text" id="pN" value="${h(d.name)}" placeholder="VD: IELTS Writing 6.0 → 7.0 · Portfolio DA 3 project"></label>
+   <label class="fld"><span>Vì sao quan trọng (đọc lại khi nản)</span><input type="text" id="pW" value="${h(d.why)}"></label>
+   <label class="fld"><span>Đang ở đâu / tài liệu có sẵn</span><textarea id="pC" placeholder="VD: Writing đang 6.0, yếu Task Response · có Cambridge 15–19">${h(d.ctx)}</textarea></label>
+   <div class="two"><label class="fld"><span>Mảng</span><select id="pK">${trackOpts(d.track)}</select></label>
+     <label class="fld"><span>Hạn (bỏ trống nếu không có)</span><input type="date" id="pD" value="${d.due||""}"></label></div>
+   <div class="two"><label class="fld"><span>Giờ mỗi tuần</span><input type="number" id="pH" min="0.5" step="0.5" value="${d.hpw}"></label>
+     <label class="fld"><span>Mỗi buổi (phút)</span><select id="pS">${[20,30,45,60,90,120].map(n=>`<option value="${n}" ${+d.sess===n?"selected":""}>${n}</option>`).join("")}</select></label></div>
+   <div class="two"><label class="fld"><span>Giờ ưa thích</span><input type="time" id="pT" value="${d.time}"></label>
+     <label class="fld"><span>Bắt đầu từ</span><input type="date" id="pF" value="${d.from||todayISO()}"></label></div>
+   <div class="fld"><span class="mlab">Ngày trong tuần</span><div class="pill-row">${[1,2,3,4,5,6,7].map(n=>`<button type="button" class="pill ${d.days.includes(n)?"on":""}" onclick="pDay(${n})">${WD[n]}</button>`).join("")}</div>
+     <div class="small muted" style="margin-top:6px">≈ ${av.perWk} buổi/tuần${d.due?` · ${av.weeks} tuần tới hạn`:""} — kiên nhẫn: nhịp đều quan trọng hơn nhồi nhiều.</div></div>
+   <div class="sec-h" style="margin:18px 0 8px"><h2>Chia thành từng buổi</h2><div class="rule"></div></div>
+   <div class="row wrap" style="gap:7px">
+     <button class="btn sm primary grow" id="aiBtn" onclick="pAI()">✨ AI chia giúp</button>
+     <button class="btn sm grow" onclick="readPlanForm();pdraft.mode='copy';renderPlanSheet()">📋 Dùng app ChatGPT/Claude</button>
+     <button class="btn sm grow" onclick="readPlanForm();pdraft.mode='manual';renderPlanSheet()">✍️ Tự liệt kê</button></div>
+   ${!key?`<div class="small muted" style="margin-top:7px">Nút ✨ cần API key (⚙️ Cài đặt). Không có key thì dùng 📋 — miễn phí: copy prompt sang app chat, dán kết quả về.</div>`:""}
+   ${msg?`<div class="verdict ${msg.c}">${h(msg.t)}</div>`:""}
+   ${d.mode==="copy"?`<div class="card" style="margin-top:10px;padding:12px">
+      <div class="small" style="font-weight:700;margin-bottom:6px">1 · Copy prompt này, dán vào ChatGPT / Claude / Gemini</div>
+      <textarea id="pPrompt" readonly style="min-height:110px;font-size:12px">${h(copyPrompt(d))}</textarea>
+      <button class="btn sm" style="margin-top:6px" onclick="copyText('pPrompt')">Copy prompt</button>
+      <div class="small" style="font-weight:700;margin:12px 0 6px">2 · Dán nguyên câu trả lời (JSON) vào đây</div>
+      <textarea id="pPaste" style="min-height:90px;font-size:12px" placeholder='{"summary": "...", "steps": [...]}'></textarea>
+      <button class="btn sm primary" style="margin-top:6px" onclick="pFromPaste()">Nhận kết quả</button></div>`:""}
+   ${d.mode==="manual"?`<div class="card" style="margin-top:10px;padding:12px">
+      <div class="small muted" style="margin-bottom:6px">Mỗi dòng một buổi. Thêm <b>| phút | xong khi…</b> nếu muốn. VD:<br>Viết Task 2 dạng Opinion | 60 | 1 bài 250 từ có chấm</div>
+      <textarea id="pLines" style="min-height:120px"></textarea>
+      <button class="btn sm primary" style="margin-top:6px" onclick="pFromLines()">Tạo danh sách</button></div>`:""}
+   ${d.summary?`<div class="note" style="margin-top:10px">${h(d.summary)}</div>`:""}
+   ${d.steps.length?`<div class="sec-h" style="margin:16px 0 8px"><h2>${d.steps.length} buổi · ${hrs(total/60)}h</h2><div class="rule"></div><span class="small muted">sửa được</span></div>
+    <div class="list">${d.steps.map((s,i)=>`<div class="rowit" style="align-items:flex-start;${s.done?"opacity:.55":""}"><span class="tm">${i+1}</span>
+      <div class="grow">${s.phase&&(i===0||d.steps[i-1].phase!==s.phase)?`<div class="phase" style="margin-top:0">${h(s.phase)}</div>`:""}
+        <input type="text" class="stT" data-i="${i}" value="${h(s.t)}" ${s.done?"disabled":""}>
+        <div class="row" style="gap:6px;margin-top:5px"><input type="number" class="stM" data-i="${i}" value="${s.min}" min="5" step="5" style="width:80px" ${s.done?"disabled":""}><span class="small muted">phút${s.done?" · đã xong":""}</span></div>
+        ${s.out?`<div class="small muted" style="margin-top:4px">✓ Xong khi: ${h(s.out)}</div>`:""}</div>
+      ${s.done?"":`<button class="mini-btn" onclick="pDelStep(${i})" aria-label="Xoá bước">✕</button>`}</div>`).join("")}</div>`:""}
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Huỷ</button><button class="btn primary" onclick="pSave()">${d.steps.some(s=>!s.done)?"Lưu & xếp lịch":"Lưu"}</button></div>`);
+}
+function copyText(id){const e=document.getElementById(id);if(!e)return;e.select();
+  (navigator.clipboard?navigator.clipboard.writeText(e.value):Promise.reject()).then(()=>toast("Đã copy prompt"),()=>{document.execCommand("copy");toast("Đã copy prompt")})}
+function normSteps(arr,sess){
+  return (Array.isArray(arr)?arr:[]).filter(s=>s&&String(s.t||s.title||"").trim()).map(s=>({id:"s"+uid(),phase:String(s.phase||"").slice(0,80),
+    t:String(s.t||s.title).trim().slice(0,200),min:Math.min(240,Math.max(10,Math.round(+s.min||+s.minutes||sess))),
+    how:String(s.how||"").slice(0,400),out:String(s.out||"").slice(0,200),done:false}));
+}
+function mergeSteps(list,append){readPlanForm();const keep=append?pdraft.steps:pdraft.steps.filter(s=>s.done);pdraft.steps=keep.concat(list)}
+function pFromLines(){
+  readPlanForm(); const txt=v("pLines");
+  const list=txt.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const [t,m,o]=l.split("|").map(x=>(x||"").trim());return {t,min:+m||pdraft.sess,out:o||""}});
+  if(!list.length){renderPlanSheet({c:"warn",t:"Chưa có dòng nào."});return}
+  mergeSteps(normSteps(list,pdraft.sess),true); pdraft.mode=""; renderPlanSheet({c:"ok",t:`Đã thêm ${list.length} buổi — xem lại rồi bấm Lưu & xếp lịch.`});
+}
+function pFromPaste(){
+  readPlanForm(); const raw=v("pPaste"); const a=raw.indexOf("{"), b=raw.lastIndexOf("}");
+  let o=null; try{o=JSON.parse(raw.slice(a,b+1))}catch(e){}
+  if(!o||!Array.isArray(o.steps)){renderPlanSheet({c:"bad",t:"Không đọc được JSON. Dán nguyên phần câu trả lời bắt đầu bằng { và kết thúc bằng }."});return}
+  const list=normSteps(o.steps,pdraft.sess); mergeSteps(list,pdraft.steps.some(s=>!s.done)&&confirm("Thêm vào sau các bước đang có? (Cancel = thay thế)"));
+  pdraft.summary=String(o.summary||pdraft.summary||""); pdraft.tips=Array.isArray(o.tips)?o.tips.map(String).slice(0,6):pdraft.tips;
+  pdraft.mode=""; renderPlanSheet({c:"ok",t:`Đã nhận ${list.length} buổi — xem lại rồi bấm Lưu & xếp lịch.`});
+}
+async function pAI(){
+  readPlanForm(); const d=pdraft;
+  if(!d.name){renderPlanSheet({c:"warn",t:"Nhập mục tiêu trước đã."});return}
+  if(!aiCfg().key){openSettings();return}
+  const append=d.steps.some(s=>!s.done)&&confirm("Tạo TIẾP sau các bước đang có? (Cancel = làm lại từ đầu)");
+  const btn=document.getElementById("aiBtn"); if(btn){btn.disabled=true;btn.textContent="✨ Đang chia… (30–90 giây)"}
+  try{
+    const o=await aiBreakdown(d,append?d.steps:d.steps.filter(s=>s.done));
+    const list=normSteps(o.steps,d.sess); mergeSteps(list,append);
+    pdraft.summary=o.summary||""; pdraft.tips=(o.tips||[]).slice(0,6); pdraft.mode="";
+    renderPlanSheet({c:"ok",t:`AI đã chia ${list.length} buổi — đọc lại, sửa chỗ chưa hợp rồi bấm Lưu & xếp lịch.`});
+  }catch(e){ renderPlanSheet({c:"bad",t:e&&e.message?e.message:String(e)}); }
+}
+function pSave(){
+  readPlanForm(); const d=pdraft;
+  if(!d.name){renderPlanSheet({c:"warn",t:"Nhập mục tiêu trước đã."});return}
+  if(!d.days.length){renderPlanSheet({c:"warn",t:"Chọn ít nhất 1 ngày trong tuần."});return}
+  state.plans=state.plans||[];
+  let p=planById(d.id);
+  if(!p){p={id:"pl"+uid(),created:todayISO(),status:"on"};state.plans.push(p)}
+  ["name","why","ctx","track","due","hpw","sess","time","from","days","steps","tips","summary"].forEach(k=>p[k]=d[k]);
+  const r=(p.status!=="off"&&p.steps.some(s=>!s.done))?schedulePlan(p,p.from):null;
+  save(); pdraft=null;
+  if(!r){closeSheet();return}
+  openSheet(`<h3>Đã xếp vào lịch</h3><div class="sh-sub">${h(p.name)}</div>
+   <div class="kv"><span>Số buổi đã đặt lên lịch</span><b>${r.placed}</b></div>
+   <div class="kv"><span>Xong dự kiến</span><b>${r.last?fmtFull(r.last):"—"}</b></div>
+   ${r.unplaced?`<div class="verdict warn">${r.unplaced} bước chưa có chỗ (lịch kín hoặc quá 1 năm). Tăng giờ/tuần hoặc thêm ngày.</div>`:""}
+   ${r.late?`<div class="verdict bad">Theo nhịp này sẽ trễ hạn ${fmtD(p.due)}. Tăng giờ/tuần, thêm ngày, hoặc thu hẹp mục tiêu — đừng nhồi.</div>`:`<div class="verdict ok">Mỗi ngày mở tab Hôm nay là thấy buổi cần làm.</div>`}
+   <div class="note" style="margin-top:10px">Lỡ buổi nào thì cuối ngày bấm <b>Chốt ngày</b> hoặc <b>Xếp lại</b> — app dồn phần còn lại sang lịch mới, không bỏ bước nào.</div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet();go('cal')">Xem lịch</button><button class="btn primary" onclick="closeSheet();go('plans')">Xong</button></div>`);
+}
+
+/* ---------- AI: Claude API, called straight from the browser with the user's own key ---------- */
+const AI_SDK="https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
+const AI_LS="son-study-os-ai";          // kept apart from state: never synced, never exported
+const AI_MODELS=[["claude-opus-5","Claude Opus 5 — tốt nhất (mặc định)"],["claude-sonnet-5","Claude Sonnet 5 — rẻ hơn"]];
+function aiCfg(){try{return JSON.parse(localStorage.getItem(AI_LS)||"{}")||{}}catch(e){return{}}}
+function aiSetCfg(c){try{localStorage.setItem(AI_LS,JSON.stringify(c))}catch(e){}}
+const PLAN_SCHEMA={type:"object",additionalProperties:false,required:["summary","tips","steps"],properties:{
+  summary:{type:"string"},
+  tips:{type:"array",items:{type:"string"}},
+  steps:{type:"array",items:{type:"object",additionalProperties:false,required:["phase","t","min","how","out"],properties:{
+    phase:{type:"string"},t:{type:"string"},min:{type:"integer"},how:{type:"string"},out:{type:"string"}}}}}};
+const PLAN_SYSTEM=`Bạn là người lập kế hoạch cho một sinh viên năm cuối ngành tài chính ở Việt Nam (đang học 2 môn cuối, lớp Data Analytics, IELTS, tiếng Trung; hướng tới Investment Analyst). Việc của bạn: chia một mục tiêu dài hạn thành các buổi làm việc cụ thể, theo đúng thứ tự, mỗi buổi làm xong trong một lần ngồi.
+
+Người này đang sửa 5 thói quen: thiếu kiên nhẫn (muốn nhanh), không tập trung (ôm đồm), làm không tới nơi tới chốn, giao du chưa chọn lọc, không giữ năng lượng. Kế hoạch phải giúp sửa các điểm đó:
+- Mỗi buổi chỉ một việc chính, có đầu ra kiểm chứng được (bài viết, file, điểm số, bản ghi âm, bảng tính…). Không có buổi kiểu "tìm hiểu", "ôn chung chung", "xem video".
+- Buổi sau xây trên buổi trước. Khoảng mỗi 2 tuần có một buổi kiểm tra thật (tự test, mock, nộp sản phẩm cho người khác xem) để đo tiến bộ.
+- Nhịp đều, vừa sức, không nhồi. Nếu quỹ thời gian không đủ để đạt mục tiêu trước hạn, nói thẳng trong summary và đề xuất thu hẹp phạm vi — đừng hứa kết quả nhanh.
+- Ở vài buổi phù hợp, gợi ý làm cùng hoặc xin góp ý từ người giỏi hơn (mentor, bạn học nghiêm túc).
+
+Trường dữ liệu: phase = tên giai đoạn ngắn; t = tên buổi (ngắn, bắt đầu bằng động từ); min = số phút; how = làm cụ thể thế nào (1–2 câu); out = "xong khi…" (đầu ra đo được). summary = 2–3 câu nhận xét thẳng thắn về độ khả thi. tips = 3–5 lời khuyên giữ nhịp riêng cho mục tiêu này. Viết tiếng Việt, ngắn gọn, cụ thể.`;
+function planUserMsg(d,existing){
+  const av=sessionsAvail(d), t=todayISO();
+  const ex=(existing||[]).length?`\n\nĐã có ${existing.length} buổi trong kế hoạch (${existing.filter(s=>s.done).length} đã xong):\n${existing.map((s,i)=>`${i+1}. ${s.done?"[xong] ":""}${s.t}`).join("\n")}\nHãy tạo TIẾP các buổi sau đó, không lặp lại.`:"";
+  return `Mục tiêu: ${d.name}
+Vì sao: ${d.why||"(không ghi)"}
+Hiện tại / tài liệu có sẵn: ${d.ctx||"(không ghi)"}
+Hôm nay: ${t}. Bắt đầu từ: ${d.from||t}. Hạn: ${d.due||"không có hạn cứng — lên kế hoạch cho khoảng 10 tuần đầu"}.
+Quỹ thời gian: ${d.hpw} giờ/tuần, các ngày ${(d.days||[]).map(n=>WD[n]).join(", ")}, mỗi buổi ${d.sess} phút ⇒ khoảng ${av.perWk} buổi/tuần.
+Tạo khoảng ${av.n} buổi (tối đa 80). Mỗi buổi min ≤ ${d.sess} phút, chỉ vượt khi thật sự bắt buộc.${ex}`;
+}
+function copyPrompt(d){
+  return PLAN_SYSTEM+"\n\n---\n\n"+planUserMsg(d,d.steps)+`\n\nChỉ trả lời bằng MỘT khối JSON đúng dạng sau, không kèm chữ nào khác:
+{"summary":"...","tips":["..."],"steps":[{"phase":"...","t":"...","min":45,"how":"...","out":"..."}]}`;
+}
+async function aiBreakdown(d,existing){
+  const c=aiCfg();
+  let Anthropic;
+  try{ ({default:Anthropic}=await import(AI_SDK)); }
+  catch(e){ throw new Error("Không tải được thư viện AI (mạng chặn cdn.jsdelivr.net?). Dùng 📋 thay thế."); }
+  const client=new Anthropic({apiKey:c.key,dangerouslyAllowBrowser:true});
+  const model=c.model||"claude-opus-5";
+  const req={model,max_tokens:16000,system:PLAN_SYSTEM,
+    messages:[{role:"user",content:planUserMsg(d,existing)}],
+    output_config:{format:{type:"json_schema",schema:PLAN_SCHEMA}}};
+  let res;
+  try{
+    res= model==="claude-opus-5"
+      ? await client.beta.messages.create({...req,betas:["server-side-fallback-2026-07-01"],fallbacks:"default"})
+      : await client.messages.create(req);
+  }catch(e){
+    if(e instanceof Anthropic.AuthenticationError) throw new Error("API key sai hoặc đã bị thu hồi — kiểm tra lại trong Cài đặt.");
+    if(e instanceof Anthropic.PermissionDeniedError) throw new Error("Key không có quyền dùng model này. Đổi model trong Cài đặt.");
+    if(e instanceof Anthropic.RateLimitError) throw new Error("Đang gọi quá nhanh / hết hạn mức. Đợi 1 phút rồi thử lại.");
+    if(e instanceof Anthropic.BadRequestError) throw new Error("Yêu cầu bị từ chối: "+(e.message||"")+" (hết credit thì nạp ở console.anthropic.com).");
+    if(e instanceof Anthropic.APIConnectionError) throw new Error("Không kết nối được tới Claude. Kiểm tra mạng rồi thử lại.");
+    if(e instanceof Anthropic.APIError) throw new Error("Claude đang lỗi ("+(e.status||"?")+"). Thử lại sau ít phút.");
+    throw e;
+  }
+  if(res.stop_reason==="refusal") throw new Error("AI không xử lý yêu cầu này — thử diễn đạt lại mục tiêu.");
+  if(res.stop_reason==="max_tokens") throw new Error("Kế hoạch quá dài bị cắt giữa chừng — rút ngắn hạn hoặc chia mục tiêu nhỏ hơn.");
+  const txt=res.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+  let o; try{o=JSON.parse(txt)}catch(e){throw new Error("AI trả về dữ liệu hỏng — bấm ✨ lần nữa.")}
+  return o;
+}
+function saveAI(){
+  const c=aiCfg(), k=v("aiK").trim();
+  if(k)c.key=k; c.model=v("aiM")||"claude-opus-5"; aiSetCfg(c); toast("Đã lưu cài đặt AI trên máy này");
+}
+function clearAI(){aiSetCfg({});openSettings();toast("Đã xoá API key khỏi máy này")}
+
+/* ================================ PLANS TAB ================================ */
+function renderPlans(){
+  const w=weekStats(mondayOf(todayISO())), P=state.plans||[], ppl=state.people||[];
+  document.getElementById("v-plans").innerHTML=`
+  <div class="sec-h"><h2>Tuần này · 5 điểm đang sửa</h2><div class="rule"></div><button class="act" onclick="openFix()">Xem</button></div>
+  <div class="wkgrid">${FIX.map(f=>`<button class="wk" onclick="openFix()" style="text-align:left"><span>#${f.n} ${f.k}</span><b style="font-size:13px;font-family:var(--f-ui);margin-top:3px">${fixMetric(f.n,w)}</b></button>`).join("")}</div>
+  <div class="sec-h"><h2>Mục tiêu dài hạn</h2><div class="rule"></div><button class="act" onclick="openPlanEdit('')">+ Mới</button></div>
+  ${P.length?P.map(planCardHTML).join(""):`<div class="card"><b>Chưa có mục tiêu dài hạn nào.</b>
+    <div class="small muted" style="margin:6px 0 12px">Nhập mục tiêu (VD: "IELTS Writing 7.0 trong 12 tuần"), chọn giờ/tuần — AI chia thành từng buổi có đầu ra rõ, app tự xếp vào lịch và nhắc mỗi ngày.</div>
+    <button class="btn primary" onclick="openPlanEdit('')">✨ Thêm mục tiêu đầu tiên</button></div>`}
+  <div class="sec-h"><h2>Người đáng đầu tư thời gian</h2><div class="rule"></div><button class="act" onclick="editPerson('')">+ Thêm</button></div>
+  ${ppl.length?`<div class="list">${ppl.map(p=>{const due=!p.last||dbet(p.last,todayISO())>=(+p.every||14);
+    return `<div class="rowit"><button class="tick" onclick="contacted('${p.id}')" aria-label="Đã liên hệ">${IC.check}</button>
+      <div class="rt" onclick="editPerson('${p.id}')"><b>${h(p.name)}</b><div class="sub">${h(p.role||"")}${p.role?" · ":""}mỗi ${p.every} ngày · ${p.last?"lần cuối "+fmtD(p.last):"chưa liên hệ"}</div></div>
+      ${due?'<span class="chip amber">đến hạn</span>':'<span class="chip green">ổn</span>'}</div>`}).join("")}</div>`
+   :`<div class="card small muted">#6 — Thêm 3–5 người kéo mình lên (mentor, anh chị trong ngành, bạn học nghiêm túc). App nhắc liên hệ đều, bạn chỉ cần tick khi đã nhắn / gặp.</div>`}
+  <div class="note" style="margin-top:14px"><b>Cách dùng mỗi ngày:</b> sáng mở <b>Hôm nay</b> → chấm năng lượng → làm Top 3 → gõ việc phát sinh vào ô thêm nhanh → tối bấm <b>Chốt ngày</b>. Mục tiêu dài hạn tự rải buổi vào lịch; lỡ thì Xếp lại, không bỏ.</div>`;
+}
+
 /* ================================= BOOT ================================= */
 render();
 initCloud();
 </script>
+</body>
+</html>
