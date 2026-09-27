@@ -1,0 +1,1509 @@
+<title>Sơn Study OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#EEEDE8; --surface:#FFFFFF; --surface2:#F6F5F1; --line:#DEDCD4; --line2:#EAE8E2;
+  --ink:#16191C; --ink2:#4B545C; --ink3:#7E888F;
+  --accent:#1D5C56; --accent-ink:#0F3E39; --accent-soft:#D9E8E4;
+  --red:#A5372A; --red-soft:#F6DFDA; --amber:#9C6410; --amber-soft:#F7E9CF;
+  --green:#3B7239; --green-soft:#DFEDDB; --blue:#2C5A86; --blue-soft:#DCE7F1;
+  --shadow:0 1px 2px rgba(20,24,28,.06), 0 6px 18px rgba(20,24,28,.05);
+  --r:14px; --r-sm:9px;
+  --f-ui:"Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-num:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B20; --surface2:#1D2329; --line:#2A3139; --line2:#232930;
+  --ink:#E9EBE7; --ink2:#A7B0B7; --ink3:#78828A;
+  --accent:#5FC2B2; --accent-ink:#8FDCCE; --accent-soft:#16302D;
+  --red:#E8796A; --red-soft:#33201D; --amber:#DEA854; --amber-soft:#312712;
+  --green:#7DC073; --green-soft:#1B2C1A; --blue:#79ADDD; --blue-soft:#182634;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 22px rgba(0,0,0,.28);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B20; --surface2:#1D2329; --line:#2A3139; --line2:#232930;
+  --ink:#E9EBE7; --ink2:#A7B0B7; --ink3:#78828A;
+  --accent:#5FC2B2; --accent-ink:#8FDCCE; --accent-soft:#16302D;
+  --red:#E8796A; --red-soft:#33201D; --amber:#DEA854; --amber-soft:#312712;
+  --green:#7DC073; --green-soft:#1B2C1A; --blue:#79ADDD; --blue-soft:#182634;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 22px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.015em}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+header.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:10px 16px calc(10px) 16px}
+.top-in{max-width:820px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.brand{display:flex;flex-direction:column;gap:1px;min-width:0}
+.brand b{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.brand span{font-size:11.5px;color:var(--ink3);font-weight:500}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
+.icon-btn{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:var(--ink2);border:1px solid transparent}
+.icon-btn:hover{background:var(--surface2);border-color:var(--line)}
+.sync{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink3);font-weight:600;padding:4px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--line)}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--ink3);display:block}
+.sync.ok i{background:var(--green)}.sync.saving i{background:var(--amber)}.sync.local i{background:var(--blue)}
+
+main{max-width:820px;margin:0 auto;padding:16px 16px 40px}
+section.view{display:none;animation:fade .18s ease-out}
+section.view.on{display:block}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:color-mix(in srgb, var(--surface) 94%, transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:11px;color:var(--ink3);font-size:10.5px;font-weight:600}
+nav.tabs button svg{width:21px;height:21px}
+nav.tabs button.on{color:var(--accent)}
+nav.tabs button.on .glyph{background:var(--accent-soft)}
+.glyph{width:44px;height:26px;border-radius:9px;display:grid;place-items:center;transition:background .15s}
+@media(min-width:821px){
+  body{padding-bottom:0}
+  nav.tabs{position:sticky;top:57px;bottom:auto;max-width:820px;margin:0 auto;border-top:none;border-bottom:1px solid var(--line);background:color-mix(in srgb, var(--bg) 88%, transparent);padding:6px 8px;gap:2px}
+  nav.tabs button{flex-direction:row;gap:7px;font-size:13px;padding:8px 12px}
+  nav.tabs button .glyph{width:auto;height:auto;background:none!important}
+  nav.tabs button.on{background:var(--accent-soft)}
+  main{padding-top:20px}
+}
+
+/* ---------- primitives ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card + .card{margin-top:12px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:26px 0 10px}
+.sec-h:first-child{margin-top:4px}
+.sec-h h2{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)}
+.sec-h .rule{flex:1;height:1px;background:var(--line)}
+.sec-h .act{font-size:12.5px;font-weight:600;color:var(--accent)}
+.muted{color:var(--ink3)}
+.small{font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--ink2);border:1px solid var(--line);white-space:nowrap}
+.chip.red{background:var(--red-soft);color:var(--red);border-color:transparent}
+.chip.amber{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.chip.green{background:var(--green-soft);color:var(--green);border-color:transparent}
+.chip.blue{background:var(--blue-soft);color:var(--blue);border-color:transparent}
+.chip.accent{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;padding:9px 14px;border-radius:10px;font-weight:600;font-size:13.5px;background:var(--surface2);border:1px solid var(--line);color:var(--ink)}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+:root[data-theme="dark"] .btn.primary,:root:not([data-theme="light"]) .btn.primary{color:#0F1216}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn.primary{color:#fff}}
+.btn.ghost{background:none;border-color:var(--line)}
+.btn.danger{color:var(--red);border-color:var(--red-soft)}
+.btn.sm{padding:7px 9px;font-size:12.5px;border-radius:8px}
+.btn.sm svg{width:14px;height:14px}
+.row{display:flex;align-items:center;gap:10px}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+textarea{min-height:74px;resize:vertical;line-height:1.45}
+label.fld{display:block;margin-bottom:11px}
+label.fld > span{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- deadline ledger ---------- */
+.ledger{display:flex;flex-direction:column;gap:8px}
+.dl{position:relative;display:flex;gap:12px;padding:13px 14px 13px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-align:left;width:100%}
+.dl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ink3)}
+.dl.s-red::before{background:var(--red)} .dl.s-amber::before{background:var(--amber)}
+.dl.s-green::before{background:var(--green)} .dl.s-done::before{background:var(--line)}
+.dl.s-done{opacity:.55}
+.dl-main{flex:1;min-width:0}
+.dl-t{font-weight:700;font-size:14.5px;line-height:1.35;letter-spacing:-.01em;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.dl-sub{font-size:12px;color:var(--ink3);margin-top:3px;font-weight:500}
+.dl-r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.cd{font-family:var(--f-num);font-size:19px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.cd small{font-size:10px;font-weight:500;color:var(--ink3);display:block;text-align:right;margin-top:3px;letter-spacing:.04em;font-family:var(--f-ui)}
+.cd.red{color:var(--red)}.cd.amber{color:var(--amber)}.cd.green{color:var(--green)}
+.w-badge{font-family:var(--f-num);font-weight:700;font-size:12px;padding:2px 7px;border-radius:6px;background:var(--surface2);border:1px solid var(--line)}
+.w-badge.big{background:var(--accent);color:#fff;border-color:transparent}
+:root[data-theme="dark"] .w-badge.big,:root:not([data-theme="light"]) .w-badge.big{color:#0F1216}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .w-badge.big{color:#fff}}
+
+/* ---------- checklist ---------- */
+.ck{display:flex;gap:11px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line2)}
+.ck:last-child{border-bottom:none}
+.box{flex-shrink:0;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface2);display:grid;place-items:center;margin-top:1px;color:transparent}
+.box svg{width:13px;height:13px}
+.ck.done .box{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .ck.done .box,:root:not([data-theme="light"]) .ck.done .box{color:#0F1216}
+.ck.done .ck-t{text-decoration:line-through;color:var(--ink3)}
+.ck-t{font-size:13.8px;font-weight:500;line-height:1.4}
+.ck-s{font-size:11.5px;color:var(--ink3);margin-top:2px}
+
+/* ---------- bars ---------- */
+.bar{height:8px;border-radius:20px;background:var(--surface2);overflow:hidden;display:flex;border:1px solid var(--line2)}
+.bar i{display:block;height:100%}
+.bar.tall{height:11px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink3);font-weight:600;margin-top:8px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend b{width:8px;height:8px;border-radius:3px;display:block}
+
+/* ---------- day / week ---------- */
+.day{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.day + .day{margin-top:10px}
+.day-h{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.day-h b{font-size:13px;font-weight:700}
+.day-h .d-num{font-family:var(--f-num);font-size:12px;color:var(--ink3);font-weight:600}
+.day.today .day-h{background:var(--accent-soft)}
+.day.today .day-h b{color:var(--accent)}
+.blk{display:flex;gap:11px;padding:10px 14px;align-items:flex-start;border-bottom:1px solid var(--line2)}
+.blk:last-child{border-bottom:none}
+.blk-t{font-family:var(--f-num);font-size:11.5px;font-weight:700;color:var(--ink3);width:44px;flex-shrink:0;padding-top:2px}
+.blk-b{flex:1;min-width:0}
+.blk-n{font-weight:600;font-size:13.6px;line-height:1.35}
+.blk-d{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.blk.fixed{background:linear-gradient(90deg,var(--blue-soft),transparent 60%)}
+.tag{width:7px;height:7px;border-radius:2px;display:inline-block;margin-right:7px;vertical-align:middle;flex-shrink:0}
+.empty{padding:16px 14px;color:var(--ink3);font-size:12.5px;text-align:center}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stat{background:var(--surface);padding:13px 12px}
+.stat b{display:block;font-family:var(--f-num);font-size:22px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.stat span{font-size:10.5px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.stat.red b{color:var(--red)}.stat.green b{color:var(--green)}.stat.amber b{color:var(--amber)}
+
+/* ---------- sheet / modal ---------- */
+.back{position:fixed;inset:0;background:rgba(10,12,14,.5);z-index:90;display:none;align-items:flex-end;justify-content:center}
+.back.open{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:var(--shadow);animation:up .2s cubic-bezier(.2,.8,.3,1)}
+@keyframes up{from{transform:translateY(24px)}to{transform:translateY(0)}}
+@media(min-width:700px){.back{align-items:center}.sheet{border-radius:18px;max-height:84vh}}
+.sheet h3{font-size:17px;font-weight:700;margin-bottom:3px}
+.sheet .sh-sub{font-size:12.5px;color:var(--ink3);margin-bottom:15px}
+.sheet-foot{display:flex;gap:9px;margin-top:16px}
+.sheet-foot .btn{flex:1}
+
+/* ---------- misc ---------- */
+.note{font-size:12.5px;color:var(--ink2);background:var(--surface2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;line-height:1.5}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:13.3px}
+.kv:last-child{border-bottom:none}
+.kv b{font-family:var(--f-num);font-weight:700}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:6px 11px;border-radius:20px;border:1px solid var(--line);font-size:12.5px;font-weight:600;background:var(--surface2);color:var(--ink2)}
+.pill.on{background:var(--accent);border-color:transparent;color:#fff}
+:root[data-theme="dark"] .pill.on,:root:not([data-theme="light"]) .pill.on{color:#0F1216}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .pill.on{color:#fff}}
+.hero-num{font-family:var(--f-num);font-size:44px;font-weight:700;letter-spacing:-.045em;line-height:1}
+.spark{display:flex;align-items:flex-end;gap:4px;height:44px}
+.spark i{flex:1;background:var(--accent-soft);border-radius:3px 3px 0 0;min-height:3px;position:relative}
+.spark i.last{background:var(--accent)}
+table.grid{width:100%;border-collapse:collapse;font-size:13px}
+table.grid th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);padding:0 8px 7px 0;font-weight:700}
+table.grid td{padding:9px 8px 9px 0;border-top:1px solid var(--line2);vertical-align:top}
+table.grid td.n{font-family:var(--f-num);text-align:right;padding-right:0}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.subject-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+details.acc{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+details.acc + details.acc{margin-top:9px}
+details.acc > summary{padding:13px 15px;cursor:pointer;font-weight:700;font-size:14px;display:flex;align-items:center;gap:9px;list-style:none}
+details.acc > summary::-webkit-details-marker{display:none}
+details.acc > summary::after{content:"⌄";margin-left:auto;color:var(--ink3);font-size:16px;transform:translateY(-3px)}
+details.acc[open] > summary::after{transform:rotate(180deg) translateY(1px)}
+details.acc .acc-b{padding:0 15px 14px}
+.progress-ring{display:flex;align-items:center;gap:12px}
+/* ---------- habits ---------- */
+.habits{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hab{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 10px;text-align:center}
+.hab.on{background:var(--accent-soft);border-color:transparent}
+.hab b{display:block;font-size:13px;font-weight:700;margin-bottom:2px}
+.hab.on b{color:var(--accent)}
+.hab span{font-size:10.5px;color:var(--ink3);font-weight:600;display:block}
+.hab .tick{font-family:var(--f-num);font-size:16px;font-weight:700;line-height:1;margin-bottom:4px;color:var(--ink3)}
+.hab.on .tick{color:var(--accent)}
+/* ---------- track head ---------- */
+.trk{display:flex;align-items:center;gap:10px;padding:14px 15px;border-bottom:1px solid var(--line2)}
+.trk .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.trk b{font-size:14.5px;font-weight:700;display:block}
+.trk span{font-size:11.5px;color:var(--ink3);font-weight:600}
+/* ---------- roadmap ---------- */
+.rm{position:relative;padding-left:22px}
+.rm::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.rmi{position:relative;padding:0 0 18px 0}
+.rmi::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink3)}
+.rmi.now::before{background:var(--accent);border-color:var(--accent)}
+.rmi h4{margin:0;font-size:13.5px;font-weight:700}
+.rmi .when{font-size:11px;color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.rmi p{margin:4px 0 0;font-size:12.8px;color:var(--ink2);line-height:1.5}
+.warnbox{border:1px solid var(--amber);background:var(--amber-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--ink)}
+.warnbox b{color:var(--amber)}
+/* ---------- day rail / timeline ---------- */
+.rail{position:relative}
+.slot{display:flex;gap:10px;align-items:stretch;min-height:38px;border-top:1px dashed var(--line2)}
+.slot:first-child{border-top:none}
+.slot .hr{width:42px;flex-shrink:0;font-family:var(--f-num);font-size:11px;color:var(--ink3);font-weight:600;padding-top:6px}
+.slot .body{flex:1;min-width:0;padding:4px 0 4px 0;display:flex;flex-direction:column;gap:5px}
+.slot.drop-on{background:var(--accent-soft)}
+.gap-btn{width:100%;text-align:left;font-size:11.5px;color:var(--ink3);font-weight:600;padding:5px 8px;border-radius:8px;border:1px dashed var(--line);background:none}
+.gap-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- compact row list (v6.1) ---------- */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.list + .list{margin-top:10px}
+.rowit{display:flex;gap:11px;align-items:center;padding:12px 13px;border-top:1px solid var(--line2);position:relative}
+.rowit:first-child{border-top:none}
+.rowit::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--c,transparent)}
+.tick{width:27px;height:27px;border-radius:9px;border:1.6px solid var(--line);display:grid;place-items:center;flex-shrink:0;color:transparent;background:var(--surface2)}
+.tick svg{width:15px;height:15px}
+.rowit.done .tick{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .rowit.done .tick,:root:not([data-theme="light"]) .rowit.done .tick{color:#0F1216}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .rowit.done .tick{color:#fff}}
+.rowit.done{opacity:.55}
+.rowit.done .rt b{text-decoration:line-through;color:var(--ink3)}
+.tm{font-family:var(--f-num);font-size:13px;font-weight:700;color:var(--ink2);width:42px;flex-shrink:0}
+.rt{flex:1;min-width:0;cursor:pointer}
+.rt b{font-weight:600;font-size:15px;line-height:1.35;display:block}
+.rt .sub{font-size:12.5px;color:var(--ink3);margin-top:2px}
+.rowit.cls{background:var(--blue-soft)}
+.rowit.cls::before{background:var(--blue)}
+.rowit.emg{background:var(--red-soft)}
+.rowit.rest{opacity:.6}
+.rowit.mac{background:linear-gradient(90deg,rgba(138,106,31,.10),transparent 55%)}
+.mblk{margin-bottom:12px;font-size:13.5px;line-height:1.55}
+.mlab{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
+.mq{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 11px;margin-bottom:6px;font-size:13px;font-style:italic}
+.mblk.out{background:var(--accent-soft);border-radius:10px;padding:10px 12px}
+.mblk.out b{font-weight:700}
+.rowit.dl{background:var(--red-soft)}
+.rowit.dl::before{background:var(--red)}
+.rowit.dragging{opacity:.4}
+.dprog{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.dprog b{font-family:var(--f-num);font-size:14px;font-weight:700;white-space:nowrap}
+.dprog .bar{flex:1}
+/* collapsible day */
+.dayhead{display:flex;align-items:center;gap:10px;padding:13px 14px;width:100%;text-align:left}
+.dayhead b{font-size:15px;font-weight:700}
+.dayhead .dn2{font-family:var(--f-num);font-size:13px;color:var(--ink3);font-weight:600}
+.dayhead .cnt{margin-left:auto;font-size:12.5px;color:var(--ink3);font-weight:600;display:flex;align-items:center;gap:7px}
+.dots{display:flex;gap:3px}
+.dots i{width:6px;height:6px;border-radius:2px;display:block}
+.daybox{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.daybox + .daybox{margin-top:8px}
+.daybox.today{border-color:var(--accent)}
+.daybox.today .dayhead{background:var(--accent-soft)}
+.daybox.today .dayhead b{color:var(--accent)}
+.daybox.drop-on{border-color:var(--accent);background:var(--accent-soft)}
+.hchips{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.hchip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 6px;border-radius:11px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600;color:var(--ink2);line-height:1.25;text-align:center}
+.hchip.on{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.hchip .s{font-family:var(--f-num);font-size:11px;opacity:.75;font-weight:700}
+.topline{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%;text-align:left}
+.topline .big{font-family:var(--f-num);font-size:30px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.foldline{display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:13.5px;font-weight:600}
+/* ---------- item card ---------- */
+.it{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:11px;border:1px solid var(--line);background:var(--surface);position:relative;cursor:grab}
+.it.dragging{opacity:.45}
+.it::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--c,var(--ink3))}
+.it-b{flex:1;min-width:0;padding-left:5px}
+.it-t{font-weight:600;font-size:13.6px;line-height:1.35}
+.it-m{font-size:11.3px;color:var(--ink3);margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.it.done .it-t{text-decoration:line-through;color:var(--ink3)}
+.it.skip{opacity:.5}
+.it.cls{background:var(--blue-soft);border-color:transparent;cursor:default}
+.it.emg{background:var(--red-soft);border-color:transparent}
+.it.rout{background:var(--surface2)}
+.it-act{display:flex;gap:4px;flex-shrink:0}
+.mini-btn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--line);color:var(--ink3);background:var(--surface)}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mini-btn.on{background:var(--accent);border-color:transparent;color:#fff}
+.mini-btn svg{width:15px;height:15px}
+.lockbadge{font-size:10.5px}
+.prog{height:4px;border-radius:4px;background:var(--line2);margin-top:6px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent)}
+/* ---------- month grid ---------- */
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.mh{font-size:10px;text-align:center;color:var(--ink3);font-weight:700;padding:4px 0;text-transform:uppercase;letter-spacing:.05em}
+.mc{min-height:62px;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:4px 4px 3px;font-size:10px;overflow:hidden;text-align:left}
+.mc.out{opacity:.35}
+.mc.today{border-color:var(--accent);background:var(--accent-soft)}
+.mc .dn{font-family:var(--f-num);font-weight:700;font-size:11px;color:var(--ink2);display:block;margin-bottom:2px}
+.mc .dot{display:block;height:4px;border-radius:3px;margin-bottom:2px}
+.mc .mtag{display:block;font-size:9.5px;line-height:1.25;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc.drop-on{background:var(--accent-soft);border-color:var(--accent)}
+/* ---------- goal card ---------- */
+.goal{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px}
+.goal + .goal{margin-top:10px}
+.goal-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.goal-h .ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.eta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.eta div{background:var(--surface2);border-radius:10px;padding:9px 10px}
+.eta b{display:block;font-family:var(--f-num);font-size:14px;font-weight:700;letter-spacing:-.02em}
+.eta span{font-size:10.5px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.verdict{margin-top:9px;font-size:12.5px;font-weight:600;padding:8px 11px;border-radius:9px}
+.verdict.ok{background:var(--green-soft);color:var(--green)}
+.verdict.bad{background:var(--red-soft);color:var(--red)}
+.verdict.warn{background:var(--amber-soft);color:var(--amber)}
+/* ---------- fab ---------- */
+.fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:45;width:52px;height:52px;border-radius:17px;background:var(--accent);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow)}
+.fab svg{width:23px;height:23px}
+@media(min-width:821px){.fab{bottom:24px}}
+:root[data-theme="dark"] .fab,:root:not([data-theme="light"]) .fab{color:#0F1216}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .fab{color:#fff}}
+.banner{display:flex;gap:10px;align-items:center;padding:11px 13px;border-radius:12px;background:var(--amber-soft);color:var(--ink);font-size:12.8px;font-weight:600;margin-bottom:12px;border:1px solid var(--amber)}
+.seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{flex:1;padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink3)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <b>Sơn Study OS</b>
+      <span id="ctxLine">—</span>
+    </div>
+    <div class="top-actions">
+      <div class="sync local" id="syncPill" title="Trạng thái lưu"><i></i><span id="syncTxt">local</span></div>
+      <button class="icon-btn" onclick="openSettings()" aria-label="Cài đặt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="nav"></nav>
+
+<main>
+  <section class="view on" id="v-today"></section>
+  <section class="view" id="v-cal"></section>
+  <section class="view" id="v-dead"></section>
+  <section class="view" id="v-track"></section>
+  <section class="view" id="v-year"></section>
+</main>
+
+<button class="fab" id="fab" onclick="quickAdd()" aria-label="Thêm">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="back" id="back" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+<script>
+/* ==================================================================
+   SƠN STUDY OS v6 — engine
+   ================================================================== */
+const WEEK1_MON="2026-08-31", N_SESS=12, LS_KEY="son-study-os-v6";
+const TR={
+ IF   :{code:"ECON3014", name:"International Finance", short:"IF",     color:"#2C5A86", ico:"🌐"},
+ BF   :{code:"FINC3022", name:"Banking & Finance",    short:"Banking", color:"#9A5B2A", ico:"🏦"},
+ DA   :{code:"MindX",    name:"Data Analytics kỳ 2",  short:"DA",      color:"#6B4E9B", ico:"📊"},
+ IELTS:{code:"IELTS",    name:"IELTS 7.0",            short:"IELTS",   color:"#1D7A6B", ico:"📝"},
+ ZH   :{code:"中文",      name:"Tiếng Trung",          short:"Trung",   color:"#B03A48", ico:"汉"},
+ MACRO:{code:"Macro",    name:"Macro & Equity Thinking",short:"Macro", color:"#8A6A1F", ico:"🧭"},
+ BASE :{code:"Nền",      name:"Nền & sức khoẻ",       short:"Nền",     color:"#5C7A52", ico:"🌱"},
+ LIFE :{code:"Khác",     name:"Khác",                 short:"Khác",    color:"#7E888F", ico:"•"}
+};
+const TKEYS=Object.keys(TR);
+
+/* ---------- date helpers ---------- */
+function D(s){const[y,m,d]=String(s).split("-").map(Number);return new Date(y,m-1,d)}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function addD(s,n){const d=D(s);d.setDate(d.getDate()+n);return iso(d)}
+function todayISO(){return iso(new Date())}
+function dow(s){const d=D(s).getDay();return d===0?7:d}
+function mondayOf(s){return addD(s,-(dow(s)-1))}
+function dbet(a,b){return Math.round((D(b)-D(a))/86400000)}
+function fmtD(s){const d=D(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")}
+function fmtFull(s){const d=D(s);return ["CN","T2","T3","T4","T5","T6","T7"][d.getDay()]+", "+fmtD(s)+"/"+d.getFullYear()}
+function sessOfWeek(m){const n=Math.round(dbet(WEEK1_MON,m)/7)+1;return(n>=1&&n<=N_SESS)?n:null}
+function sessDates(n){const m=addD(WEEK1_MON,(n-1)*7);return{mon:m,fri:addD(m,4),sat:addD(m,5),sun:addD(m,6)}}
+function mm(t){const[a,b]=String(t).split(":").map(Number);return a*60+(b||0)}
+function hhmm(m){m=Math.max(0,Math.round(m));return String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+function hrs(n){return (Math.round(n*10)/10).toString().replace(".0","")}
+function h(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function uid(){return Math.random().toString(36).slice(2,9)}
+
+const MACRO_WEEKS=[{"n":1,"d":"2026-09-14","m":"M1","p":"A","f":"Ba câu hỏi thay thế · Price = Earnings × Multiple","o":"Macro Journal chạy + 5 chuỗi nhân quả","g":"","s":[{"t":"Dựng Macro Journal + lịch dữ liệu tuần","l":"Tạo bảng 7 cột: ngày · headline · cửa (a/b/c) · chuỗi nhân quả · hàm ý tài sản · đoán price-in · kiểm chứng sau. Mở lịch kinh tế, đánh dấu 3 số quan trọng nhất tuần.","q":"Tuần này có số liệu vĩ mô Mỹ và VN nào, xếp theo mức thị trường quan tâm?|Consensus cho từng số đang là bao nhiêu?","o":"File Macro Journal tồn tại + 3 số đã đánh dấu"},{"t":"Ba câu hỏi thay thế","l":"Bỏ câu 'tin này tốt hay xấu'. Thay bằng: (1) cơ chế là gì — viết từng mắt xích; (2) ai được ai mất; (3) thị trường đã trả trước bao nhiêu.","q":"Cho tôi 5 headline vĩ mô hôm nay, hỏi ngược tôi 3 câu này từng cái và chấm câu trả lời|Câu nào của tôi là narrative chứ không phải cơ chế?","o":"5 headline trả lời đủ 3 câu"},{"t":"Ba cửa — Price ≈ Earnings × Multiple","l":"Multiple ≈ f(discount rate, risk premium, liquidity, growth). Mọi biến vĩ mô phải chạm (a) earnings, (b) discount rate, hoặc (c) risk premium/liquidity. Không chỉ được cửa nào là chưa hiểu tin đó.","q":"Tôi xếp headline này vào cửa (b), phản biện giúp tôi|Tin nào chạm nhiều hơn một cửa, cửa nào mạnh hơn?","o":"1 dòng journal + 5 headline đã phân cửa"},{"t":"Viết chuỗi nhân quả","l":"Chuỗi ≥4 mắt xích, mỗi mắt xích là một cơ chế có thể sai, bắt buộc có cả nhánh thắng lẫn nhánh thua. Học ví dụ chuỗi dầu 9 mắt xích trong tài liệu.","q":"Đây là chuỗi tôi viết — mắt xích nào đang nhảy cóc?|Mắt xích nào dễ đứt nhất, đứt thì hệ quả đảo chiều ra sao?","o":"2 chuỗi ≥4 mắt xích có nhánh ngược"},{"t":"Journal + ép viết nhánh ngược","l":"Cùng một cú sốc luôn có bên thắng và bên thua. Đọc một chiều ('dầu tăng là xấu') chính là lỗi bị chặn bởi câu hỏi số 2.","q":"Với cú sốc này, ai là bên thắng mà ít người nghĩ tới?|Bên thua chịu qua kênh doanh thu, chi phí hay tài chính?","o":"1 dòng journal đủ 2 nhánh"},{"t":"Bốn lớp bằng chứng","l":"Số liệu cứng · khảo sát · giá thị trường · narrative. Giá thị trường là lớp duy nhất đã chứa kỳ vọng — dùng nó để đo price-in, không dùng để xác nhận cơ chế.","q":"Bằng chứng tôi đang dựa vào thuộc lớp nào?|Lớp giá thị trường đang nói thị trường tin điều gì?","o":"Bảng 4 lớp cho 5 tin trong tuần"},{"t":"Chốt tuần 1","l":"Đọc lại 7 dòng journal. Đếm số tin không phân loại được cửa — đó là danh sách lỗ hổng kiến thức, mang sang các module sau.","q":"Từ 7 dòng journal này, tôi yếu nhất ở khâu nào?|Lỗ hổng nào nên vá trước vì nó chặn module sau?","o":"5 chuỗi hoàn chỉnh + danh sách lỗ hổng"}]},{"n":2,"d":"2026-09-21","m":"M1→M2","p":"A","f":"Surprise > level · leading vs lagging","o":"Qua cổng M1 + bảng phân loại chỉ số","g":"M1: cho 5 headline lạ, viết chuỗi ≥4 mắt xích mỗi cái, không tra cứu, trong 15 phút","s":[{"t":"Reset tuần + bài tập phản xạ","l":"Trước mỗi số công bố, viết ra con số bạn nghĩ thị trường đang chờ. Sau công bố ghi: thực tế, lệch bao nhiêu, thị trường phản ứng thế nào. Làm 30 lần sẽ có cảm giác số nào thực sự làm giá.","q":"Consensus cho các số tuần này là bao nhiêu?|Số nào nếu lệch sẽ làm thị trường phản ứng mạnh nhất?","o":"3 dự đoán consensus ghi trước"},{"t":"Surprise > Level","l":"Thị trường không trả tiền cho mức tuyệt đối mà cho phần lệch khỏi kỳ vọng. CPI 3% là tin tốt hay xấu tuỳ consensus đang chờ bao nhiêu.","q":"Ví dụ thật tuần qua: số tốt nhưng giá giảm — vì sao?|Đo 'kỳ vọng' bằng gì khi không có consensus chính thức?","o":"3 ví dụ số tốt/giá giảm và ngược lại"},{"t":"Journal + đo price-in","l":"Mỗi dòng journal phải có cột 'đoán price-in': thị trường đã trả trước bao nhiêu phần của tin này, dựa trên bằng chứng giá.","q":"Bằng chứng nào cho thấy tin này đã được price-in?|Nếu price-in hết rồi thì còn gì để giao dịch?","o":"1 dòng journal có cột price-in"},{"t":"🚧 Cổng M1 — bấm giờ 15 phút","l":"5 headline lạ, viết chuỗi ≥4 mắt xích cho mỗi cái, không tra cứu. Không qua thì lặp M1 thêm vài buổi, đừng đi tiếp.","q":"Cho tôi 5 headline vĩ mô ngẫu nhiên 12 tháng qua để làm bài 15 phút|Chấm 5 chuỗi này, chỉ chỗ nhảy cóc","o":"Qua/không qua cổng M1 (ghi vào journal)"},{"t":"Leading · coincident · lagging","l":"Trước khi đọc bất kỳ số nào, xếp nó vào 3 nhóm. Đọc lagging như leading là lỗi tốn tiền nhất.","q":"Xếp 10 chỉ số vĩ mô hay gặp vào 3 nhóm|Chỉ số nào bị dùng sai nhóm nhiều nhất?","o":"Bảng phân loại 10 chỉ số"},{"t":"PMI — đọc cho đúng","l":"PMI là khảo sát dạng diffusion: 50 là ngưỡng, nhưng thông tin nằm ở cấu phần. New orders là leading, inventories là mẫu số ẩn.","q":"Vì sao new orders − inventories dẫn được chu kỳ sản xuất?|PMI trên 50 nhưng giảm so tháng trước thì đọc thế nào?","o":"Ghi cấu phần PMI cần theo dõi"},{"t":"Chốt tuần 2","l":"Dựng nhanh chart PMI new orders − inventories (Mỹ + VN, 3 năm), đặt cạnh IIP của VN trễ 2 tháng.","q":"Nguồn lấy PMI new orders và inventories cho VN?|Cách kiểm tra quan hệ dẫn dắt mà không bị nhiễu?","o":"Chart 3 năm + nhận xét độ dẫn"}]},{"n":3,"d":"2026-09-28","m":"M2","p":"A","f":"Inflation: bóc rổ · 3m SAAR · CPI Việt Nam","o":"Tự tính 3m SAAR core CPI","g":"M2: nhìn bản tin CPI Mỹ, trong 5 phút nói được nóng ở nhóm nào, lệch consensus bao nhiêu, Fed path bị đẩy hướng nào","s":[{"t":"Reset tuần + 4 thước đo lạm phát","l":"CPI vs core CPI vs PCE vs core PCE: khác rổ, khác trọng số, khác cách xử lý nhà ở và y tế. Fed nhìn core PCE, thị trường phản ứng theo CPI.","q":"Bảng so sánh 4 thước đo: rổ, trọng số, độ trễ, ai dùng|Vì sao CPI và PCE lệch nhau kéo dài?","o":"Bảng so sánh 4 thước đo"},{"t":"Bóc rổ — đừng đọc headline","l":"Tách shelter, năng lượng, thực phẩm, core services ex-housing. Phần dính (sticky) mới quyết định Fed path.","q":"Trong bản tin CPI gần nhất, nhóm nào đóng góp nhiều nhất vào phần lệch?|Nhóm nào là sticky và vì sao?","o":"Bảng đóng góp theo nhóm"},{"t":"3m SAAR — tách momentum khỏi base effect","l":"y/y chứa base effect, m/m quá nhiễu. 3m SAAR (annualised 3 tháng) là cách nhìn động lượng thật.","q":"Hướng dẫn tôi tính 3m SAAR từ chuỗi chỉ số, từng bước|3m SAAR và y/y lệch nhau thì đọc cái nào trước?","o":"Tự tính 3m SAAR core CPI 24 tháng"},{"t":"Lạm phát Việt Nam khác gì","l":"Rổ CPI VN nặng lương thực-thực phẩm và có nhóm giá điều hành (điện, y tế, giáo dục). Phần do điều hành không phải tín hiệu cầu.","q":"Bóc CPI VN gần nhất: bao nhiêu phần là giá điều hành, bao nhiêu là cầu?|Vì sao lạm phát VN ít dẫn dắt chính sách hơn tỷ giá?","o":"Bảng bóc CPI VN theo nhóm"},{"t":"Journal + ma trận Growth × Inflation","l":"Bốn ô: tăng trưởng lên/xuống × lạm phát lên/xuống. Mỗi ô thưởng cho một loại tài sản và một loại doanh nghiệp khác nhau.","q":"Mỗi ô trong ma trận: tài sản nào thắng, ngành VN nào thắng?|Hiện đang ở ô nào, bằng chứng gì?","o":"Ma trận 4 ô + xác định ô hiện tại"},{"t":"Payrolls & GDP","l":"Payrolls là coincident nhưng thị trường coi như leading vì nó lái Fed path. GDP là lagging, gần như không giao dịch được.","q":"Trong bản tin việc làm, cấu phần nào thị trường thực sự nhìn?|Vì sao GDP ít làm giá dù là số lớn nhất?","o":"Ghi 3 cấu phần payrolls đáng nhìn"},{"t":"🚧 Cổng M2 — bấm giờ 5 phút","l":"Một bản tin CPI bất kỳ: nóng ở nhóm nào, lệch consensus bao nhiêu, Fed path bị đẩy hướng nào.","q":"Đưa tôi một bản tin CPI lịch sử không nói ngày, tôi trả lời trong 5 phút rồi chấm giúp","o":"Qua/không qua cổng M2"}]},{"n":4,"d":"2026-10-05","m":"M3","p":"A","f":"Fed reaction function · dot plot vs market pricing","o":"Reaction function Fed bằng 5 câu","g":"","s":[{"t":"Reset tuần","l":"Cập nhật lịch tuần, đánh dấu cuộc họp NHTW và số liệu lái chính sách.","q":"Tuần này có cuộc họp NHTW nào, thị trường đang định giá gì?","o":"Lịch tuần + 1 dòng journal"},{"t":"Reaction function là gì","l":"NHTW không phản ứng với số liệu, họ phản ứng với khoảng cách giữa số liệu và mục tiêu, có trọng số. Biết trọng số là đoán được hành động.","q":"Viết reaction function của Fed dạng hàm: biến nào, trọng số nào?|Taylor rule khác gì reaction function thực tế của Fed hiện nay?","o":"Công thức reaction function Fed"},{"t":"Dot plot vs market pricing","l":"Dot plot là ý định của Fed, FedWatch/OIS là kỳ vọng thị trường. Khoảng lệch giữa hai cái là nơi rủi ro nằm.","q":"Dot plot và thị trường đang lệch bao nhiêu bps cho 12 tháng tới?|Lịch sử cho thấy bên nào thường đúng hơn?","o":"Ghi khoảng lệch dot plot vs market"},{"t":"Cùng một hành động, hai ý nghĩa","l":"Cắt lãi suất vì lạm phát hạ (tốt) khác hẳn cắt vì tăng trưởng sụp (xấu). Bối cảnh quyết định dấu.","q":"Cho 2 ví dụ lịch sử cùng là cắt lãi suất nhưng thị trường phản ứng ngược|Phân biệt hai trường hợp bằng chỉ báo nào?","o":"Ghi 2 ví dụ đối lập"},{"t":"Financial conditions","l":"Thứ Fed thực sự điều khiển không phải lãi suất chính sách mà là điều kiện tài chính tổng thể: lợi suất, spread, USD, giá cổ phiếu.","q":"Chỉ số financial conditions gồm gì và đọc thế nào?|Vì sao thị trường tăng mạnh lại làm Fed khó cắt lãi suất hơn?","o":"Ghi cấu phần financial conditions"},{"t":"Journal + theo dõi FedWatch","l":"Ghi xác suất FedWatch mỗi lần có số liệu mới. Đây là cách trực quan nhất để thấy 'surprise' hoạt động.","q":"FedWatch đổi thế nào sau số liệu gần nhất và vì sao?","o":"1 dòng journal + số FedWatch"},{"t":"Viết reaction function Fed — 5 câu","l":"Đúng 5 câu: Fed lo gì nhất, ngưỡng nào khiến họ đổi hướng, dot plot ở đâu, thị trường định giá gì, khoảng lệch bao nhiêu.","q":"Chấm 5 câu reaction function của tôi, chỉ câu nào là narrative","o":"Reaction function Fed 5 câu"}]},{"n":5,"d":"2026-10-12","m":"M3","p":"A","f":"SBV reaction function · bộ ba bất khả thi","o":"Reaction function SBV bằng 5 câu","g":"M3: cho 3 kịch bản dữ liệu giả định, dự đoán phản ứng của Fed và SBV có lập luận","s":[{"t":"Reset tuần (tuần mid-sem IF — giữ nhẹ)","l":"Tuần này trường nặng: giữ journal và đọc, không nhận bài tập dữ liệu mới.","q":"Tuần này SBV có động thái nào trên thị trường mở không?","o":"Lịch tuần + 1 dòng journal"},{"t":"Bộ ba bất khả thi","l":"Không thể đồng thời có tỷ giá ổn định + dòng vốn tự do + chính sách tiền tệ độc lập. SBV chọn 2, và lựa chọn đó giải thích gần như mọi hành động.","q":"SBV đang ưu tiên hai cạnh nào, bằng chứng gì?|Khi tỷ giá căng, cạnh nào bị hy sinh trước?","o":"Ghi lựa chọn bộ ba hiện tại"},{"t":"Công cụ của SBV","l":"Tín phiếu, OMO, bán/mua ngoại tệ, trần lãi suất, room tín dụng. Mỗi công cụ phát một thông điệp khác nhau.","q":"Liệt kê công cụ SBV kèm thông điệp mỗi công cụ phát ra|Phát hành tín phiếu khác gì bán ngoại tệ về mặt tín hiệu?","o":"Bảng công cụ → thông điệp"},{"t":"Journal — đọc lãi suất liên ngân hàng","l":"Một dòng gắn với tỷ giá hoặc lãi suất O/N. Đây là chỉ báo thanh khoản hệ thống nhạy nhất của VN.","q":"Lãi suất O/N tuần này nói gì về thanh khoản hệ thống?","o":"1 dòng journal"},{"t":"Bảng quyết định SBV 12 tháng","l":"Bảng: ngày · công cụ · bối cảnh tỷ giá/lạm phát/tín dụng lúc đó · phản ứng lãi suất liên ngân hàng sau 1–2 tuần.","q":"Giúp tôi tìm mốc các quyết định SBV 12 tháng qua|Từ bảng này, ngưỡng nào khiến SBV hành động?","o":"Bảng quyết định SBV 12 tháng"},{"t":"Viết reaction function SBV — 5 câu","l":"Đúng 5 câu như đã làm với Fed, nhưng biến số chính là tỷ giá chứ không phải lạm phát.","q":"Chấm 5 câu reaction function SBV của tôi","o":"Reaction function SBV 5 câu"},{"t":"🚧 Cổng M3","l":"Tự cho 3 kịch bản dữ liệu giả định, dự đoán phản ứng của cả Fed và SBV, có lập luận reaction function.","q":"Cho tôi 3 kịch bản dữ liệu giả định để dự đoán phản ứng Fed và SBV, rồi chấm lập luận","o":"Qua/không qua cổng M3"}]},{"n":6,"d":"2026-10-19","m":"M4","p":"B","f":"Decompose US10Y: breakeven · real yield · 2Y","o":"Dashboard FRED 6 chuỗi","g":"","s":[{"t":"Reset tuần + vì sao M4 quan trọng nhất","l":"US10Y là mẫu số của mọi định giá. Không decompose được nó thì mọi kết luận về multiple đều là đoán.","q":"Vì sao lợi suất tăng đôi khi tốt cho cổ phiếu, đôi khi giết cổ phiếu?","o":"1 đoạn ghi vì sao 10Y là mẫu số"},{"t":"Decompose US10Y","l":"10Y danh nghĩa = real yield + breakeven inflation. Real yield tách tiếp thành kỳ vọng lãi suất thực ngắn hạn + term premium.","q":"Giải thích 5 nguồn làm 10Y thay đổi và cách phân biệt bằng dữ liệu|Chuỗi FRED nào đọc được từng thành phần?","o":"Sơ đồ decompose 10Y"},{"t":"Phân biệt bằng dữ liệu","l":"Breakeven tăng + real yield đứng = chuyện lạm phát. Real yield tăng + breakeven đứng = chuyện tăng trưởng hoặc term premium. 2Y dẫn = chuyện chính sách.","q":"Cho 3 tình huống lợi suất tăng, tôi phân loại rồi bạn kiểm tra lại|Trường hợp nào nén multiple mạnh nhất?","o":"Bảng 3 tình huống → nguồn gốc"},{"t":"Journal — đọc lợi suất mỗi ngày","l":"Mỗi dòng ghi: 10Y đổi bao nhiêu bps, do breakeven hay real yield, hàm ý cho multiple.","q":"Hôm nay 10Y đổi do thành phần nào, bằng chứng ở chuỗi nào?","o":"1 dòng journal có phân rã 10Y"},{"t":"Dựng dashboard FRED 6 chuỗi","l":"DGS2, DGS10, T10YIE, DFII10, T10Y2Y, BAMLH0A0HYM2 — một chart hai trục. Cập nhật hằng tuần đến hết khoá.","q":"Cách lấy 6 chuỗi FRED này tự động và vẽ 2 trục|Chuẩn hoá thế nào để nhìn chung một chart?","o":"Dashboard FRED 6 chuỗi chạy được"},{"t":"Journal + đọc dashboard","l":"Dùng chính dashboard vừa dựng để viết dòng journal hôm nay.","q":"Từ 6 chuỗi này, thị trường trái phiếu đang định giá kịch bản gì?","o":"1 dòng journal đọc từ dashboard"},{"t":"Chốt tuần 6","l":"Ghi trạng thái hiện tại của 6 chuỗi và câu chuyện chúng đang kể.","q":"Phản biện cách đọc 6 chuỗi của tôi","o":"Note trạng thái 6 chuỗi"}]},{"n":7,"d":"2026-10-26","m":"M4","p":"B","f":"Yield curve 4 chế độ · credit spread · TT1 vs TT2","o":"Note 1 trang: US10Y 12 tháng qua","g":"M4: cho một tuần US10Y tăng 20bps, chỉ ra nguồn gốc bằng bằng chứng breakeven / real yield / 2Y","s":[{"t":"Reset tuần","l":"Cập nhật dashboard FRED, ghi thay đổi tuần.","q":"Tuần này số nào có thể làm đổi đường cong lợi suất?","o":"Dashboard cập nhật + 1 dòng journal"},{"t":"Yield curve — 4 chế độ","l":"Bull steepening, bear steepening, bull flattening, bear flattening. Mỗi chế độ là một câu chuyện khác về chính sách và tăng trưởng.","q":"Giải thích 4 chế độ kèm ví dụ lịch sử và hàm ý cổ phiếu|Đường cong hiện tại đang ở chế độ nào?","o":"Bảng 4 chế độ + chế độ hiện tại"},{"t":"Credit spread — giá của rủi ro","l":"HY OAS nhạy hơn VIX. Spread nới trước khi cổ phiếu giảm là tín hiệu đáng tin nhất về khẩu vị rủi ro.","q":"Vì sao credit spread dẫn cổ phiếu?|Nới bao nhiêu bps thì đáng báo động?","o":"Ghi ngưỡng HY OAS theo dõi"},{"t":"Journal + spread","l":"Một dòng, ưu tiên tin liên quan lợi suất hoặc spread.","q":"Spread tuần này nói gì về khẩu vị rủi ro?","o":"1 dòng journal"},{"t":"TT1 vs TT2 — lỗi phổ biến nhất","l":"TT1 (dân cư–doanh nghiệp) và TT2 (liên ngân hàng) là hai thị trường khác nhau. TT2 căng không tự động kéo TT1 lên.","q":"Chart lãi suất O/N vs huy động 12 tháng 3 năm — TT2 căng thì TT1 phản ứng sau bao lâu?|Khi nào TT2 mới truyền sang TT1?","o":"Chart TT1 vs TT2 + độ trễ"},{"t":"Viết note 1 trang","l":"'US10Y đã đi đâu trong 12 tháng qua và vì sao' — bắt buộc decompose theo 5 nguồn, có bằng chứng breakeven và real yield cho từng đoạn.","q":"Chấm note này: chỗ nào tôi kết luận mà không có bằng chứng phân rã?","o":"Note 1 trang hoàn chỉnh"},{"t":"🚧 Cổng M4","l":"Cho một tuần 10Y tăng 20bps bất kỳ, chỉ ra nguồn gốc bằng bằng chứng.","q":"Cho tôi một tuần lịch sử 10Y tăng mạnh, tôi phân rã rồi bạn chấm","o":"Qua/không qua cổng M4"}]},{"n":8,"d":"2026-11-02","m":"M5","p":"B","f":"USD/VND · carry trade · cơ chế tín phiếu SBV","o":"Chuỗi 8 mắt xích tín phiếu","g":"M5: giải thích trọn một đợt SBV phát hành tín phiếu, từ chênh lệch lãi suất VND–USD đến giá cổ phiếu nhóm chứng khoán","s":[{"t":"Reset tuần (tuần Report 40% — chỉ đọc)","l":"Hạn Report FINC3022 ngày 08/11. Tuần này khoá macro giảm tải theo thiết kế: đọc và journal, không bài tập nặng.","q":"Tuần này có tin gì đủ lớn để đổi Fed path hoặc tỷ giá không?","o":"1 dòng journal"},{"t":"USD là hệ thống funding, không phải một đồng tiền","l":"Phần lớn nợ ngoài nước Mỹ vay bằng USD. USD mạnh = điều kiện tài chính toàn cầu thắt lại, kể cả khi Fed không làm gì.","q":"Cơ chế USD mạnh siết thanh khoản toàn cầu là gì?|Vì sao EM chịu nặng hơn DM?","o":"Ghi cơ chế USD → thanh khoản EM"},{"t":"DXY và cái bẫy của nó","l":"DXY nặng EUR (~58%) và JPY. DXY giảm không có nghĩa USD yếu với VND — phải nhìn tỷ giá song phương và rổ thương mại.","q":"Trọng số DXY và vì sao nó gây hiểu nhầm với thị trường VN|Nên dùng chỉ số USD nào thay thế?","o":"Ghi trọng số DXY + chỉ số thay thế"},{"t":"Carry trade và USD/JPY","l":"Vay đồng lãi suất thấp đầu tư đồng lãi suất cao. Khi biến động tăng, carry unwind cưỡng bức gây bán tháo đồng loạt không phân biệt cơ bản.","q":"Cơ chế carry unwind lan sang cổ phiếu EM thế nào?|Dấu hiệu sớm của một đợt unwind?","o":"Ghi cơ chế + dấu hiệu sớm"},{"t":"USD/VND — chuỗi phải thuộc lòng","l":"Chênh lệch lãi suất VND–USD âm → áp lực USD/VND → SBV phát hành tín phiếu hút VND → lãi suất liên ngân hàng lên → chi phí vốn margin của CTCK lên → nhóm chứng khoán chịu áp lực.","q":"Chạy lại chuỗi này với số liệu hiện tại: mắt xích nào đang chạy, mắt xích nào đứt?|Độ trễ giữa tín phiếu và phản ứng giá nhóm CTCK?","o":"Chuỗi 8 mắt xích với số liệu thật"},{"t":"FX ở tầng doanh nghiệp","l":"Nơi macro biến thành earnings: % doanh thu ngoại tệ, % chi phí ngoại tệ, dư nợ ngoại tệ, có hedge không. Lấy số từ thuyết minh BCTC, không đoán.","q":"Tìm mục nào trong thuyết minh BCTC cho biết exposure ngoại tệ?|Net effect khi VND mất giá 3% tính thế nào?","o":"Bảng FX exposure 5 mã watchlist"},{"t":"🚧 Cổng M5","l":"Giải thích trọn một đợt tín phiếu từ chênh lệch lãi suất đến giá cổ phiếu CTCK, không nhảy cóc.","q":"Nghe tôi giải thích và bắt lỗi nhảy cóc từng mắt xích","o":"Qua/không qua cổng M5"}]},{"n":9,"d":"2026-11-09","m":"M6+M7","p":"B","f":"Commodity spread · credit impulse · thanh khoản TTCK VN","o":"Chart spread ngành + ADTV vs margin","g":"M6–M7: chỉ ra biên lợi nhuận gộp của một doanh nghiệp thép/phân bón bám theo spread nào, trễ bao nhiêu quý","s":[{"t":"Reset tuần","l":"Report đã nộp. Quay lại nhịp đủ, cập nhật dashboard.","q":"Bức tranh vĩ mô tuần này đổi gì so với tuần trước?","o":"Dashboard cập nhật + 1 dòng journal"},{"t":"Cung hay cầu — câu hỏi đầu tiên","l":"Sốc cung đẩy lạm phát và giết tăng trưởng; sốc cầu thì giá và tăng trưởng cùng chiều. Phải phân loại trước khi đi tiếp chuỗi.","q":"Cách phân biệt sốc cung và sốc cầu bằng dữ liệu công khai|Hai loại sốc tác động khác nhau thế nào lên ngành VN?","o":"Tiêu chí phân biệt cung/cầu"},{"t":"Tư duy spread","l":"Doanh nghiệp hàng hoá sống bằng chênh lệch giá bán − giá đầu vào, không phải giá bán. Thép: HRC − quặng/than. Phân bón: urê − khí.","q":"Với thép và phân bón VN, spread chính xác là gì, lấy dữ liệu ở đâu?|Spread dẫn biên lợi nhuận gộp bao nhiêu quý?","o":"Định nghĩa spread cho 2 ngành"},{"t":"Dựng chart spread vs biên lợi nhuận","l":"Chọn một ngành, chart spread 5 năm đặt cạnh biên lợi nhuận gộp theo quý của 2 doanh nghiệp đầu ngành. Xác định độ trễ.","q":"Độ trễ tôi đo được có ổn định qua các chu kỳ không?|Đây có dùng được làm leading indicator thật không?","o":"Chart spread + độ trễ đo được"},{"t":"Credit impulse","l":"Đạo hàm bậc hai của tín dụng — thay đổi của tốc độ tăng trưởng tín dụng. Nó dẫn hoạt động kinh tế thực tốt hơn mức tăng trưởng tín dụng.","q":"Hướng dẫn tính credit impulse VN từ số liệu tăng trưởng tín dụng SBV|Credit impulse dẫn doanh thu bất động sản và xây dựng bao lâu?","o":"Chart credit impulse 5 năm"},{"t":"Thanh khoản TTCK Việt Nam","l":"ADTV, dư nợ margin, VN-Index. Khi margin tăng nhanh hơn ADTV là dấu hiệu đòn bẩy chạy trước dòng tiền thật.","q":"ADTV, margin và VN-Index: cái nào dẫn cái nào?|Điều gì xảy ra khi margin tăng nhanh hơn ADTV?","o":"Chart ADTV vs margin vs VN-Index"},{"t":"Chốt tuần 9","l":"Ghép spread ngành + credit impulse + thanh khoản → môi trường hiện tại đang thưởng cho loại doanh nghiệp nào.","q":"Phản biện kết luận của tôi bằng bằng chứng ngược","o":"Note 5 câu về môi trường hiện tại"}]},{"n":10,"d":"2026-11-16","m":"M8","p":"C","f":"Chuỗi truyền dẫn 8 bước · độ trễ · mắt xích đứt","o":"Bảng 8 mắt xích có số liệu thật","g":"M8: truy ngược một đợt biến động lớn của VN-Index qua đủ 8 mắt xích, chỉ ra mắt xích nào đứt","s":[{"t":"Reset tuần (tuần học cuối, thi từ 23/11 — giữ 30 phút)","l":"Tuần cuối trước thi. Macro giữ đúng 30 phút/ngày, không lấn vào giờ ôn thi.","q":"Chọn giúp tôi một đợt VN-Index biến động ≥10% trong 2 tháng, 3 năm qua để phân tích","o":"Chọn được đợt biến động + lý do"},{"t":"Chuỗi 8 bước — bản đầy đủ","l":"Cú sốc gốc → lạm phát → kỳ vọng lạm phát → Fed path → US yield → USD → thanh khoản toàn cầu → áp lực USD/VND → thị trường VN.","q":"Chạy chuỗi 8 bước cho đợt tôi chọn, từng mắt xích, đừng nhảy|Số liệu thực tế từng mắt xích tại thời điểm đó?","o":"Bảng 8 dòng có số liệu thật"},{"t":"Độ trễ giữa các mắt xích","l":"Mỗi mắt xích có độ trễ riêng — đó là thứ quyết định bạn thấy tín hiệu sớm hay muộn hơn thị trường.","q":"Mắt xích nào trễ nhất, mắt xích nào quan sát được sớm nhất bằng dữ liệu công khai?","o":"Ghi độ trễ từng mắt xích"},{"t":"Mắt xích nào đứt","l":"Mỗi mắt xích đều có thể đứt: chính sách trong nước bù đắp, dòng vốn nội địa hấp thụ, kỳ vọng đã price-in. Chỉ ra chỗ đứt mới là phân tích thật.","q":"Trong bảng của tôi, mắt xích nào đứt và vì sao?|Nếu theo dõi dashboard, tôi thấy tín hiệu đầu tiên ở đâu, sớm mấy ngày?","o":"Đánh dấu mắt xích đứt + tín hiệu sớm"},{"t":"Journal + thesis breaker","l":"Tập viết phần 'điều gì có thể khiến phân tích này sai' — tối thiểu 3 khả năng. Đây là kỷ luật falsification.","q":"Phần thesis breaker của tôi đã đủ nghiêm khắc chưa?","o":"3 khả năng làm phân tích sai"},{"t":"Từ macro xuống ngành — 3 kênh","l":"Mọi cú sốc chạm doanh nghiệp qua đúng 3 kênh: doanh thu · chi phí · tài chính. Macro không chọn cổ phiếu, nó chọn môi trường.","q":"Chạy cú sốc trong bài của tôi qua 3 kênh cho 5 ngành|Kênh nào có độ trễ dài nhất?","o":"Bảng 5 ngành × 3 kênh"},{"t":"🚧 Cổng M8","l":"Trình bày lại chuỗi 8 mắt xích không nhìn giấy. Ghi vào journal qua hay chưa.","q":"Nghe tôi trình bày chuỗi 8 mắt xích và bắt mọi chỗ nhảy cóc","o":"Qua/không qua cổng M8"}]},{"n":11,"d":"2026-11-23","m":"—","p":"C","f":"TUẦN THI — chỉ duy trì Journal","o":"Journal không đứt ngày","g":"","s":[{"t":"Duy trì · 15 phút","l":"Tuần thi. Chỉ đọc 1 bản tin sáng + ghi 1 dòng journal. Không nạp lý thuyết mới.","q":"Tóm tắt 3 tin vĩ mô đáng chú ý hôm nay trong 5 gạch đầu dòng","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp, không đứt ngày.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Tuần sau thi xong là tuần chốt khoá.","q":"Tuần qua có tin nào tôi nên quay lại đọc kỹ sau khi thi xong?","o":"1 dòng journal + danh sách đọc bù"}]},{"n":12,"d":"2026-11-30","m":"M8+","p":"C","f":"Chốt khoá: Macro Note 3 trang + chế độ duy trì","o":"MACRO NOTE 3 trang (capstone)","g":"","s":[{"t":"Duy trì · thi chưa xong","l":"Vẫn trong đợt thi. Giữ journal, chuẩn bị đề cương note.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì + đề cương note","l":"Dựng khung note: bối cảnh → chuỗi 8 mắt xích có số liệu → mắt xích đứt → tín hiệu sớm → thesis breaker.","q":"Review đề cương note của tôi, thiếu phần nào?","o":"Đề cương note"},{"t":"Đọc bù 2 tuần thi","l":"Đọc lại danh sách đọc bù, chọn 3 tin quan trọng nhất, viết chuỗi cho từng cái.","q":"Dựng lại bối cảnh vĩ mô 2 tuần thi vừa qua theo trình tự nhân quả","o":"3 chuỗi nhân quả bù"},{"t":"Viết Macro Note — phần 1","l":"Bối cảnh + bảng 8 mắt xích có số liệu thật.","q":"Chấm phần 1: chỗ nào là narrative, chỗ nào thiếu bằng chứng?","o":"Note phần 1"},{"t":"Viết Macro Note — phần 2","l":"Mắt xích đứt + tín hiệu sớm + hàm ý ngành qua 3 kênh.","q":"Chấm phần 2: kết luận ngành của tôi có bằng chứng không?","o":"Note phần 2"},{"t":"Viết Macro Note — phần 3 + nộp","l":"Thesis breaker tối thiểu 3 khả năng. Đây là portfolio piece dùng được cho hồ sơ Investment Analyst và LPBS.","q":"Chấm toàn bộ note như một nhà tuyển dụng Investment Analyst sẽ chấm","o":"MACRO NOTE 3 trang hoàn thành"},{"t":"Post-mortem + chế độ duy trì","l":"Đọc lại ~84 dòng journal. Bốn loại sai: sai cơ chế · sai độ trễ · sai định lượng · sai vì đã price-in. Sau đó chuyển sang duy trì ~3h/tuần: cập nhật dashboard, 1 dòng journal/ngày, 1 note mỗi quý.","q":"Từ journal 12 tuần, loại sai nào của tôi lặp nhiều nhất?|Viết lịch duy trì 3h/tuần cụ thể theo ngày cho tôi","o":"Post-mortem 1 trang + lịch duy trì"}]}];
+
+/* ================================ SEED ================================ */
+function seed(){return {
+v:6, rev:1, dlog:{},
+settings:{dayStart:"06:00", dayEnd:"23:00", aim:7, hideDone:false},
+macro:{start:"2026-09-14", time:"17:00", dur:30, on:true},
+
+assess:[
+ {id:"if-pres",sub:"IF",title:"Tutorial Presentation",weight:10,mode:"Cá nhân",mandatory:true,due:"2026-09-12",dueTime:"12:00",prov:false,session:2,mark:null,
+  where:"Present trên lớp T7 12/09 (Session 2) · hard copy cho tutor ngay sau khi present · soft copy Ultra trước CN 13/09 23:59",
+  note:"Đã có đề. Tối đa 10 phút — tập bấm giờ. Rubric: hiểu đúng câu hỏi · đúng theory · lập luận logic · apply vào tình huống thực tế · critical analysis · kết luận rõ. Dùng bảng/biểu/phép tính, đừng chỉ chữ. IF ĐƯỢC dùng AI nhưng phải khai báo."},
+ {id:"da-topic",sub:"DA",title:"Chốt chủ đề Final Project",weight:0,mode:"Nhóm",mandatory:false,due:"2026-09-26",dueTime:"",prov:true,session:null,mark:null,
+  where:"Buổi 7 MindX",note:"Chọn đề tài dữ liệu tài chính: churn + RFM khách hàng ngân hàng/CTCK, dữ liệu public Kaggle. TUYỆT ĐỐI không dùng dữ liệu khách thật của Kafi/SSI."},
+ {id:"da-group",sub:"DA",title:"Chia nhóm + chốt phần việc bằng văn bản",weight:0,mode:"Nhóm",mandatory:false,due:"2026-09-29",dueTime:"",prov:true,session:null,mark:null,
+  where:"Buổi 8 MindX",note:"Nhận phần phân tích + viết báo cáo (thế mạnh). Nói ngay hôm chia nhóm: có mid-sem 16–17/10 nên phần của mình xong trước 13/10. Đặt deadline nội bộ sớm hơn deadline thật 1 tuần."},
+ {id:"da-part",sub:"DA",title:"Xong phần việc của mình trong Final Project",weight:0,mode:"Cá nhân",mandatory:false,due:"2026-10-11",dueTime:"",prov:false,session:null,mark:null,
+  where:"Tự đặt — trước tuần va chạm",note:"Chốt cứng ngày này. Tuần sau là mid-sem IF + nhận đề Final Test cùng lúc."},
+ {id:"da-test",sub:"DA",title:"Nộp Final Test (MindX)",weight:0,mode:"Cá nhân",mandatory:false,due:"2026-10-17",dueTime:"",prov:true,session:null,mark:null,
+  where:"Nhận đề buổi 12 (~13/10), nộp buổi 13 (~17/10)",note:"Rơi đúng tuần mid-sem IF. Làm ngay 14–15/10, đừng để tới hạn."},
+ {id:"if-mid",sub:"IF",title:"Mid-semester Exam",weight:30,mode:"Cá nhân",mandatory:true,due:"2026-10-16",dueTime:"",prov:true,session:7,mark:null,
+  where:"Sau Session 7 (tuần 12/10) · ngày chính xác chờ Ultra",
+  note:"Closed book · 90 phút · 30 MCQ · không trừ điểm sai nên phải làm hết. Phạm vi S1–S7: Multinational Financial Mgmt, International Monetary System, BoP, FX Market, Parity Conditions, FX Derivatives, FX Determination & Forecasting, Transaction Exposure. KHÔNG có thi bù."},
+ {id:"da-defend",sub:"DA",title:"Bảo vệ Final Project trước BGK",weight:0,mode:"Nhóm",mandatory:false,due:"2026-10-27",dueTime:"",prov:true,session:null,mark:null,
+  where:"Buổi 16 — kết thúc kỳ 2",note:"Xong là đẩy toàn bộ lên GitHub 'data-portfolio' và đưa thẳng vào CV cho LPBS."},
+ {id:"bf-pres",sub:"BF",title:"Group Presentation",weight:20,mode:"Nhóm",mandatory:false,due:"2026-10-09",dueTime:"12:00",prov:true,session:null,mark:null,
+  where:"Present T6 trên lớp · nộp Ultra",
+  note:"13–15 phút là vùng điểm cao (dưới 10 hoặc trên 15 = below standard). Mỗi người ≥2 phút. Understanding và voice/body language chấm riêng từng người. BFN CẤM dùng AI hoàn toàn."},
+ {id:"bf-report",sub:"BF",title:"Report on Banking Services",weight:40,mode:"Cá nhân",mandatory:false,due:"2026-11-08",dueTime:"23:59",prov:false,session:10,mark:null,
+  where:"Turnitin trên Ultra",
+  note:"1.500 từ (không tính figure, table, in-text citation, reference list). Figure/table phải có label, được nhắc trong body, đặt gần đoạn liên quan, có diễn giải. KHÔNG appendix. Harvard referencing, heading cuối là 'Reference List'. BFN cấm AI."},
+ {id:"if-final",sub:"IF",title:"Final Exam",weight:60,mode:"Cá nhân",mandatory:true,due:"2026-11-23",dueTime:"",prov:true,session:null,mark:null,
+  where:"Formal Exam Period (từ tuần 23/11) · ngày chính xác chờ Ultra",
+  note:"2 tiếng · closed book · MCQ + short answer · toàn bộ học kỳ. Short answer chấm: problem solving, economic logic, analytical reasoning, policy, analysis, synthesis, evaluation, written communication."},
+ {id:"bf-final",sub:"BF",title:"Final Exam",weight:40,mode:"Cá nhân",mandatory:true,due:"2026-11-26",dueTime:"",prov:true,session:null,mark:null,
+  where:"Formal Exam Period (từ tuần 23/11) · on-campus",
+  note:"2 tiếng. Được mang calculator + 1 tờ A4 viết tay 2 mặt (tên & student number góc trên trái). Gom: repricing, duration, credit risk, liquidity risk, capital management. Ôn bằng cách LÀM LẠI BÀI, không đọc chay."}
+],
+
+/* dated work items */
+tasks:[
+ {id:"t01",t:"IF present: đọc kỹ đề, chốt theory, gạch outline 10 phút (mở – 3 ý – kết)",track:"IF",date:"2026-09-09",start:600,dur:120,pri:5,link:"if-pres"},
+ {id:"t02",t:"IF present: dựng slide + bảng/biểu/phép tính minh hoạ",track:"IF",date:"2026-09-10",start:600,dur:120,pri:5,link:"if-pres"},
+ {id:"t03",t:"IF present: tập nói bấm giờ 2 lần, cắt xuống dưới 10 phút",track:"IF",date:"2026-09-11",start:570,dur:90,pri:5,link:"if-pres"},
+ {id:"t04",t:"IF present: in hard copy + present trên lớp",track:"IF",date:"2026-09-12",start:720,dur:195,pri:5,link:"if-pres",locked:true},
+ {id:"t05",t:"IF present: nộp soft copy lên Ultra trước 23:59",track:"IF",date:"2026-09-13",start:1140,dur:30,pri:5,link:"if-pres"},
+ {id:"t06",t:"Chốt nhóm Banking + topic + session present",track:"BF",date:"2026-09-11",start:930,dur:30,pri:5,link:"bf-pres"},
+ {id:"t07",t:"Lập file ôn IF: bảng 8 topic S1–S7 (công thức / bẫy / bài mẫu)",track:"IF",date:"2026-09-13",start:840,dur:90,pri:4,link:"if-mid"},
+ {id:"t08",t:"IELTS: làm trọn bộ baseline 4 kỹ năng để biết band xuất phát",track:"IELTS",date:"2026-09-13",start:540,dur:180,pri:4},
+ {id:"t09",t:"Xin full brief Report 40%: đề chính xác, phạm vi dịch vụ/ngân hàng nào",track:"BF",date:"2026-09-19",start:930,dur:30,pri:5,link:"bf-report"},
+ {id:"t10",t:"Report: chọn 3 hướng đề, mỗi hướng 5 nguồn học thuật",track:"BF",date:"2026-09-27",start:840,dur:120,pri:4,link:"bf-report"},
+ {id:"t11",t:"Report: chốt đề + outline 5 phần + 8 nguồn academic",track:"BF",date:"2026-10-11",start:840,dur:120,pri:5,link:"bf-report"},
+ {id:"t12",t:"IF Mid: học thuộc bộ công thức parity + FX + transaction exposure",track:"IF",date:"2026-10-13",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t13",t:"IF Mid: mock 60 câu MCQ bấm giờ, chấm và soi lỗi theo topic",track:"IF",date:"2026-10-14",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t14",t:"IF Mid: ôn lại đúng phần sai, nghỉ sớm ngủ đủ",track:"IF",date:"2026-10-15",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t15",t:"Report: draft 1 đủ 1.500 từ (thô cũng được, miễn đủ khung)",track:"BF",date:"2026-10-28",start:840,dur:180,pri:5,link:"bf-report"},
+ {id:"t16",t:"Report: chèn 2 figure + 1 table, có label và diễn giải",track:"BF",date:"2026-11-01",start:840,dur:120,pri:5,link:"bf-report"},
+ {id:"t17",t:"Report: soát Harvard referencing + chạy Turnitin thử",track:"BF",date:"2026-11-05",start:840,dur:120,pri:5,link:"bf-report"},
+ {id:"t18",t:"Report: nộp sớm 1 ngày",track:"BF",date:"2026-11-07",start:840,dur:60,pri:5,link:"bf-report"},
+ {id:"t19",t:"Hồ sơ LPBS: CV + câu chuyện phỏng vấn (dùng Final Project DA)",track:"LIFE",date:"2026-11-03",start:1140,dur:120,pri:3},
+ {id:"t20",t:"Check Ultra: exact date/time/room của 2 kỳ final",track:"LIFE",date:"2026-11-09",start:930,dur:30,pri:4},
+ {id:"t21",t:"Banking: viết tờ A4 cheat sheet 2 mặt (repricing, duration, credit/liquidity risk, capital)",track:"BF",date:"2026-11-16",start:840,dur:180,pri:5,link:"bf-final"},
+ {id:"t22",t:"IF Final: ôn cumulative S1–S12 vòng 1",track:"IF",date:"2026-11-17",start:540,dur:240,pri:5,link:"if-final"},
+ {id:"t23",t:"IF Final: luyện 10 short-answer theo rubric (policy + analysis + evaluation)",track:"IF",date:"2026-11-19",start:540,dur:180,pri:5,link:"if-final"},
+ {id:"t24",t:"Banking: làm lại toàn bộ bài tính toán Ch.5–6, Ch.10–11, Ch.14",track:"BF",date:"2026-11-20",start:540,dur:240,pri:5,link:"bf-final"},
+ {id:"t25",t:"IF Final: ôn vòng 2, chỉ đọc phần đánh dấu đỏ",track:"IF",date:"2026-11-22",start:540,dur:240,pri:5,link:"if-final"}
+],
+
+/* weekly repeating template */
+routine:{tplV:2, tpl:{
+ 1:[{id:"r11",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
+    {id:"r12",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r13",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+    {id:"r14",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
+    {id:"r15",from:"14:00",to:"16:00",label:"Banking — làm bài tính toán",track:"BF"},
+    {id:"r16",from:"19:00",to:"20:30",label:"IELTS · Writing (1 bài có chấm)",track:"IELTS"}],
+ 2:[{id:"r21",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
+    {id:"r22",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r23",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+    {id:"r24",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
+    {id:"r25",from:"14:00",to:"15:00",label:"Banking — đọc chương trước",track:"BF"},
+    {id:"r26",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
+ 3:[{id:"r31",from:"09:00",to:"10:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r32",from:"10:00",to:"10:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+    {id:"r33",from:"11:00",to:"12:00",label:"Banking — tính toán",track:"BF"},
+    {id:"r34",from:"14:00",to:"16:00",label:"Ôn IF (cumulative)",track:"IF"},
+    {id:"r35",from:"19:00",to:"20:30",label:"IELTS · Reading + error log",track:"IELTS"}],
+ 4:[{id:"r41",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
+    {id:"r42",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r43",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+    {id:"r44",from:"10:00",to:"12:00",label:"Ôn IF (cumulative)",track:"IF"},
+    {id:"r45",from:"14:00",to:"16:00",label:"Banking / Report",track:"BF"},
+    {id:"r46",from:"16:00",to:"17:00",label:"IELTS · Listening + dictation",track:"IELTS"},
+    {id:"r47",from:"19:00",to:"21:00",label:"Bài tập DA (luật 48h)",track:"DA"}],
+ 5:[{id:"r51",from:"06:00",to:"07:15",label:"GYM",track:"BASE"},
+    {id:"r52",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r53",from:"09:00",to:"11:00",label:"Đọc chương trước buổi Banking",track:"BF"},
+    {id:"r54",from:"12:00",to:"15:15",label:"LỚP FINC3022 · D402 · Lê Anh Tuấn",track:"BF",fixed:true},
+    {id:"r55",from:"19:00",to:"22:00",label:"Tối T6 để trống — nghỉ thật",track:"BASE",rest:true}],
+ 6:[{id:"r61",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r62",from:"09:00",to:"11:00",label:"Đọc chương trước buổi IF",track:"IF"},
+    {id:"r63",from:"12:00",to:"15:15",label:"LỚP ECON3014 · D102 · Bùi Hồng Mai",track:"IF",fixed:true},
+    {id:"r64",from:"16:00",to:"17:00",label:"Nghỉ thật — ngày nặng nhất tuần",track:"BASE",rest:true},
+    {id:"r65",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
+ 7:[{id:"r71",from:"09:00",to:"10:30",label:"IELTS · Full section mock + chấm",track:"IELTS"},
+    {id:"r72",from:"10:30",to:"11:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r73",from:"11:00",to:"12:00",label:"Review tuần: check Ultra, cập nhật deadline",track:"LIFE"},
+    {id:"r74",from:"14:00",to:"16:00",label:"Bài tập DA / Final Project",track:"DA"}]
+}},
+
+habits:[
+ {id:"hz",label:"Tiếng Trung",track:"ZH",rule:"Mỗi ngày, tối thiểu 15'. Rút ngắn được, đứt ngày thì không.",log:{}},
+ {id:"hg",label:"GYM",track:"BASE",rule:"4 buổi/tuần, 06:00–07:15. Không tập sáng sau buổi DA (T4, CN).",log:{}},
+ {id:"hn",label:"Đọc báo",track:"BASE",rule:"20'. Giữ đúng 3 nguồn: 1 quốc tế cho cơ chế · 1 bản tin sáng VN · lịch kinh tế sáng T2. Thời gian tiết kiệm được dồn vào Macro Journal.",log:{}}
+],
+
+goals:[
+ {id:"g-ielts",name:"IELTS 7.0",track:"IELTS",src:"ielts",targetDate:"",note:"Không đặt deadline cứng. Đặt lịch thi khi đạt 7.0 ở 2 mock liên tiếp và không kỹ năng nào dưới 6.5."},
+ {id:"g-zh",name:"Tiếng Trung → HSK 2 chắc",track:"ZH",src:"zh",targetDate:"2026-12-31",note:"HSK 2 chắc vào 12/2026 → bắt đầu tìm gia sư 1-kèm-1 từ 1/2027. HSK 3 giữa 2027, đủ tư vấn khách Trung ~2028."},
+ {id:"g-da",name:"DA MindX kỳ 2",track:"DA",src:"da",targetDate:"2026-10-27",note:"16 buổi, 5/9 → ~31/10. Xong là có Final Project đưa vào CV cho LPBS."},
+ {id:"g-school",name:"Tốt nghiệp — 2 môn cuối",track:"IF",src:"school",targetDate:"2026-11-26",note:"Điều kiện: mỗi môn ≥50 tổng. IF cả 3 đầu điểm đều bắt buộc."},
+ {id:"g-macro",name:"Macro & Equity Thinking System",track:"MACRO",src:"macro",targetDate:"2026-12-06",note:"12 tuần × 30 phút/ngày = 42h. Kết thúc bằng Macro Note 3 trang dùng được cho hồ sơ Investment Analyst. Module dashboard + regime scorecard được dời sang sau khoá, làm cùng DA L3 vì trùng kỹ năng."}
+],
+
+ielts:{aim:7, examDate:"", mocks:[], phases:[
+ {id:"p0",name:"Phase 0 · Đo baseline",goal:"Biết đang đứng ở đâu trước khi học bất cứ thứ gì",units:[
+  {id:"p0a",t:"Reading: 1 full test bấm giờ 60' (Cam 17 trở lên, làm TRÊN MÁY vì thi CD-IELTS)",hh:1},
+  {id:"p0b",t:"Listening: 1 full test, nghe 1 lần + 10' transfer",hh:1},
+  {id:"p0c",t:"Writing: Task 1 + Task 2 trong 60', viết như thi thật",hh:1},
+  {id:"p0d",t:"Speaking: tự thu P1 + P2 + P3 một lượt, không dừng",hh:0.5},
+  {id:"p0e",t:"Chấm cả 4 (project chấm Writing bằng AI, prompt khắt khe), ghi band vào Mock log",hh:1},
+  {id:"p0f",t:"Lập error log 3 cột: dạng câu / lý do sai / cách tránh",hh:0.5}]},
+ {id:"p1",name:"Phase 1 · Xây nền",goal:"Đúng kỹ thuật từng dạng, chưa cần nhanh",units:[
+  {id:"p1a",t:"Reading: 8 dạng câu hỏi — ưu tiên Matching Headings, TFNG (False vs Not Given), Matching Information",hh:8},
+  {id:"p1b",t:"Listening: tách P1–P4, nặng nhất P3 (nhiều distractor) và P4 (monologue không nghỉ)",hh:8},
+  {id:"p1c",t:"Writing T1: khung mô tả 6 dạng biểu đồ (line, bar, pie, table, process, map)",hh:5},
+  {id:"p1d",t:"Writing T2: 4 dạng đề + khung. Soi kỹ Task Response — đây mới là chỗ chặn ở 6.5, không phải từ vựng",hh:5},
+  {id:"p1e",t:"Speaking: dựng Story Bank 8 chuyện × 2 phút (phủ ~70% cue card)",hh:6},
+  {id:"p1f",t:"Speaking: sửa âm cuối /s/ /z/ + cụm phụ âm — ghi âm 2'/ngày chỉ soi âm cuối",hh:4},
+  {id:"p1g",t:"Vocab 15 topic set + grammar: complex sentence, relative clause, passive, conditional",hh:7}]},
+ {id:"p2",name:"Phase 2 · Luyện có kiểm soát",goal:"Đúng rồi thì làm cho nhanh và ổn định",units:[
+  {id:"p2a",t:"Reading: 1 full test/tuần bấm giờ + soi lỗi (6 tuần)",hh:9},
+  {id:"p2b",t:"Listening: 1 full test/tuần + dictation lại phần sai (6 tuần)",hh:9},
+  {id:"p2c",t:"Writing: 2 bài/tuần có chấm — viết lại 1 đoạn quan trọng hơn viết bài mới (6 tuần)",hh:12},
+  {id:"p2d",t:"Speaking: 2 buổi/tuần thu âm + BẮT BUỘC nghe lại (6 tuần)",hh:6},
+  {id:"p2e",t:"Error log: cập nhật hằng tuần, 2 tuần/lần review lỗi lặp — chỉ luyện đúng 2–3 dạng sai nhiều nhất",hh:3}]},
+ {id:"p3",name:"Phase 3 · Đỉnh & thi",goal:"Chỉ đặt lịch thi khi số liệu cho phép",units:[
+  {id:"p3a",t:"Full mock 4 kỹ năng đúng khung giờ thi (mỗi 1–2 tuần)",hh:12},
+  {id:"p3b",t:"Đạt ≥ aim ở 2 mock liên tiếp, không kỹ năng nào dưới 6.5",hh:0},
+  {id:"p3c",t:"Đặt lịch thi (đăng ký trước ngày thi 3–4 tuần)",hh:0.5},
+  {id:"p3d",t:"Tuần cuối: giữ nhịp, không nạp kiến thức mới, ngủ đủ",hh:4}]}
+]},
+
+zh:{phases:[
+ {id:"z1",name:"Giai đoạn 1 · Pinyin (2 tuần)",goal:"Chỉ pinyin. Không chữ, không từ vựng, không ngữ pháp.",units:[
+  {id:"z1a",t:"Cấu tạo âm tiết + 4 thanh + thanh nhẹ (mā má mǎ mà ×50, ghi âm)",hh:1.5},
+  {id:"z1b",t:"b p m f / d t n l — bật hơi vs không bật hơi",hh:1.5},
+  {id:"z1c",t:"g k h + j q x (luyện phân biệt ji/qi/xi)",hh:1.5},
+  {id:"z1d",t:"⚠️ zh ch sh r — âm quặt lưỡi, 2 buổi, tập trước gương",hh:3},
+  {id:"z1e",t:"z c s + nghe 30 cặp zi/zhi, ci/chi, si/shi",hh:1.5},
+  {id:"z1f",t:"Vận mẫu đơn + kép + quy tắc bỏ dấu ü sau j/q/x/y",hh:2},
+  {id:"z1g",t:"Vận mẫu mũi: phân biệt -n vs -ng",hh:1.5},
+  {id:"z1h",t:"Biến điệu thanh 3 (nǐ hǎo → ní hǎo), biến điệu 不 và 一, ér hoá",hh:2},
+  {id:"z1i",t:"🚧 TEST THOÁT: nghe 20 âm tiết, viết pinyin + số thanh, ĐẠT ≥16/20 mới được học tiếp",hh:1}]},
+ {id:"z2",name:"Giai đoạn 2 · HSK 1 + nhận mặt chữ",goal:"~150 từ, nhận mặt chữ và gõ được bằng pinyin",units:[
+  {id:"z2a",t:"Cài bàn phím tiếng Trung trên điện thoại + Pleco + Anki",hh:0.5},
+  {id:"z2b",t:"HSK1 bài 1–5 (từ mới + mẫu câu + nhập Anki)",hh:7},
+  {id:"z2c",t:"HSK1 bài 6–10",hh:7},
+  {id:"z2d",t:"HSK1 bài 11–15",hh:7},
+  {id:"z2e",t:"🚧 TEST 150 từ HSK1: nhận mặt chữ + đọc đúng thanh",hh:1}]},
+ {id:"z3",name:"Giai đoạn 3 · HSK 2",goal:"Tự đặt được câu cơ bản → mốc chuyển sang có người sửa",units:[
+  {id:"z3a",t:"HSK2 bài 1–8",hh:12},
+  {id:"z3b",t:"HSK2 bài 9–15 + ngữ pháp phân biệt cặp từ dễ nhầm",hh:12},
+  {id:"z3c",t:"Duy trì Anki 15–20'/ngày xuyên mùa thi — rút ngắn được, đứt ngày thì không",hh:6}]},
+ {id:"z4",name:"Giai đoạn 4 · Có người sửa (từ 1/2027)",goal:"YouTube tốt cho đầu vào, vô dụng cho đầu ra",units:[
+  {id:"z4a",t:"Tìm gia sư 1-kèm-1 (italki ~10–15 USD/h), bắt đầu 1 buổi/tuần 45–60'",hh:2},
+  {id:"z4b",t:"Tăng lên 2 buổi/tuần từ giữa 2027",hh:2},
+  {id:"z4c",t:"Từ HSK 3 mới bọc lớp từ vựng chứng khoán lên (股票, 开户, 涨跌…) — học sớm chỉ là danh sách chết",hh:4}]}
+],
+rules:["✅ Nhận mặt chữ: bắt buộc — không có bản pinyin của bản tin thị trường",
+       "✅ Gõ bằng pinyin: thao tác chọn chữ chính là luyện nhận mặt chữ mỗi ngày",
+       "❌ Viết tay chữ Hán: bỏ hẳn — đây là chỗ tiết kiệm thời gian lớn nhất",
+       "Kênh chính: Tiếng Trung Cầm Xu. Bổ sung: Phạm Dương Châu, Thảo An, An Khả Hy. Chọn 1 kênh rồi bám hết lộ trình.",
+       "Lợi thế Hán–Việt: 分析 phân tích · 投资 đầu tư · 证券 chứng khoán · 银行 ngân hàng. Học bằng kênh Việt để giữ lợi thế này."]},
+
+da:{note:"Giả định T3 + T7, 19:15–22:15. Có lịch chính thức thì sửa lại — và đảo luôn ngày ngủ bù + ngày gym.",
+ sessions:[
+ {n:1,d:"2026-09-05",t:"Khai giảng"},{n:2,d:"2026-09-08",t:"Python cơ bản (nhẹ — dùng khoảng này cày IF)"},
+ {n:3,d:"2026-09-12",t:"Python cơ bản"},{n:4,d:"2026-09-15",t:"Python cơ bản"},
+ {n:5,d:"2026-09-19",t:"numpy / pandas"},{n:6,d:"2026-09-22",t:"⚡ T-test, A/B test, hồi quy — phần MỚI, học nghiêm túc"},
+ {n:7,d:"2026-09-26",t:"RFM · CHỌN CHỦ ĐỀ FINAL PROJECT"},{n:8,d:"2026-09-29",t:"CHIA NHÓM 3–4 người"},
+ {n:9,d:"2026-10-03",t:"Cohort · Final Project làm ở nhà"},{n:10,d:"2026-10-06",t:"Final Project"},
+ {n:11,d:"2026-10-10",t:"Churn · phần của mình phải xong tuần này"},{n:12,d:"2026-10-13",t:"⚠️ NHẬN ĐỀ FINAL TEST"},
+ {n:13,d:"2026-10-17",t:"⚠️ NỘP FINAL TEST + bắt đầu thuyết trình"},{n:14,d:"2026-10-20",t:"Thuyết trình lấy góp ý"},
+ {n:15,d:"2026-10-24",t:"Thuyết trình"},{n:16,d:"2026-10-27",t:"🎓 BẢO VỆ TRƯỚC BGK — kết thúc kỳ 2"}]},
+
+confirm:[
+ {id:"c1",t:"IF: present session mấy, problem nào?",done:true},
+ {id:"c2",t:"MindX: cohort 5/9 là kỳ mấy, đúng 2 ngày nào trong tuần?",done:false},
+ {id:"c3",t:"Banking: nhóm nào, topic gì, present session mấy?",done:false},
+ {id:"c4",t:"Banking Report: đề bài / câu hỏi chính xác (outline mới chỉ có rubric)",done:false},
+ {id:"c5",t:"IF Mid: exact date / time / location",done:false},
+ {id:"c6",t:"Final 2 môn: exact date / time / location",done:false},
+ {id:"c7",t:"IELTS Academic hay General Training? (đổi hoàn toàn Writing Task 1)",done:false},
+ {id:"c8",t:"LPBS: có kỳ tuyển cố định không, deadline nộp, hồ sơ cần gì?",done:false},
+ {id:"c9",t:"Website chứng khoán: phạm vi là gì, portfolio hay sản phẩm thật?",done:false},
+ {id:"c10",t:"CTV line còn giữ không, tốn bao nhiêu giờ/tuần?",done:false},
+ {id:"c11",t:"Lịch thi CCHN UBCKNN 2027 + module cần cho vị trí ở LPBS",done:false}
+],
+patches:["v6-base"]
+};}
+
+/* ============================ STATE / SYNC ============================ */
+let state=seed(), cloud=null, saveT=null, tab="today", weekOff=0, calMode="week", monthCur=null, patched=false;
+
+function lsLoad(){try{const s=localStorage.getItem(LS_KEY);return s?JSON.parse(s):null}catch(e){return null}}
+function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+function setSync(c,t){const p=document.getElementById("syncPill");if(!p)return;p.className="sync "+c;document.getElementById("syncTxt").textContent=t}
+
+/* merge saved progress onto a fresh seed → new content arrives, progress survives */
+function upgrade(old){
+  const s=seed();
+  if(!old) return s;
+  if(old.v===6){
+    // same shape: carry everything the user owns
+    ["assess","tasks","habits","goals","confirm"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
+    if(old.dlog) s.dlog=old.dlog; if(old.placed) s.placed=old.placed; if(old.macro) s.macro=Object.assign(s.macro,old.macro);
+    if(old.routine&&old.routine.tplV>=2) s.routine=old.routine;
+    if(old.ielts) s.ielts=Object.assign(s.ielts,old.ielts);
+    if(old.zh&&old.zh.phases) s.zh.phases=old.zh.phases;
+    if(old.da&&old.da.sessions) s.da=old.da;
+    if(old.settings) s.settings=Object.assign(s.settings,old.settings);
+    s.rev=old.rev||1; s.patches=old.patches||s.patches;
+    return s;
+  }
+  // v5 → v6: carry progress by id
+  patched=true;
+  const byId=(arr,id)=>(arr||[]).find(x=>x.id===id);
+  s.assess.forEach(a=>{const o=byId(old.assess,a.id); if(o){a.mark=o.mark??a.mark; if(o.mark!=null)a.markedAt=o.markedAt;}});
+  (old.tasks||[]).forEach(o=>{ if(o.done){ const t=s.tasks.find(x=>x.link===o.link&&x.t===o.t); if(t)t.status="done"; }});
+  s.confirm.forEach(c=>{const o=byId(old.ultra,c.id.replace("c","u")); if(o&&o.done)c.done=true;});
+  if(old.ielts){
+    s.ielts.aim=old.ielts.aim||7; s.ielts.examDate=old.ielts.examDate||""; s.ielts.mocks=old.ielts.mocks||[];
+    s.ielts.phases.forEach(p=>{const op=byId(old.ielts.phases,p.id); if(op)p.units.forEach(u=>{const ou=byId(op.units,u.id); if(ou&&ou.done){u.done=true;u.at=ou.at}});});
+  }
+  return s;
+}
+function save(){
+  state.rev=(state.rev||1)+1; lsSave(); render();
+  if(!cloud) return;
+  setSync("saving","đang lưu"); clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    try{ await cloud.doc("state/main").set({rev:state.rev,at:new Date().toISOString(),json:JSON.stringify(state)}); setSync("ok","đã đồng bộ"); }
+    catch(e){ setSync("local","lưu máy này"); }
+  },700);
+}
+async function initCloud(){
+  const local=lsLoad(); if(local) state=upgrade(local);
+  if(normalizeOnce()) patched=true;
+  render(); if(patched) lsSave();
+  let c=null; try{ if(typeof claude!=="undefined"&&claude&&claude.use) c=await claude.use("db"); }catch(e){c=null}
+  if(!c){ setSync("local","lưu máy này"); return; }
+  cloud=c;
+  try{
+    const snap=await cloud.doc("state/main").get(); const d=snap.exists?snap.data():null;
+    if(d&&d.json&&(!local||(d.rev||0)>=(state.rev||0))){ state=upgrade(JSON.parse(d.json)); lsSave(); render(); }
+    else { await cloud.doc("state/main").set({rev:state.rev,at:new Date().toISOString(),json:JSON.stringify(state)}); }
+    setSync("ok","đã đồng bộ");
+    if(normalizeOnce()) patched=true;
+    if(patched){ patched=false; save(); }
+    cloud.doc("state/main").onSnapshot(s=>{
+      if(s.metadata&&s.metadata.hasPendingWrites) return;
+      const dd=s.exists?s.data():null;
+      if(dd&&dd.json&&(dd.rev||0)>(state.rev||0)){ state=upgrade(JSON.parse(dd.json)); lsSave(); render(); setSync("ok","đã đồng bộ"); }
+    },()=>setSync("local","lưu máy này"));
+  }catch(e){ setSync("local","lưu máy này"); }
+}
+
+/* ========================= SCHEDULER ENGINE ========================= */
+function dayStart(){return mm(state.settings.dayStart||"06:00")}
+function dayEnd(){return mm(state.settings.dayEnd||"23:00")}
+function routineOn(date){ return (state.routine.tpl[dow(date)]||[]).map(b=>({...b,kind:"rout",start:mm(b.from),end:mm(b.to)})); }
+function fixedOn(date){ const r=routineOn(date); const m=macroFor(date); if(m) r.push(m); return r; }
+function tasksOn(date){ return state.tasks.filter(t=>t.date===date); }
+function taskEnd(t){ return (t.start||0)+(t.dur||60); }
+function isActive(t){ return t.status!=="skipped"; }
+/* --- per-day completion (routine blocks get ticked per date) --- */
+function isDone(x,date){ return x.kind==="task" ? x.status==="done" : !!((state.dlog||{})[date]||{})[x.id]; }
+function tgDay(id,date){ state.dlog=state.dlog||{}; const d=state.dlog[date]=state.dlog[date]||{}; if(d[id]) delete d[id]; else d[id]=1; save(); }
+/* --- macro curriculum --- */
+function macroFor(date){
+  const M=state.macro; if(!M||!M.on) return null;
+  const i=dbet(M.start,date); if(i<0) return null;
+  const w=Math.floor(i/7), d=i%7; if(w>=MACRO_WEEKS.length) return null;
+  const wk=MACRO_WEEKS[w], se=wk.s[d];
+  return {id:"mc-"+(w+1)+"-"+(d+1), kind:"macro", track:"MACRO", w:w+1, d:d+1, wk, se,
+          t:"Macro "+(w+1)+"."+(d+1)+" · "+se.t, start:mm(M.time), dur:M.dur, end:mm(M.time)+M.dur};
+}
+function macroStats(){
+  const log=state.dlog||{}; let done=0;
+  Object.keys(log).forEach(dt=>Object.keys(log[dt]).forEach(k=>{ if(k.startsWith("mc-")&&log[dt][k]) done++; }));
+  const n=MACRO_WEEKS.length*7;
+  return {n, done, pct:Math.round(done/n*100), hAll:n*0.5, hDone:done*0.5};
+}
+function macroWeekDone(w){
+  const log=state.dlog||{}; let d=0;
+  Object.keys(log).forEach(dt=>Object.keys(log[dt]).forEach(k=>{ if(k.indexOf("mc-"+w+"-")===0&&log[dt][k]) d++; }));
+  return d;
+}
+function dayProgress(date){ const it=dayItems(date).filter(x=>!x.rest); return {n:it.length, d:it.filter(x=>isDone(x,date)).length}; }
+/* every occupied interval on a day */
+function busy(date,ignoreId){
+  const out=[];
+  fixedOn(date).forEach(b=>out.push({start:b.start,end:b.end,type:b.fixed?"fixed":"rout",label:b.label||b.t}));
+  tasksOn(date).forEach(t=>{ if(t.id!==ignoreId&&isActive(t)) out.push({start:t.start,end:taskEnd(t),type:t.emg?"emg":(t.locked?"lock":"task"),label:t.t,id:t.id}); });
+  return out.sort((a,b)=>a.start-b.start);
+}
+function overlap(a1,a2,b1,b2){ return a1<b2&&b1<a2 }
+function conflictsAt(date,start,end,ignoreId){ return busy(date,ignoreId).filter(b=>overlap(start,end,b.start,b.end)); }
+function freeSlots(date,dur,ignoreId,after){
+  const b=busy(date,ignoreId), out=[]; let cur=Math.max(dayStart(),after||0);
+  b.forEach(x=>{ if(x.start-cur>=dur) out.push({start:cur,end:x.start}); cur=Math.max(cur,x.end); });
+  if(dayEnd()-cur>=dur) out.push({start:cur,end:dayEnd()});
+  return out;
+}
+function nextFreeSlot(fromDate,fromMin,dur,ignoreId,maxDays){
+  let d=fromDate;
+  for(let i=0;i<(maxDays||45);i++){
+    const s=freeSlots(d,dur,ignoreId,i===0?fromMin:0)[0];
+    if(s) return {date:d,start:s.start};
+    d=addD(d,1);
+  }
+  return null;
+}
+/* auto-reflow: push every movable task out of a collision, keeping order */
+function reflow(){
+  const moved=[];
+  const movable=state.tasks.filter(t=>!t.locked&&!t.emg&&isActive(t)&&t.status!=="done")
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
+  movable.forEach(t=>{
+    const hard=busy(t.date,t.id).filter(b=>b.type==="fixed"||b.type==="emg"||b.type==="lock"||b.type==="rout"||b.type==="task");
+    const hit=hard.some(b=>overlap(t.start,taskEnd(t),b.start,b.end));
+    if(!hit) return;
+    const slot=nextFreeSlot(t.date,t.start,t.dur,t.id);
+    if(slot&&(slot.date!==t.date||slot.start!==t.start)){ moved.push({t:t.t,from:t.date+" "+hhmm(t.start),to:slot.date+" "+hhmm(slot.start)}); t.date=slot.date; t.start=slot.start; }
+  });
+  return moved;
+}
+/* one-time: nudge any seeded task that lands on top of the weekly routine */
+function normalizeOnce(){
+  if(state.placed) return false;
+  let moved=0;
+  state.tasks.filter(t=>!t.locked&&!t.emg&&t.status!=="done").forEach(t=>{
+    if(!conflictsAt(t.date,t.start,taskEnd(t),t.id).length) return;
+    const same=freeSlots(t.date,t.dur,t.id,720)[0]||freeSlots(t.date,t.dur,t.id,0)[0];
+    if(same){ t.start=same.start; moved++; return; }
+    const s2=nextFreeSlot(addD(t.date,1),0,t.dur,t.id);
+    if(s2){ t.date=s2.date; t.start=s2.start; moved++; }
+  });
+  state.placed=true;
+  return moved>0;
+}
+function audit(){
+  const out=[];
+  state.tasks.filter(t=>isActive(t)&&t.status!=="done"&&!t.locked&&!t.emg).forEach(t=>{
+    const c=conflictsAt(t.date,t.start,taskEnd(t),t.id);
+    if(c.length) out.push({id:t.id,t:t.t,date:t.date,with:c[0].label});
+  });
+  return out;
+}
+
+/* ============================ GOAL MATH ============================ */
+function ielUnits(){ return state.ielts.phases.flatMap(p=>p.units) }
+function zhUnits(){ return state.zh.phases.flatMap(p=>p.units) }
+function unitStats(list){
+  const all=list.reduce((s,u)=>s+(u.hh||0),0), done=list.filter(u=>u.done).reduce((s,u)=>s+(u.hh||0),0);
+  return {all,done,left:all-done,pct:all?Math.round(done/all*100):0,n:list.length,nd:list.filter(u=>u.done).length};
+}
+function paceOf(list){ // real h/week over last 21 days
+  const cut=addD(todayISO(),-21);
+  return list.filter(u=>u.done&&u.at&&u.at>=cut).reduce((s,u)=>s+(u.hh||0),0)/3;
+}
+function weeklyFor(track){
+  let t=0; for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{ if(b.track===track&&!b.rest) t+=(mm(b.to)-mm(b.from))/60; });
+  return t;
+}
+function goalStats(g){
+  let st,pace,list=null;
+  if(g.src==="ielts"){ list=ielUnits(); st=unitStats(list); }
+  else if(g.src==="zh"){ list=zhUnits(); st=unitStats(list); }
+  else if(g.src==="macro"){ const m=macroStats(); st={all:m.hAll,done:m.hDone,left:m.hAll-m.hDone,pct:m.pct,n:m.n,nd:m.done}; }
+  else if(g.src==="da"){ const done=(state.da.sessions||[]).filter(s=>s.done).length,n=(state.da.sessions||[]).length;
+    st={all:n*3,done:done*3,left:(n-done)*3,pct:n?Math.round(done/n*100):0,n,nd:done}; }
+  else if(g.src==="school"){ const A=state.assess.filter(a=>a.weight>0), tot=A.reduce((s,a)=>s+a.weight,0),
+    dn=A.filter(a=>a.mark!=null).reduce((s,a)=>s+a.weight,0);
+    st={all:tot,done:dn,left:tot-dn,pct:tot?Math.round(dn/tot*100):0,n:A.length,nd:A.filter(a=>a.mark!=null).length}; }
+  else { st={all:+g.totalH||0,done:+g.doneH||0,left:Math.max(0,(+g.totalH||0)-(+g.doneH||0)),
+    pct:g.totalH?Math.round((g.doneH||0)/g.totalH*100):0,n:0,nd:0}; }
+  pace=list?paceOf(list):0;
+  if(g.src==="school"){
+    const nx=state.assess.filter(a=>a.mark==null&&a.weight>0&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
+    return {st,planned:weeklyFor(g.track),pace:0,etaPlan:null,etaPace:null,need:null,byPoints:true,
+      verdict:nx?{c:dbet(todayISO(),nx.due)<=10?"warn":"ok",t:`Còn ${st.n-st.nd} đầu điểm · gần nhất: ${nx.title} (${nx.weight}%) ngày ${fmtD(nx.due)}`}:null};
+  }
+  const planned=weeklyFor(g.track);
+  const wkPlan=planned>0?st.left/planned:null;
+  const wkPace=pace>0?st.left/pace:null;
+  const etaPlan=wkPlan!=null?addD(todayISO(),Math.ceil(wkPlan*7)):null;
+  const etaPace=wkPace!=null?addD(todayISO(),Math.ceil(wkPace*7)):null;
+  let need=null,verdict=null;
+  if(g.targetDate){
+    const wk=Math.max(0.15,dbet(todayISO(),g.targetDate)/7);
+    need=st.left/wk;
+    if(dbet(todayISO(),g.targetDate)<0) verdict={c:"bad",t:"Đã quá ngày mục tiêu"};
+    else if(need<=planned) verdict={c:"ok",t:`Kịp — cần ${hrs(need)}h/tuần, khung tuần đang cấp ${hrs(planned)}h`};
+    else verdict={c:planned>0&&need<planned*1.5?"warn":"bad",t:`Thiếu — cần ${hrs(need)}h/tuần nhưng chỉ có ${hrs(planned)}h. Hụt ${hrs(need-planned)}h/tuần`};
+  }
+  return {st,planned,pace,etaPlan,etaPace,need,verdict};
+}
+function bandRound(x){return Math.round(x*2)/2}
+function mockOverall(m){const v=[m.r,m.l,m.w,m.s].map(Number).filter(x=>!isNaN(x)&&x>0);return v.length?bandRound(v.reduce((a,b)=>a+b,0)/v.length):null}
+function weekLoad(){
+  const o={}; TKEYS.forEach(k=>o[k]=0);
+  let rest=0;
+  for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{const hh=(mm(b.to)-mm(b.from))/60; if(b.rest){rest+=hh;return} o[b.track]=(o[b.track]||0)+hh});
+  o.rest=rest;
+  if(state.macro&&state.macro.on) o.MACRO=(o.MACRO||0)+state.macro.dur/60*7;
+  o.total=TKEYS.reduce((a,k)=>a+o[k],0);
+  return o;
+}
+function habitStreak(hb){
+  let n=0,d=todayISO();
+  if(!hb.log[d]) d=addD(d,-1);
+  while(hb.log[d]){n++;d=addD(d,-1)}
+  return n;
+}
+
+/* ================================ ICONS ================================ */
+const IC={
+ today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg>',
+ cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9.5h18M9 9.5V21M15 9.5V21"/></svg>',
+ dead:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="8"/><path d="M12 9.5V13l2.5 2M9 2h6"/></svg>',
+ track:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16"/><path d="M8 15v-3M12 15V8M16 15v-6"/></svg>',
+ year:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><circle cx="12" cy="7" r="2.4"/><circle cx="12" cy="17" r="2.4"/><path d="M6 7h4M14 17h4"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9.5 18 20 6.5"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+ unlock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></svg>',
+ more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
+ bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>'
+};
+const TABS=[["today","Hôm nay",IC.today],["cal","Lịch",IC.cal],["dead","Deadline",IC.dead],["track","Mảng",IC.track],["year","Năm",IC.year]];
+
+function go(t){tab=t;render();window.scrollTo({top:0,behavior:"instant"})}
+function render(){
+  document.getElementById("nav").innerHTML=TABS.map(([k,l,i])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')"><span class="glyph">${i}</span>${l}</button>`).join("");
+  TABS.forEach(([k])=>{const e=document.getElementById("v-"+k);if(e)e.classList.toggle("on",tab===k)});
+  const t=todayISO(),s=sessOfWeek(mondayOf(t));
+  document.getElementById("ctxLine").textContent=fmtFull(t)+" · "+(s?("Tuần "+s+" / Session "+s):"Ngoài kỳ học");
+  renderToday();renderCal();renderDead();renderTrack();renderYear();
+}
+
+/* ============================== ITEM CARD ============================== */
+function rowHTML(x,date){
+  const c=TR[x.track]||TR.LIFE, done=isDone(x,date), rout=x.kind==="rout";
+  const end=rout?x.end:taskEnd(x);
+  const mac=x.kind==="macro";
+  const cls=[rout?(x.fixed?"cls":""):(x.emg?"emg":""), mac?"mac":"", done?"done":"", x.rest?"rest":"", x.status==="skipped"?"done":""].join(" ");
+  const drag=(rout||mac)?"":`draggable="true" ondragstart="dragStart(event,'${x.id}')" ondragend="dragEnd(event)"`;
+  const sub=mac?[x.wk.m+" · "+x.se.o].join(""):[hrs((end-x.start)/60)+"h", c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
+  return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${x.id}">
+    <button class="tick" onclick="event.stopPropagation();${(rout||mac)?`tgDay('${x.id}','${date}')`:`tgDone('${x.id}')`}" aria-label="Đánh dấu xong">${IC.check}</button>
+    <span class="tm">${hhmm(x.start)}</span>
+    <div class="rt" onclick="${mac?`openMacro('${date}')`:rout?`editBlock(${dow(date)},'${x.id}')`:`openTask('${x.id}')`}">
+      <b>${h(x.t||x.label)}</b><div class="sub">${sub}</div>
+      ${(x.progress>0&&!done&&!rout)?`<div class="prog"><i style="width:${x.progress}%"></i></div>`:""}
+    </div></div>`;
+}
+function dlRowHTML(a){
+  return `<div class="rowit dl" onclick="openAssess('${a.id}')" style="cursor:pointer">
+    <span class="tick" style="border:none;background:none;color:var(--red);font-size:15px">!</span>
+    <span class="tm">${a.dueTime||"hạn"}</span>
+    <div class="rt"><b>${h(a.title)}</b><div class="sub">${TR[a.sub].code}${a.weight?" · "+a.weight+"%":""}${a.prov?" · tạm tính":""}</div></div></div>`;
+}
+function dayItems(date){
+  const r=fixedOn(date).map(b=>(b.kind==="macro"?b:{...b,kind:"rout"}));
+  const t=tasksOn(date).map(x=>({...x,kind:"task"}));
+  return r.concat(t).sort((a,b)=>a.start-b.start);
+}
+
+/* ================================ TODAY ================================ */
+function renderToday(){
+  const t=todayISO();
+  const items=dayItems(t).sort((a,b)=>a.start-b.start);
+  const shown=state.settings.hideDone?items.filter(x=>!isDone(x,t)):items;
+  const pg=dayProgress(t);
+  const up=state.assess.filter(a=>a.mark==null&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
+  const load=weekLoad();
+  const late=state.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<t);
+  const cf=audit();
+  const dls=state.assess.filter(a=>a.due===t);
+
+  let hero="";
+  if(up){ const dd=dbet(t,up.due), sv=dd<0?"red":dd<=3?"red":dd<=10?"amber":"green";
+    hero=`<button class="topline" onclick="openAssess('${up.id}')">
+      <div><div class="big" style="color:var(--${sv})">${dd<0?"!":dd}</div>
+        <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:3px">${dd<0?"quá hạn":"ngày nữa"}</div></div>
+      <div class="grow">
+        <div style="font-weight:700;font-size:15px;letter-spacing:-.01em">${h(up.title)}</div>
+        <div class="sub" style="font-size:12.5px;color:var(--ink3);margin-top:3px">${TR[up.sub].code}${up.weight?" · "+up.weight+"%":""} · ${fmtD(up.due)}${up.dueTime?" "+up.dueTime:""}${up.prov?" · tạm tính":""}</div>
+      </div></button>`; }
+
+  document.getElementById("v-today").innerHTML=`
+  ${cf.length?`<div class="banner">${cf.length} việc chồng giờ<button class="btn sm" style="margin-left:auto" onclick="doReflow()">Dồn lại</button></div>`:""}
+  ${late.length?`<div class="banner" style="background:var(--red-soft);border-color:var(--red)">${late.length} việc quá hạn<button class="btn sm" style="margin-left:auto" onclick="pullOverdue()">Kéo về hôm nay</button></div>`:""}
+  ${hero}
+
+  <div class="sec-h"><h2>Việc hôm nay</h2><div class="rule"></div>
+    <button class="act" onclick="toggleHideDone()">${state.settings.hideDone?"Hiện việc đã xong":"Ẩn việc đã xong"}</button></div>
+  <div class="list" ondragover="dragOver(event)" ondrop="dropDay(event,'${t}')">
+    <div class="dprog"><b>${pg.d}/${pg.n}</b><div class="bar grow"><i style="width:${pg.n?pg.d/pg.n*100:0}%;background:var(--accent)"></i></div>
+      <button class="btn sm" onclick="addTask({date:'${t}'})">+ Việc</button></div>
+    ${dls.map(a=>dlRowHTML(a)).join("")}
+    ${shown.length?shown.map(x=>rowHTML(x,t)).join(""):'<div class="empty">Xong hết rồi.</div>'}
+  </div>
+
+  <div class="sec-h"><h2>Giữ nếp</h2><div class="rule"></div></div>
+  <div class="hchips">${state.habits.map(hb=>{const on=!!hb.log[t],st=habitStreak(hb);
+    return `<button class="hchip ${on?'on':''}" onclick="tgHabit('${hb.id}')"><span>${on?"✓":"○"} ${h(hb.label)}</span><span class="s">${st||0} ngày</span></button>`}).join("")}</div>
+
+  <button class="foldline" style="margin-top:12px" onclick="toggleFold('loadBox')">
+    Tải tuần <b class="num" style="margin-left:auto">${hrs(load.total)}h</b>
+    <span class="chip ${load.total>55?'red':load.total>46?'amber':'green'}">${load.total>55?'quá tải':load.total>46?'nặng':'vừa'}</span></button>
+  <div id="loadBox" hidden><div class="card" style="margin-top:8px">
+    <div class="bar tall">${TKEYS.filter(k=>load[k]>0).map(k=>`<i style="width:${load[k]/load.total*100}%;background:${TR[k].color}"></i>`).join("")}</div>
+    <div class="legend">${TKEYS.filter(k=>load[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(load[k])}h</span>`).join("")}</div>
+    <div class="note" style="margin-top:11px">Trong đó <b>12.5h cố định</b>: lớp 6.5h + DA 6h. Vỡ trận thì cắt theo thứ tự: đọc báo → 1 buổi gym → IELTS. Không cắt: ngủ, tiếng Trung 15', deadline.</div>
+  </div></div>`;
+}
+function toggleHideDone(){state.settings.hideDone=!state.settings.hideDone;save()}
+function toggleFold(id){const e=document.getElementById(id);if(e)e.hidden=!e.hidden}
+function tgHabit(id){const hb=state.habits.find(x=>x.id===id);if(!hb)return;const t=todayISO();
+  if(hb.log[t])delete hb.log[t];else hb.log[t]=true;save()}
+function tgDone(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
+  x.status=x.status==="done"?"pending":"done"; x.progress=x.status==="done"?100:(x.progress||0);
+  x.doneAt=x.status==="done"?todayISO():null; save()}
+function tgLock(id){const x=state.tasks.find(t=>t.id===id);if(x){x.locked=!x.locked;save()}}
+function doReflow(){const m=reflow();save();
+  openSheet(`<h3>Đã dồn lại lịch</h3><div class="sh-sub">${m.length} việc được đẩy sang chỗ trống gần nhất</div>
+   ${m.length?m.map(x=>`<div class="kv"><span>${h(x.t)}</span><b class="small">${x.to}</b></div>`).join(""):'<div class="note">Không có việc nào phải dời.</div>'}
+   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Xong</button></div>`)}
+function pullOverdue(){const t=todayISO();
+  state.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<t).forEach(x=>{
+    const s=nextFreeSlot(t,0,x.dur,x.id); if(s){x.date=s.date;x.start=s.start}else{x.date=t}});
+  save()}
+
+/* =============================== CALENDAR =============================== */
+function renderCal(){
+  const t=todayISO();
+  const head=`<div class="card" style="padding:12px 14px;margin-bottom:12px">
+    <div class="seg" style="margin-bottom:11px">
+      <button class="${calMode==='week'?'on':''}" onclick="calMode='week';render()">Tuần</button>
+      <button class="${calMode==='month'?'on':''}" onclick="calMode='month';render()">Tháng</button>
+    </div>
+    <div class="row">
+      <button class="btn sm ghost" onclick="${calMode==='week'?"weekOff--":"moveMonth(-1)"};render()">←</button>
+      <div class="grow" style="text-align:center" id="calTitle"></div>
+      <button class="btn sm ghost" onclick="${calMode==='week'?"weekOff++":"moveMonth(1)"};render()">→</button>
+    </div>
+    <div class="row" style="margin-top:10px;gap:7px">
+      <button class="btn sm ghost grow" onclick="weekOff=0;monthCur=null;render()">Hôm nay</button>
+      <button class="btn sm ghost grow" onclick="openEmergency()">${IC.bolt} Khẩn cấp</button>
+      <button class="btn sm ghost grow" onclick="doReflow()">Dồn lịch</button>
+    </div>
+    <div class="row" style="margin-top:7px;gap:7px">
+      <button class="btn sm ghost grow" onclick="toggleHideDone()">${state.settings.hideDone?"Hiện việc đã xong":"Ẩn việc đã xong"}</button>
+      <button class="btn sm ghost grow" onclick="openDays=new Set(['${todayISO()}']);render()">Thu gọn hết</button>
+    </div>
+  </div>`;
+  document.getElementById("v-cal").innerHTML=head+(calMode==="week"?weekHTML():monthHTML());
+  const ttl=document.getElementById("calTitle");
+  if(calMode==="week"){ const mon=addD(mondayOf(t),weekOff*7),sn=sessOfWeek(mon);
+    ttl.innerHTML=`<b style="font-size:14.5px">${sn?"Tuần "+sn+" · Session "+sn:"Ngoài kỳ"}</b><div class="small muted">${fmtD(mon)} – ${fmtD(addD(mon,6))}</div>`;
+  } else { const c=monthCur||t.slice(0,7)+"-01"; const d=D(c);
+    ttl.innerHTML=`<b style="font-size:14.5px">Tháng ${d.getMonth()+1}/${d.getFullYear()}</b>`; }
+}
+function moveMonth(n){const c=monthCur||todayISO().slice(0,7)+"-01";const d=D(c);d.setMonth(d.getMonth()+n,1);monthCur=iso(d)}
+function weekHTML(){
+  const t=todayISO(), mon=addD(mondayOf(t),weekOff*7), out=[];
+  for(let i=0;i<7;i++){
+    const d=addD(mon,i);
+    const all=dayItems(d).sort((a,b)=>a.start-b.start);
+    const items=state.settings.hideDone?all.filter(x=>!isDone(x,d)):all;
+    const dl=state.assess.filter(a=>a.due===d);
+    const pg=dayProgress(d), open=openDays.has(d)||d===t;
+    const tracks=[...new Set(all.map(x=>x.track))];
+    out.push(`<div class="daybox ${d===t?'today':''}" ondragover="dragOver(event)" ondrop="dropDay(event,'${d}')">
+      <button class="dayhead" onclick="tgDay2('${d}')">
+        <b>${["T2","T3","T4","T5","T6","T7","CN"][i]}</b><span class="dn2">${fmtD(d)}</span>
+        ${dl.length?`<span class="chip red">${dl.length} hạn</span>`:""}
+        <span class="cnt"><span class="dots">${tracks.map(k=>`<i style="background:${(TR[k]||TR.LIFE).color}"></i>`).join("")}</span>${pg.d}/${pg.n}<span style="opacity:.5">${open?"▾":"▸"}</span></span>
+      </button>
+      ${open?`<div class="list" style="border:none;border-radius:0;border-top:1px solid var(--line)">
+        ${dl.map(a=>dlRowHTML(a)).join("")}
+        ${items.length?items.map(x=>rowHTML(x,d)).join(""):'<div class="empty">Trống — kéo việc vào đây</div>'}
+        <div class="rowit" style="justify-content:center"><button class="btn sm ghost" onclick="addTask({date:'${d}'})">+ Thêm việc ngày này</button></div>
+      </div>`:""}
+    </div>`);
+  }
+  return out.join("");
+}
+let openDays=new Set();
+function tgDay2(d){ if(openDays.has(d))openDays.delete(d); else openDays.add(d); render(); }
+function monthHTML(){
+  const t=todayISO(), c=monthCur||t.slice(0,7)+"-01", first=D(c);
+  const start=mondayOf(iso(first)); const cells=[];
+  for(let i=0;i<42;i++){
+    const d=addD(start,i), out=d.slice(0,7)!==c.slice(0,7);
+    const items=tasksOn(d).filter(x=>x.status!=="done"), dl=state.assess.filter(a=>a.due===d);
+    const tracks=[...new Set(dayItems(d).map(x=>x.track))];
+    cells.push(`<button class="mc ${out?'out':''} ${d===t?'today':''}" ondragover="dragOver(event)" ondrop="dropDay(event,'${d}')" onclick="weekOff=Math.round(dbet(mondayOf(todayISO()),mondayOf('${d}'))/7);calMode='week';render()">
+      <span class="dn">${D(d).getDate()}</span>
+      ${dl.map(a=>`<span class="mtag" style="color:var(--red);font-weight:700">${h(a.title.slice(0,14))}</span>`).join("")}
+      ${items.slice(0,2).map(x=>`<span class="mtag">• ${h(x.t.slice(0,16))}</span>`).join("")}
+      ${items.length>2?`<span class="mtag muted">+${items.length-2}</span>`:""}
+      <span class="dot" style="background:linear-gradient(90deg,${tracks.map(k=>(TR[k]||TR.LIFE).color).join(",")||"transparent"})"></span>
+    </button>`);
+  }
+  return `<div class="mgrid">${["T2","T3","T4","T5","T6","T7","CN"].map(x=>`<div class="mh">${x}</div>`).join("")}${cells.join("")}</div>
+  <div class="note" style="margin-top:12px">Bấm vào ngày để mở tuần đó. Trên máy tính có thể kéo thẳng việc từ ngày này sang ngày khác.</div>`;
+}
+/* drag & drop */
+let dragId=null;
+function dragStart(e,id){dragId=id;e.dataTransfer.setData("text/plain",id);e.dataTransfer.effectAllowed="move";e.target.classList.add("dragging")}
+function dragEnd(e){e.target.classList.remove("dragging");document.querySelectorAll(".drop-on").forEach(x=>x.classList.remove("drop-on"))}
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect="move"}
+function dropDay(e,date){
+  e.preventDefault();
+  const id=dragId||e.dataTransfer.getData("text/plain"); dragId=null;
+  const x=state.tasks.find(t=>t.id===id); if(!x)return;
+  const s=freeSlots(date,x.dur,x.id,x.start)[0]||freeSlots(date,x.dur,x.id,0)[0];
+  x.date=date; if(s)x.start=s.start;
+  save();
+}
+
+/* =============================== DEADLINE =============================== */
+function renderDead(){
+  const t=todayISO();
+  const A=state.assess.slice().sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
+  const rows=A.map(a=>{
+    const dd=a.due?dbet(t,a.due):null, done=a.mark!=null;
+    const sv=done?"done":(dd<0?"red":dd<=3?"red":dd<=10?"amber":"green");
+    return `<button class="dl s-${sv}" onclick="openAssess('${a.id}')">
+      <div class="dl-main"><div class="dl-t">${h(a.title)}
+        ${a.weight?`<span class="w-badge ${a.weight>=40?'big':''}">${a.weight}%</span>`:`<span class="chip" style="background:${TR[a.sub].color};color:#fff;border-color:transparent">mốc</span>`}
+        ${a.mandatory?'<span class="chip">bắt buộc</span>':''}${a.mode==="Nhóm"?'<span class="chip blue">nhóm</span>':''}
+        ${a.prov?'<span class="chip amber">tạm tính</span>':''}</div>
+        <div class="dl-sub"><span class="subject-dot" style="background:${TR[a.sub].color};display:inline-block;margin-right:5px"></span>${TR[a.sub].code} · ${a.due?fmtFull(a.due):"chưa có ngày"}${a.dueTime?" "+a.dueTime:""}</div></div>
+      <div class="dl-r">${done?`<span class="chip green">${a.mark}%</span>`:`<div class="cd ${sv}">${dd<0?"trễ":dd}<small>${dd<0?Math.abs(dd)+" ngày":"ngày"}</small></div>`}</div></button>`;
+  }).join("");
+  const open=state.tasks.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const months={}; open.forEach(x=>{const k=x.date.slice(0,7);(months[k]=months[k]||[]).push(x)});
+  const acc=Object.keys(months).sort().map(k=>{
+    const[y,m]=k.split("-"), left=months[k].filter(x=>x.status!=="done").length;
+    return `<details class="acc" ${(k>=t.slice(0,7)&&left)?"open":""}><summary>Tháng ${+m}/${y}<span class="chip ${left?'':'green'}" style="margin-left:auto">${left?left+" việc":"xong"}</span></summary>
+      <div class="acc-b" style="padding:0 0 6px"><div class="list" style="border:none">${months[k].map(x=>rowHTML({...x,kind:"task"},x.date).replace('<div class="sub">','<div class="sub">'+fmtD(x.date)+' · ')).join("")}</div></div></details>`;
+  }).join("");
+  document.getElementById("v-dead").innerHTML=`
+  <div class="sec-h"><h2>${A.length} mốc chấm điểm & nộp bài</h2><div class="rule"></div><button class="act" onclick="openAssess('')">+ Thêm</button></div>
+  <div class="ledger">${rows}</div>
+  <div class="note" style="margin-top:12px">“Tạm tính” = ngày mình đặt tạm để còn đếm ngược. Bấm vào dòng đó để thay bằng ngày thật khi Ultra / MindX công bố.</div>
+  <div class="sec-h"><h2>Việc bắc cầu tới deadline</h2><div class="rule"></div><button class="act" onclick="addTask({})">+ Thêm</button></div>
+  ${acc||'<div class="card muted small">Chưa có việc nào.</div>'}`;
+}
+
+/* ================================ TRACKS ================================ */
+function renderTrack(){
+  const goals=state.goals.map(g=>goalHTML(g)).join("");
+  document.getElementById("v-track").innerHTML=`
+  <div class="sec-h"><h2>Mục tiêu & thời gian đạt</h2><div class="rule"></div><button class="act" onclick="editGoal('')">+ Goal</button></div>
+  ${goals}
+  <div class="sec-h"><h2>Chi tiết từng mảng</h2><div class="rule"></div><span class="small muted">bấm để mở</span></div>
+  ${schoolAcc()}${macroAcc()}${daAcc()}${ieltsAcc()}${zhAcc()}${baseAcc()}`;
+}
+function goalHTML(g){
+  const c=TR[g.track]||TR.LIFE, s=goalStats(g);
+  return `<div class="goal">
+    <div class="goal-h">
+      <div class="ico" style="background:${c.color}22">${c.ico}</div>
+      <div class="grow"><b style="font-size:14.5px">${h(g.name)}</b>
+        <div class="small muted">${c.name}${g.targetDate?" · mục tiêu "+fmtD(g.targetDate):" · không đặt hạn cứng"}</div></div>
+      <button class="mini-btn" onclick="editGoal('${g.id}')">${IC.more}</button>
+    </div>
+    <div class="bar tall"><i style="width:${s.st.pct}%;background:${c.color}"></i></div>
+    <div class="legend"><span>${s.st.pct}% · ${hrs(s.st.done)}/${hrs(s.st.all)}${g.src==="school"?" điểm":"h"}</span>
+      <span style="margin-left:auto">còn ${hrs(s.st.left)}${g.src==="school"?" điểm":"h"}</span></div>
+    ${s.byPoints?"":`<div class="eta">
+      <div><span>Theo khung tuần (${hrs(s.planned)}h)</span><b>${s.etaPlan?fmtD(s.etaPlan)+" · "+Math.ceil(dbet(todayISO(),s.etaPlan)/7)+" tuần":"chưa cấp giờ"}</b></div>
+      <div><span>Theo nhịp thật (${hrs(s.pace)}h)</span><b>${s.etaPace?fmtD(s.etaPace)+" · "+Math.ceil(dbet(todayISO(),s.etaPace)/7)+" tuần":"chưa có dữ liệu"}</b></div>
+    </div>`}
+    ${s.verdict?`<div class="verdict ${s.verdict.c}">${s.verdict.t}</div>`:""}
+    ${g.note?`<div class="note" style="margin-top:10px">${h(g.note)}</div>`:""}
+  </div>`;
+}
+function unitList(phases,kind){
+  return phases.map(p=>{
+    const n=p.units.length,nd=p.units.filter(u=>u.done).length;
+    const hh=p.units.reduce((s,u)=>s+u.hh,0),hd=p.units.filter(u=>u.done).reduce((s,u)=>s+u.hh,0);
+    return `<details class="acc" style="margin-top:8px"><summary>${h(p.name)}<span class="chip ${nd===n?'green':''}" style="margin-left:auto">${nd}/${n}</span></summary>
+    <div class="acc-b"><div class="small muted" style="margin-bottom:8px">${h(p.goal)} · ${hrs(hd)}/${hrs(hh)}h</div>
+    ${p.units.map(u=>`<div class="ck ${u.done?'done':''}" onclick="tgUnit('${kind}','${p.id}','${u.id}')"><span class="box">${IC.check}</span>
+      <div class="grow"><div class="ck-t">${h(u.t)}</div><div class="ck-s">${u.hh}h${u.at?" · xong "+fmtD(u.at):""}</div></div></div>`).join("")}
+    </div></details>`}).join("");
+}
+function tgUnit(kind,pid,uid_){
+  const arr=kind==="ielts"?state.ielts.phases:state.zh.phases;
+  const p=arr.find(x=>x.id===pid); if(!p)return; const u=p.units.find(x=>x.id===uid_); if(!u)return;
+  u.done=!u.done; u.at=u.done?todayISO():null; save();
+}
+function schoolAcc(){
+  const cards=["IF","BF"].map(k=>{
+    const s=TR[k], items=state.assess.filter(a=>a.sub===k&&a.weight>0).sort((a,b)=>(a.due||"").localeCompare(b.due||""));
+    let earned=0,doneW=0; items.forEach(a=>{if(a.mark!=null){earned+=a.weight*a.mark/100;doneW+=a.weight}});
+    const leftW=100-doneW, need=x=>leftW>0?Math.max(0,Math.min(100,(x-earned)/leftW*100)):null;
+    return `<div style="margin-top:12px"><b style="font-size:13.5px"><span class="subject-dot" style="background:${s.color};margin-right:6px"></span>${s.code} · ${s.name}</b>
+      <div class="small muted" style="margin:3px 0 8px">${k==="IF"?"T7":"T6"} 12:00–15:15 · ${k==="IF"?"D102 · Bùi Hồng Mai":"D402 · Lê Anh Tuấn"}</div>
+      <div class="scroll-x"><table class="grid"><tr><th>Đầu điểm</th><th class="n">%</th><th class="n">Hạn</th><th style="text-align:right">Điểm</th></tr>
+      ${items.map(a=>`<tr onclick="openAssess('${a.id}')" style="cursor:pointer"><td><b>${h(a.title)}</b><div class="small muted">${a.mode}${a.mandatory?" · bắt buộc":""}</div></td>
+        <td class="n">${a.weight}</td><td class="n">${fmtD(a.due)}${a.prov?'<div class="small" style="color:var(--amber)">tạm</div>':""}</td><td class="n">${a.mark??"—"}</td></tr>`).join("")}
+      </table></div>
+      <div class="card" style="background:var(--surface2);margin-top:10px;padding:12px">
+        <div class="small" style="font-weight:700;margin-bottom:6px">Đang có ${earned.toFixed(1)} / 100</div>
+        ${leftW>0?`<div class="kv"><span>Để Pass (50)</span><b>${need(50).toFixed(0)}% phần còn lại</b></div>
+        <div class="kv"><span>Để Credit (65)</span><b>${need(65).toFixed(0)}%</b></div>
+        <div class="kv"><span>Để Distinction (75)</span><b>${need(75).toFixed(0)}%</b></div>`:'<div class="small muted">Đã có đủ điểm.</div>'}
+      </div></div>`}).join("");
+  const sess=[];for(let n=2;n<=N_SESS;n++){const d=sessDates(n);
+    sess.push(`<tr><td class="n">S${n}</td><td class="n">${fmtD(d.fri)}</td><td class="n">${fmtD(d.sat)}</td></tr>`)}
+  return `<details class="acc"><summary>🎓 Trường — 2 môn cuối<span class="chip" style="margin-left:auto">180% trọng số</span></summary>
+   <div class="acc-b">
+     <div class="warnbox">90% điểm IF nằm ở Mid + Final → môn này phải học cumulative. Banking ngược lại: 60% là coursework, chốt được điểm <b>trước</b> Final. Ưu tiên: IF Final → Report 40% → IF Mid → Banking present → IF present.</div>
+     ${cards}
+     <div class="kv" style="margin-top:14px"><span>ECON3014</span><b>≥50 tổng · cả 3 đầu điểm bắt buộc</b></div>
+     <div class="kv"><span>FINC3022</span><b>≥50 tổng · chỉ Final bắt buộc</b></div>
+     <div class="note" style="margin-top:9px">IF <b>được</b> dùng AI (phải khai báo). BFN <b>cấm</b> hoàn toàn. DA thì AI là nội dung học. Ba chế độ khác nhau trong cùng một kỳ — đừng lẫn.</div>
+     <div class="scroll-x" style="margin-top:12px"><table class="grid"><tr><th>Session</th><th>T6 Banking</th><th>T7 IF</th></tr>${sess.join("")}</table></div>
+   </div></details>`;
+}
+function daAcc(){
+  const S=state.da.sessions||[], done=S.filter(x=>x.done).length;
+  return `<details class="acc"><summary>📊 DA MindX kỳ 2<span class="chip ${done===S.length?'green':''}" style="margin-left:auto">${done}/${S.length} buổi</span></summary>
+   <div class="acc-b">
+    <div class="warnbox">Va chạm lớn nhất cả kỳ: <b>13–17/10</b> — nhận đề Final Test (buổi 12) và nộp (buổi 13) kẹp đúng ngày mid-sem IF. Cách xử lý duy nhất là đẩy việc lên tháng 9 và báo nhóm từ đầu tháng 10 rằng phần của mình xong trước 13/10.</div>
+    <div class="note" style="margin:10px 0">${h(state.da.note)}</div>
+    ${S.map(x=>`<div class="ck ${x.done?'done':''}" onclick="tgDaSess(${x.n})"><span class="box">${IC.check}</span>
+      <div class="grow"><div class="ck-t">Buổi ${x.n} · ${h(x.t)}</div><div class="ck-s">${fmtFull(x.d)} · 19:15–22:15</div></div></div>`).join("")}
+    <div class="note" style="margin-top:11px"><b>Luật 48 giờ:</b> trong 2 ngày sau mỗi buổi, làm lại phần thực hành từ đầu không nhìn note. 45 phút làm lại đáng giá hơn 3 tiếng đọc slide.<br><b>Final Project:</b> churn + RFM khách hàng ngân hàng/CTCK, dữ liệu public Kaggle. Nhận phần phân tích + viết báo cáo, đẩy làm sạch dữ liệu và slide cho người khác. Tuyệt đối không dùng dữ liệu khách thật của Kafi/SSI.</div>
+   </div></details>`;
+}
+function tgDaSess(n){const s=(state.da.sessions||[]).find(x=>x.n===n);if(s){s.done=!s.done;save()}}
+function ieltsAcc(){
+  const I=state.ielts, st=unitStats(ielUnits()), mocks=I.mocks.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const last=mocks[mocks.length-1], lo=last?mockOverall(last):null;
+  const gate=mocks.length>=2&&mockOverall(mocks[mocks.length-1])>=I.aim&&mockOverall(mocks[mocks.length-2])>=I.aim;
+  const mx=Math.max(9,...mocks.map(m=>mockOverall(m)||0));
+  return `<details class="acc"><summary>📝 IELTS ${I.aim.toFixed(1)}<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
+   <div class="acc-b">
+     <div class="warnbox">Không có deadline cứng — nhưng cửa sổ rẻ nhất là <b>tháng 9 đến giữa tháng 10</b>, và <b>từ 27/11 sau khi thi xong</b>. Tháng 11 gần như không còn chỗ (Report 8/11 + thi từ 23/11).</div>
+     <div class="note" style="margin:10px 0">Cổng đặt lịch thi: đạt ${I.aim.toFixed(1)} ở <b>2 mock liên tiếp</b>, không kỹ năng nào dưới 6.5.${gate?' <b style="color:var(--green)">→ Đủ điều kiện rồi.</b>':""}${lo?` Mock gần nhất: <b>${lo.toFixed(1)}</b>.`:" Chưa có mock nào."}</div>
+     ${unitList(I.phases,"ielts")}
+     <div class="sec-h" style="margin:16px 0 8px"><h2>Mock log</h2><div class="rule"></div><button class="act" onclick="editMock('')">+ Thêm</button></div>
+     ${mocks.length?`<div class="spark" style="margin-bottom:12px">${mocks.slice(-8).map((m,i,a)=>`<i class="${i===a.length-1?'last':''}" style="height:${Math.max(6,(mockOverall(m)||0)/mx*100)}%"></i>`).join("")}</div>
+     <div class="scroll-x"><table class="grid"><tr><th>Ngày</th><th class="n">R</th><th class="n">L</th><th class="n">W</th><th class="n">S</th><th style="text-align:right">Overall</th></tr>
+     ${mocks.slice().reverse().map(m=>`<tr onclick="editMock('${m.id}')" style="cursor:pointer"><td>${fmtD(m.date)}</td><td class="n">${m.r||"—"}</td><td class="n">${m.l||"—"}</td><td class="n">${m.w||"—"}</td><td class="n">${m.s||"—"}</td>
+     <td class="n"><b style="color:${(mockOverall(m)||0)>=I.aim?"var(--green)":"var(--ink)"}">${mockOverall(m)?mockOverall(m).toFixed(1):"—"}</b></td></tr>`).join("")}</table></div>`
+     :'<div class="empty">Chưa có mock nào. Bắt đầu bằng bộ baseline ở Phase 0 — chưa cần điểm đẹp, cần con số thật.</div>'}
+     <label class="fld" style="margin-top:14px"><span>Ngày thi (để trống nếu chưa đặt)</span><input type="date" value="${I.examDate||""}" onchange="state.ielts.examDate=this.value;save()"></label>
+   </div></details>`;
+}
+function zhAcc(){
+  const st=unitStats(zhUnits());
+  return `<details class="acc"><summary>汉 Tiếng Trung<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
+   <div class="acc-b">
+     <div class="warnbox">Thứ tự là <b>bắt buộc</b>: nhảy cóc pinyin là hỏng toàn bộ phần sau. Chưa qua test 16/20 thì chưa được học sang chữ Hán.</div>
+     ${unitList(state.zh.phases,"zh")}
+     <div class="note" style="margin-top:11px">${state.zh.rules.map(r=>h(r)).join("<br>")}</div>
+   </div></details>`;
+}
+function baseAcc(){
+  return `<details class="acc"><summary>🌱 Nền & những thứ chưa chốt<span class="chip" style="margin-left:auto">${state.confirm.filter(c=>!c.done).length} cần hỏi</span></summary>
+   <div class="acc-b">
+     ${state.habits.map(hb=>`<div class="kv"><span><b>${h(hb.label)}</b><div class="small muted">${h(hb.rule)}</div></span><b>${habitStreak(hb)} ngày</b></div>`).join("")}
+     <div class="sec-h" style="margin:14px 0 6px"><h2>Cần xác nhận</h2><div class="rule"></div></div>
+     ${state.confirm.map(c=>`<div class="ck ${c.done?'done':''}" onclick="tgConfirm('${c.id}')"><span class="box">${IC.check}</span><div class="ck-t">${h(c.t)}</div></div>`).join("")}
+     <div class="note" style="margin-top:10px">Check Ultra tối thiểu 2 lần/tuần — cả 2 outline đều nói timetable có thể đổi.</div>
+   </div></details>`;
+}
+function tgConfirm(id){const c=state.confirm.find(x=>x.id===id);if(c){c.done=!c.done;save()}}
+
+/* ================================= YEAR ================================= */
+function renderYear(){
+  const t=todayISO();
+  const RM=[
+   {w:"Tháng 9",d:"2026-09-01",e:"2026-09-30",h:"Vào guồng",p:"Bốn thứ chạy song song lần đầu: trường + DA + tiếng Trung + IELTS. Front-load ôn mid-sem IF ngay từ tuần 1 vì tháng 10 sẽ không còn chỗ. Pinyin xong trong 2 tuần rồi mới sang HSK1."},
+   {w:"Tháng 10",d:"2026-10-01",e:"2026-10-31",h:"Nặng nhất trong kỳ",p:"13–17/10 là điểm va chạm: nhận đề + nộp Final Test DA kẹp quanh mid-sem IF. DA kỳ 2 kết thúc 27/10 → từ 28/10 buổi tối trống hoàn toàn."},
+   {w:"Tháng 11",d:"2026-11-01",e:"2026-11-30",h:"Không còn khoảng nghỉ",p:"Report 40% hạn 8/11, buổi học cuối 20–21/11, thi từ 23/11. Kế hoạch cũ tính thi giữa tháng 12 — lịch mới sớm hơn 2–3 tuần, nên ôn thi phải bắt đầu từ 9/11 chứ không phải 20/11. Tiếng Trung rút còn 15–20'/ngày, IELTS tạm dừng."},
+   {w:"Tháng 12",d:"2026-12-01",e:"2026-12-31",h:"Cửa sổ vừa mở ra",p:"Thi xong sớm hơn dự tính → nửa sau tháng 12 trống hơn kế hoạch cũ. Đây là chỗ đẩy IELTS mạnh nhất, đồng thời nộp hồ sơ LPBS và ghi danh DA kỳ 3."},
+   {w:"Q1 2027",d:"2027-01-01",e:"2027-03-31",h:"Tốt nghiệp · vào LPBS · DA kỳ 3",p:"Tháng đầu ở chỗ làm mới luôn nặng hơn dự tính — đừng nhét thêm gì. Tiếng Trung chuyển sang gia sư 1-kèm-1. Đăng ký CCHN."},
+   {w:"Q2 2027",d:"2027-04-01",e:"2027-06-30",h:"CCHN là mục tiêu duy nhất",p:"CCHN là điều kiện cần để hành nghề ở LPBS — bắt buộc. CFA là bonus. Chạy song song thì thứ bị hy sinh luôn là CCHN."},
+   {w:"Q3 2027+",d:"2027-07-01",e:"2027-12-31",h:"CFA Level 1",p:"Nền WSU + L1 prep 10/2025 kéo khối lượng từ ~350h xuống ~250h, không xuống 100h. Ethics, Derivatives, Alternative Investments và độ sâu FRA không overlap. Tiếng Trung lên HSK 3."}
+  ];
+  const RULES=[
+   "Tiếng Trung mỗi ngày, kể cả 15 phút. Thứ này chết vì đứt quãng chứ không chết vì thiếu giờ.",
+   "Tối T6 và T7 để trống. Hai ngày đó đã kín từ sáng tới chiều — nhét việc vào là đuối ở tuần 6–7.",
+   "IF được dùng AI (có khai báo) · BFN cấm hoàn toàn · DA thì AI là nội dung học. Ba chế độ, đừng lẫn — đây là rủi ro academic misconduct thật.",
+   "Đọc chương trước khi lên lớp. BFN nặng tính toán (repricing, duration, credit risk) — nghe chay không kịp.",
+   "Report 40% là chỗ chốt điểm trước Final: từ 19/9 trở đi, tuần nào cũng phải chạm vào nó ít nhất một lần.",
+   "Vỡ trận thì cắt theo thứ tự: Free → Đọc báo → 1 buổi gym. KHÔNG cắt: giấc ngủ, tiếng Trung 15', deadline."
+  ];
+  document.getElementById("v-year").innerHTML=`
+  <div class="card">
+    <div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10.5px">Nguyên tắc xuyên suốt</div>
+    <div style="font-weight:700;font-size:15.5px;margin-top:4px">Mỗi giai đoạn chỉ có 1 mục tiêu nặng. Còn lại là duy trì.</div>
+    <div class="warnbox" style="margin-top:11px">Hai chỗ kế hoạch cũ (17/8) đã lệch: <b>IELTS không đóng được trong tháng 8</b> nên giờ phải chạy nền suốt kỳ thay vì là mục tiêu nặng; và <b>BFN đổi syllabus</b> — không còn 10 quiz 30%, thi cuối kỳ dời từ giữa 12 lên <b>từ 23/11</b>. Chủ nhật không còn là ngày quiz.</div>
+  </div>
+  <div class="sec-h"><h2>Đường đi 12 tháng</h2><div class="rule"></div></div>
+  <div class="card"><div class="rm">${RM.map(r=>`<div class="rmi ${t>=r.d&&t<=r.e?'now':''}">
+    <div class="when">${r.w}${t>=r.d&&t<=r.e?" · đang ở đây":""}</div><h4>${r.h}</h4><p>${r.p}</p></div>`).join("")}</div></div>
+  <details class="acc" style="margin-top:16px"><summary>6 luật tuần</summary><div class="acc-b">${RULES.map((r,i)=>`<div class="kv"><span><b class="num" style="color:var(--accent);margin-right:8px">${i+1}</b>${h(r)}</span></div>`).join("")}</div></details>
+  <details class="acc" style="margin-top:9px"><summary>Thứ tự ưu tiên nếu phải chọn</summary><div class="acc-b">
+   <div class="kv"><span>1 · IF Final</span><b>60%</b></div>
+   <div class="kv"><span>2 · Banking Report</span><b>40% · hạn cứng 8/11</b></div>
+   <div class="kv"><span>3 · Banking Final</span><b>40%</b></div>
+   <div class="kv"><span>4 · IF Mid</span><b>30%</b></div>
+   <div class="kv"><span>5 · Banking Presentation</span><b>20%</b></div>
+   <div class="kv"><span>6 · IF Presentation</span><b>10% · nhưng bắt buộc</b></div>
+   <div class="note" style="margin-top:10px">CCHN đứng trước CFA: CCHN là điều kiện cần để hành nghề ở LPBS. Chạy song song thì thứ bị hy sinh luôn là CCHN — và đó là thứ không được phép hy sinh.</div>
+  </div></details>`;
+}
+
+
+/* ============================== MACRO ============================== */
+function openMacro(date){
+  const m=macroFor(date); if(!m) return;
+  const qs=m.se.q.split("|").filter(Boolean);
+  const done=isDone(m,date);
+  openSheet(`<h3>Macro ${m.w}.${m.d} — ${h(m.se.t)}</h3>
+   <div class="sh-sub">Tuần ${m.w} · ${h(m.wk.m)} · ${fmtFull(date)} · ${state.macro.time} · ${state.macro.dur} phút</div>
+   <div class="mblk"><span class="mlab">Chủ đề tuần</span>${h(m.wk.f)}</div>
+   <div class="mblk"><span class="mlab">Học gì trong 30 phút</span>${h(m.se.l)}</div>
+   <div class="mblk"><span class="mlab">Câu hỏi mang sang hỏi chat</span>
+     ${qs.map(q=>`<div class="mq">“${h(q)}”</div>`).join("")}</div>
+   <div class="mblk out"><span class="mlab">Outcome bắt buộc</span><b>${h(m.se.o)}</b></div>
+   ${m.wk.g?`<div class="warnbox" style="margin-top:10px"><b>Cổng năng lực tuần ${m.w}:</b> ${h(m.wk.g)}</div>`:""}
+   <div class="note" style="margin-top:10px">Luật: không có buổi nào không sinh ra output. Đọc mà không sinh artifact thì coi như chưa học.</div>
+   <div class="sheet-foot">
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="tgDay('${m.id}','${date}');closeSheet()">${done?"Bỏ đánh dấu":"Đánh dấu xong"}</button></div>`);
+}
+function macroAcc(){
+  const st=macroStats(), M=state.macro;
+  const PH={A:"A · Ngôn ngữ macro",B:"B · Dòng tiền & mẫu số",C:"C · Truyền dẫn về VN"};
+  let lastPh="";
+  const weeks=MACRO_WEEKS.map(w=>{
+    const d=macroWeekDone(w.n), end=addD(w.d,6);
+    const head=(w.p!==lastPh)?`<div class="sec-h" style="margin:14px 0 6px"><h2>${PH[w.p]}</h2><div class="rule"></div></div>`:"";
+    lastPh=w.p;
+    return head+`<details class="acc" style="margin-top:7px"><summary>Tuần ${w.n} · ${h(w.m)}
+      <span class="chip ${d===7?'green':''}" style="margin-left:auto">${d}/7</span></summary>
+      <div class="acc-b">
+        <div class="small muted" style="margin-bottom:8px">${fmtD(w.d)} – ${fmtD(end)} · ${h(w.f)}</div>
+        <div class="kv"><span>Output tuần</span><b class="small">${h(w.o)}</b></div>
+        ${w.g?`<div class="note" style="margin-top:8px"><b>🚧 Cổng:</b> ${h(w.g)}</div>`:""}
+        <div class="list" style="margin-top:9px">${w.s.map((se,i)=>{
+          const dt=addD(w.d,i), dn=!!((state.dlog||{})[dt]||{})["mc-"+w.n+"-"+(i+1)];
+          return `<div class="rowit ${dn?'done':''}" style="--c:${TR.MACRO.color}">
+            <button class="tick" onclick="tgDay('mc-${w.n}-${i+1}','${dt}')">${IC.check}</button>
+            <span class="tm">${["T2","T3","T4","T5","T6","T7","CN"][i]}</span>
+            <div class="rt" onclick="openMacro('${dt}')"><b>${h(se.t)}</b><div class="sub">${fmtD(dt)} · ${h(se.o)}</div></div></div>`;
+        }).join("")}</div>
+      </div></details>`;
+  }).join("");
+  return `<details class="acc"><summary>🧭 Macro & Equity Thinking<span class="chip ${st.pct===100?'green':''}" style="margin-left:auto">${st.done}/${st.n}</span></summary>
+   <div class="acc-b">
+     <div class="warnbox">12 tuần × 30 phút/ngày, cố định ${M.time}. Rút gọn từ khoá 24 tuần: giữ trọn phần tư duy (M1→M8) và phần macro→ngành; <b>bỏ phần xây dashboard và regime scorecard</b> — hai module đó trùng kỹ năng với DA L3 nên để làm sau, một lần tính cho cả hai.</div>
+     <div class="bar tall" style="margin-top:10px"><i style="width:${st.pct}%;background:${TR.MACRO.color}"></i></div>
+     <div class="legend"><span>${st.pct}% · ${hrs(st.hDone)}/${hrs(st.hAll)}h</span><span style="margin-left:auto">14/9 → 6/12/2026</span></div>
+     <div class="note" style="margin-top:10px"><b>3 luật học:</b> ① Không buổi nào không sinh output. ② Học bằng dữ liệu thật của tuần đó, không dùng ví dụ đóng hộp. ③ Không qua cổng năng lực thì lặp lại, đừng đi tiếp.<br><b>Đọc hằng ngày, giữ tối thiểu:</b> 1 nguồn quốc tế cho cơ chế · 1 bản tin sáng VN · lịch kinh tế sáng thứ Hai. Dừng ở đó — đọc nhiều nguồn chỉ làm nhớ nhiều tiêu đề hơn.</div>
+     ${weeks}
+   </div></details>`;
+}
+
+/* ================================ SHEETS ================================ */
+function openSheet(html){document.getElementById("sheet").innerHTML=html;document.getElementById("back").classList.add("open")}
+function closeSheet(){document.getElementById("back").classList.remove("open")}
+function v(id){const e=document.getElementById(id);return e?e.value:""}
+function ck(id){const e=document.getElementById(id);return e?e.checked:false}
+function trackOpts(sel){return TKEYS.map(k=>`<option value="${k}" ${sel===k?"selected":""}>${TR[k].ico} ${TR[k].name}</option>`).join("")}
+
+function quickAdd(){
+  openSheet(`<h3>Thêm nhanh</h3><div class="sh-sub">Chọn loại</div>
+   <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn" onclick="closeSheet();addTask({date:'${todayISO()}'})">📌 Việc có ngày giờ</button>
+    <button class="btn" onclick="closeSheet();openAssess('')">🎯 Mốc chấm điểm / deadline</button>
+    <button class="btn" onclick="closeSheet();editBlock(${dow(todayISO())},'')">🔁 Block lặp mỗi tuần</button>
+    <button class="btn" onclick="closeSheet();editGoal('')">🏁 Goal mới</button>
+    <button class="btn" onclick="closeSheet();openEmergency()">⚡ Lịch khẩn cấp</button>
+   </div><div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
+}
+function addTask(pre){ openTask("",pre||{}) }
+function openTask(id,pre){
+  const x=state.tasks.find(t=>t.id===id)||Object.assign({id:"",t:"",track:"IF",date:todayISO(),start:540,dur:60,pri:3,status:"pending",progress:0,note:"",link:"",locked:false},pre||{});
+  const isNew=!x.id;
+  openSheet(`<h3>${isNew?"Việc mới":"Chi tiết việc"}</h3><div class="sh-sub">${isNew?"Đặt ngày giờ để nó nằm trên lịch":fmtFull(x.date)+" · "+hhmm(x.start)+"–"+hhmm(taskEnd(x))}</div>
+   <label class="fld"><span>Nội dung</span><textarea id="xT">${h(x.t)}</textarea></label>
+   <div class="two"><label class="fld"><span>Ngày</span><input type="date" id="xD" value="${x.date}"></label>
+     <label class="fld"><span>Bắt đầu</span><input type="time" id="xS" value="${hhmm(x.start)}"></label></div>
+   <div class="two"><label class="fld"><span>Dài (phút)</span><input type="number" id="xU" value="${x.dur}" step="15" min="15"></label>
+     <label class="fld"><span>Mảng</span><select id="xK">${trackOpts(x.track)}</select></label></div>
+   <label class="fld"><span>Gắn với mốc</span><select id="xL"><option value="">—</option>
+     ${state.assess.map(a=>`<option value="${a.id}" ${x.link===a.id?"selected":""}>${TR[a.sub].short} · ${h(a.title)}</option>`).join("")}</select></label>
+   ${!isNew?`<label class="fld"><span>Tiến độ: <b id="pgV">${x.progress||0}</b>%</span>
+     <input type="range" min="0" max="100" step="10" value="${x.progress||0}" oninput="document.getElementById('pgV').textContent=this.value" id="xP"></label>`:""}
+   <label class="fld"><span><input type="checkbox" id="xLk" ${x.locked?"checked":""} style="width:auto;margin-right:7px">Khoá giờ này (không cho tự dời)</span></label>
+   ${!isNew?`<div class="row" style="gap:7px;margin-bottom:12px">
+     <button class="btn sm grow" onclick="pushNext('${x.id}')">Đẩy sang chỗ trống kế tiếp</button>
+     <button class="btn sm grow" onclick="setStatus('${x.id}','skipped')">Bỏ qua</button></div>`:""}
+   <div class="sheet-foot">
+     ${!isNew?`<button class="btn danger" onclick="delTask('${x.id}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="saveTask('${x.id}')">Lưu</button></div>`);
+}
+function saveTask(id){
+  let x=state.tasks.find(t=>t.id===id);
+  if(!x){x={id:"x"+uid(),status:"pending",progress:0};state.tasks.push(x)}
+  x.t=v("xT")||"Việc mới"; x.date=v("xD")||todayISO(); x.start=mm(v("xS")||"09:00");
+  x.dur=+v("xU")||60; x.track=v("xK"); x.link=v("xL"); x.locked=ck("xLk");
+  const p=document.getElementById("xP"); if(p){x.progress=+p.value; if(x.progress===100)x.status="done"}
+  closeSheet(); save();
+}
+function delTask(id){state.tasks=state.tasks.filter(t=>t.id!==id);closeSheet();save()}
+function setStatus(id,s){const x=state.tasks.find(t=>t.id===id);if(x){x.status=x.status===s?"pending":s;closeSheet();save()}}
+function pushNext(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
+  const s=nextFreeSlot(x.date,x.start+15,x.dur,x.id); if(s){x.date=s.date;x.start=s.start} closeSheet(); save()}
+
+function editBlock(day,id){
+  const list=state.routine.tpl[day]||[];
+  const b=list.find(x=>x.id===id)||{id:"",from:"08:00",to:"09:30",label:"",track:"IF",fixed:false};
+  const isNew=!b.id;
+  openSheet(`<h3>${isNew?"Block lặp tuần":"Sửa block"}</h3><div class="sh-sub">${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][day]} · lặp mỗi tuần</div>
+   <label class="fld"><span>Nội dung</span><input type="text" id="bL" value="${h(b.label)}"></label>
+   <div class="two"><label class="fld"><span>Từ</span><input type="time" id="bF" value="${b.from}"></label>
+     <label class="fld"><span>Đến</span><input type="time" id="bT" value="${b.to}"></label></div>
+   <label class="fld"><span>Mảng</span><select id="bK">${trackOpts(b.track)}</select></label>
+   <label class="fld"><span>Đổi sang thứ</span><select id="bD">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===day?"selected":""}>${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][n]}</option>`).join("")}</select></label>
+   <label class="fld"><span><input type="checkbox" id="bX" ${b.fixed?"checked":""} style="width:auto;margin-right:7px">Cố định (giờ lên lớp — không dời được)</span></label>
+   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delBlock(${day},'${b.id}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="saveBlock(${day},'${b.id}')">Lưu</button></div>`);
+}
+function saveBlock(day,id){
+  const nd=+v("bD")||day;
+  state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);
+  state.routine.tpl[nd]=state.routine.tpl[nd]||[];
+  state.routine.tpl[nd].push({id:id||("b"+uid()),label:v("bL")||"Block",from:v("bF"),to:v("bT"),track:v("bK"),fixed:ck("bX")});
+  closeSheet(); save();
+}
+function delBlock(day,id){state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);closeSheet();save()}
+
+function openEmergency(){
+  openSheet(`<h3>⚡ Lịch khẩn cấp</h3><div class="sh-sub">Chèn việc đột xuất — mọi việc đụng giờ sẽ tự dồn sang chỗ trống gần nhất</div>
+   <label class="fld"><span>Việc gì</span><input type="text" id="eL" placeholder="Ví dụ: họp nhóm DA đột xuất"></label>
+   <div class="two"><label class="fld"><span>Ngày</span><input type="date" id="eD" value="${todayISO()}"></label>
+     <label class="fld"><span>Từ</span><input type="time" id="eF" value="14:00"></label></div>
+   <div class="two"><label class="fld"><span>Đến</span><input type="time" id="eT" value="16:00"></label>
+     <label class="fld"><span>Mảng</span><select id="eK">${trackOpts("LIFE")}</select></label></div>
+   <div class="note">Việc đang bị khoá 🔒 và giờ lên lớp sẽ không bị dời — những việc còn lại sẽ nhường chỗ.</div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Huỷ</button>
+     <button class="btn primary" onclick="createEmergency()">Chèn & dồn lịch</button></div>`);
+}
+function createEmergency(){
+  const d=v("eD")||todayISO(), f=mm(v("eF")||"14:00"), tt=mm(v("eT")||"16:00");
+  state.tasks.push({id:"e"+uid(),t:(v("eL")||"Việc khẩn cấp"),track:v("eK"),date:d,start:f,dur:Math.max(15,tt-f),pri:5,status:"pending",progress:0,emg:true,locked:true});
+  const moved=reflow(); save();
+  openSheet(`<h3>Đã chèn</h3><div class="sh-sub">${moved.length} việc được dời</div>
+   ${moved.length?moved.map(x=>`<div class="kv"><span>${h(x.t)}</span><b class="small">${x.to}</b></div>`).join(""):'<div class="note">Không việc nào bị ảnh hưởng.</div>'}
+   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Xong</button></div>`);
+}
+
+function openAssess(id){
+  const a=state.assess.find(x=>x.id===id)||{id:"",sub:"IF",title:"",weight:0,mode:"Cá nhân",mandatory:false,due:todayISO(),dueTime:"",prov:false,session:null,mark:null,where:"",note:""};
+  const isNew=!a.id;
+  openSheet(`<h3>${isNew?"Mốc mới":h(a.title)}</h3><div class="sh-sub">${isNew?"":TR[a.sub].code+" · "+TR[a.sub].name}</div>
+   ${!isNew&&a.note?`<div class="note" style="margin-bottom:12px">${h(a.note)}</div>`:""}
+   ${!isNew&&a.where?`<div class="small muted" style="margin-bottom:12px"><b>Nộp / diễn ra ở:</b> ${h(a.where)}</div>`:""}
+   <label class="fld"><span>Tên</span><input type="text" id="aT" value="${h(a.title)}"></label>
+   <div class="two"><label class="fld"><span>Mảng</span><select id="aS">${trackOpts(a.sub)}</select></label>
+     <label class="fld"><span>Trọng số % (0 = mốc)</span><input type="number" id="aW" value="${a.weight}" min="0" max="100"></label></div>
+   <div class="two"><label class="fld"><span>Hạn</span><input type="date" id="aD" value="${a.due||""}"></label>
+     <label class="fld"><span>Giờ</span><input type="text" id="aTi" value="${h(a.dueTime||"")}" placeholder="23:59"></label></div>
+   <div class="two"><label class="fld"><span>Session</span><select id="aSe"><option value="">—</option>${Array.from({length:N_SESS},(_,i)=>i+1).map(n=>`<option value="${n}" ${a.session===n?"selected":""}>S${n} (${fmtD(sessDates(n).fri)}–${fmtD(sessDates(n).sat)})</option>`).join("")}</select></label>
+     <label class="fld"><span>Điểm đã có (%)</span><input type="number" id="aM" value="${a.mark??""}" min="0" max="100" placeholder="—"></label></div>
+   <label class="fld"><span><input type="checkbox" id="aP" ${a.prov?"checked":""} style="width:auto;margin-right:7px">Ngày còn là tạm tính</span></label>
+   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delAssess('${a.id}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="saveAssess('${a.id}')">Lưu</button></div>`);
+}
+function saveAssess(id){
+  let a=state.assess.find(x=>x.id===id);
+  if(!a){a={id:"a"+uid(),where:"",note:""};state.assess.push(a)}
+  a.title=v("aT")||"Mốc mới"; a.sub=v("aS"); a.weight=+v("aW")||0; a.due=v("aD"); a.dueTime=v("aTi");
+  const se=v("aSe"); a.session=se?+se:null; const mk=v("aM"); a.mark=mk===""?null:+mk; a.prov=ck("aP");
+  if(a.session&&!a.due)a.due=sessDates(a.session).sun;
+  closeSheet(); save();
+}
+function delAssess(id){state.assess=state.assess.filter(x=>x.id!==id);closeSheet();save()}
+
+function editGoal(id){
+  const g=state.goals.find(x=>x.id===id)||{id:"",name:"",track:"LIFE",src:"custom",targetDate:"",totalH:20,doneH:0,note:""};
+  const isNew=!g.id;
+  openSheet(`<h3>${isNew?"Goal mới":"Sửa goal"}</h3><div class="sh-sub">App tự tính ngày đạt được từ số giờ bạn cấp cho mảng đó trong khung tuần</div>
+   <label class="fld"><span>Tên goal</span><input type="text" id="gN" value="${h(g.name)}" placeholder="Ví dụ: Website chứng khoán v1"></label>
+   <div class="two"><label class="fld"><span>Mảng</span><select id="gK">${trackOpts(g.track)}</select></label>
+     <label class="fld"><span>Ngày mục tiêu</span><input type="date" id="gD" value="${g.targetDate||""}"></label></div>
+   <label class="fld"><span>Nguồn tiến độ</span><select id="gS">
+     ${[["custom","Tự nhập số giờ"],["ielts","Lộ trình IELTS"],["zh","Lộ trình tiếng Trung"],["da","Buổi DA MindX"],["school","Trọng số điểm 2 môn"]].map(([k,l])=>`<option value="${k}" ${g.src===k?"selected":""}>${l}</option>`).join("")}</select></label>
+   <div class="two"><label class="fld"><span>Tổng giờ (nếu tự nhập)</span><input type="number" id="gT" value="${g.totalH||0}"></label>
+     <label class="fld"><span>Đã làm (giờ)</span><input type="number" id="gDn" value="${g.doneH||0}"></label></div>
+   <label class="fld"><span>Ghi chú</span><textarea id="gNo">${h(g.note||"")}</textarea></label>
+   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delGoal('${g.id}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="saveGoal('${g.id}')">Lưu</button></div>`);
+}
+function saveGoal(id){
+  let g=state.goals.find(x=>x.id===id);
+  if(!g){g={id:"g"+uid()};state.goals.push(g)}
+  g.name=v("gN")||"Goal mới"; g.track=v("gK"); g.targetDate=v("gD"); g.src=v("gS");
+  g.totalH=+v("gT")||0; g.doneH=+v("gDn")||0; g.note=v("gNo");
+  closeSheet(); save();
+}
+function delGoal(id){state.goals=state.goals.filter(x=>x.id!==id);closeSheet();save()}
+
+function editMock(id){
+  const m=state.ielts.mocks.find(x=>x.id===id)||{id:"",date:todayISO(),r:"",l:"",w:"",s:""};
+  const isNew=!m.id;
+  openSheet(`<h3>${isNew?"Thêm mock":"Sửa mock"}</h3><div class="sh-sub">Band từng kỹ năng, để trống nếu chưa làm</div>
+   <label class="fld"><span>Ngày</span><input type="date" id="mD" value="${m.date}"></label>
+   <div class="two"><label class="fld"><span>Reading</span><input type="number" step="0.5" id="mR" value="${m.r}"></label>
+     <label class="fld"><span>Listening</span><input type="number" step="0.5" id="mL" value="${m.l}"></label></div>
+   <div class="two"><label class="fld"><span>Writing</span><input type="number" step="0.5" id="mW" value="${m.w}"></label>
+     <label class="fld"><span>Speaking</span><input type="number" step="0.5" id="mS" value="${m.s}"></label></div>
+   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delMock('${m.id}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="saveMock('${m.id}')">Lưu</button></div>`);
+}
+function saveMock(id){
+  let m=state.ielts.mocks.find(x=>x.id===id);
+  if(!m){m={id:"k"+uid()};state.ielts.mocks.push(m)}
+  m.date=v("mD")||todayISO(); m.r=v("mR"); m.l=v("mL"); m.w=v("mW"); m.s=v("mS");
+  closeSheet(); save();
+}
+function delMock(id){state.ielts.mocks=state.ielts.mocks.filter(x=>x.id!==id);closeSheet();save()}
+
+function openSettings(){
+  const c=audit().length;
+  openSheet(`<h3>Cài đặt</h3><div class="sh-sub">${cloud?"Đang đồng bộ giữa điện thoại và máy tính":"Chỉ lưu trên máy này"}</div>
+   <div class="two"><label class="fld"><span>Ngày bắt đầu lúc</span><input type="time" id="sA" value="${state.settings.dayStart}"></label>
+     <label class="fld"><span>Kết thúc lúc</span><input type="time" id="sB" value="${state.settings.dayEnd}"></label></div>
+   <label class="fld"><span>Mục tiêu IELTS</span><input type="number" step="0.5" id="sAim" value="${state.ielts.aim}"></label>
+   <div class="kv"><span>Việc đang chồng giờ</span><b>${c}</b></div>
+   <div class="row" style="gap:8px;margin:12px 0">
+     <button class="btn sm grow" onclick="doReflow()">Dồn lại toàn bộ lịch</button>
+     <button class="btn sm grow" onclick="exportJSON()">Xuất dữ liệu</button></div>
+   <div class="note">Session 1 = tuần ${fmtD(WEEK1_MON)}. T6 FINC3022 D402 · T7 ECON3014 D102, 12:00–15:15. DA MindX giả định T3 + T7 19:15–22:15.</div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="state.settings.dayStart=v('sA');state.settings.dayEnd=v('sB');state.ielts.aim=+v('sAim')||7;closeSheet();save()">Lưu</button></div>
+   <button class="btn danger" style="width:100%;margin-top:10px" onclick="if(confirm('Xoá hết và về bản gốc?')){state=seed();save();closeSheet()}">Reset về bản gốc</button>`);
+}
+function exportJSON(){
+  openSheet(`<h3>Dữ liệu</h3><div class="sh-sub">Copy để backup</div>
+   <textarea style="min-height:240px;font-family:var(--f-num);font-size:11px">${h(JSON.stringify(state))}</textarea>
+   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Đóng</button></div>`);
+}
+
+/* ================================= BOOT ================================= */
+render();
+initCloud();
+</script>
