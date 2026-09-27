@@ -117,11 +117,11 @@ Lớp BFN học **T6**, lớp IF học **T7** (12:00–15:30). Các block dướ
 
 <a id="trading"></a>
 ## 7. Phương pháp giao dịch của bạn
-Luật và con số của hệ thống **không đăng ở đây** vì là hệ thống giao dịch cá nhân. Bài học đầy đủ nằm ở trang riêng [Học lại PP giao dịch](https://claude.ai/artifact/Wi1JueCe86jHCnUienopke): khung học theo bản 26/09, luật và số theo bản 27/09, có bảng "bản mới đổi gì", checklist trước lệnh, mẫu nhật ký, 14 câu tự kiểm tra và lộ trình 4 tuần.
+Luật và con số của hệ thống **không đăng ở đây** vì là hệ thống giao dịch cá nhân. Bài học đầy đủ nằm ở trang riêng [Học lại PP giao dịch](https://claude.ai/artifact/Wi1JueCe86jHCnUienopke): khung học theo bản 26/09, luật và số theo bản 27/09, có bảng "bản mới đổi gì", checklist trước lệnh, mẫu nhật ký, 14 câu tự kiểm tra và lộ trình 10 bài.
 
-Cách học:
-1. **Tuần 1–3:** mỗi tuần 2 buổi ngắn (dùng khối Macro 17:00 của 2 ngày trong tuần, hoặc 30 phút sau tin nhắn buổi tối), học theo lộ trình trong trang riêng.
-2. **Tuần 4:** học ngành bạn đang cầm nhiều nhất, post-mortem 3 lệnh theo 4 nguyên nhân: luận điểm ngành, doanh nghiệp, điểm kích hoạt, thực thi.
-3. **Sau đó:** mỗi cuối tuần 20 phút xem lại nhật ký, ghi trượt giá thật, học thêm 1 ngành.
+Cách học: **10 bài × 40 phút, T2 và T4 lúc 16:15**, nghỉ tuần thi giữa kỳ (19–23/10), xong 04/11. Mỗi bài có: đọc mục nào, làm gì trong 40 phút, câu hỏi cho NotebookLM/AI, đầu ra bắt buộc và câu tự kiểm tra.
+- Trong app: bấm khối **📈 Giao dịch** trong ngày là thấy đúng bài hôm đó. Xem cả lộ trình ở tab **Mảng → 📈 Học lại PP giao dịch**.
+- Bài 7 (thứ tự luật thoát) là cổng: làm sai câu kiểm tra thì học lại bài 7 trước khi qua bài 8.
+- Sau bài 10: mỗi cuối tuần 20 phút xem lại nhật ký lệnh, ghi trượt giá thật, học thêm 1 ngành.
 
 NotebookLM: nạp 2 file docx (bản mới và bản cũ) vào một notebook riêng. Trong mọi prompt, dặn *"nếu 2 tài liệu mâu thuẫn thì ưu tiên bản mới"*. Nút **✨ Tạo prompt** trong app có môn **Giao dịch**.
