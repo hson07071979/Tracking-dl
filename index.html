@@ -428,6 +428,19 @@ const TR={
  LIFE :{code:"Khác",     name:"Khác",                 short:"Khác",    color:"#7E888F", ico:"•"}
 };
 const TKEYS=Object.keys(TR);
+const IF_W=[null,["Multinational Financial Mgmt; International Monetary System","Ch.1, Ch.2"],["Balance of Payments","Ch.3"],["Foreign Exchange Market","Ch.5"],
+ ["International Parity Conditions","Ch.6"],["Foreign Currency Derivatives","Ch.7"],["FX Rate Determination & Forecasting","Ch.9"],["Transaction Exposure","Ch.10"],
+ ["Global Cost of Capital","Ch.13"],["Sourcing Capital Globally","Ch.14"],["International Trade Finance","Ch.16"],["Foreign Direct Investment","Ch.17"],["Summary of Subject","ôn tổng"]];
+const BF_W=[null,["Why are FIs special?","Ch.1"],["FI Risks","Ch.7"],["Interest Rate Risk — Repricing","Ch.8"],["Interest Rate Risk — Duration","Ch.9"],
+ ["Interest Rate Risk Management","Ch.23–27"],["Market Risk","Ch.15"],["Credit Risk — Individual Loan","Ch.10"],["Credit Risk — Loan Portfolio","Ch.11"],
+ ["Liquidity Risk","Ch.12"],["Liability & Liquidity Management","Ch.19"],["Capital Management","Ch.21"],["Revision","ôn tổng"]];
+/* which session a study block is about: "pre" = this week's class, "rev" = the latest class already held */
+function blockTopic(b,date){
+  const W=b.track==="IF"?IF_W:b.track==="BF"?BF_W:null; if(!W||!b.hint) return "";
+  const n=sessOfWeek(mondayOf(date)); if(!n) return "";
+  const classDay=b.track==="IF"?6:5, k=b.hint==="pre"?n:(dow(date)>=classDay?n:n-1);
+  return W[k]?`S${k} · ${W[k][0]} (${W[k][1]})`:"";
+}
 const DA_HOW="Cách học với AI (3 bước, ~2h): ① Gemini ~15' — tải record buổi học lên, xin tóm tắt theo mốc thời gian + danh sách đoạn code/ví dụ thầy làm. ② Claude hoặc ChatGPT ~30' — hỏi lại chỗ chưa hiểu, nhờ giải thích từng dòng code; cần chạy thử dữ liệu / vẽ biểu đồ thì dùng ChatGPT (có chạy Python). ③ Tự làm lại bài thực hành từ đầu, không nhìn note ~75'. Không để AI làm hộ bước ③ — Final Project ~20h cần kỹ năng thật.";
 
 /* ---------- date helpers ---------- */
@@ -462,7 +475,7 @@ settings:{dayStart:"07:30", dayEnd:"23:00", aim:7, hideDone:false},
 macro:{start:"2026-09-14", time:"17:00", dur:30, on:true},
 
 assess:[
- {id:"if-pres",sub:"IF",title:"Tutorial Presentation",weight:10,mode:"Cá nhân",mandatory:true,due:"2026-09-12",dueTime:"12:00",prov:false,session:2,mark:null,
+ {id:"if-pres",sub:"IF",title:"Tutorial Presentation",weight:10,mode:"Cá nhân",mandatory:true,due:"2026-09-12",dueTime:"12:00",prov:false,session:2,mark:null,done:true,
   where:"Present trên lớp T7 12/09 (Session 2) · hard copy cho tutor ngay sau khi present · soft copy Ultra trước CN 13/09 23:59",
   note:"Đã có đề. Tối đa 10 phút — tập bấm giờ. Rubric: hiểu đúng câu hỏi · đúng theory · lập luận logic · apply vào tình huống thực tế · critical analysis · kết luận rõ. Dùng bảng/biểu/phép tính, đừng chỉ chữ. IF ĐƯỢC dùng AI nhưng phải khai báo."},
  {id:"da-topic",sub:"DA",title:"Chốt chủ đề Final Project",weight:0,mode:"Nhóm",mandatory:false,due:"2026-09-26",dueTime:"",prov:true,session:null,mark:null,
@@ -473,22 +486,22 @@ assess:[
   where:"Tự đặt — trước tuần va chạm",note:"Chốt cứng ngày này. Tuần sau là mid-sem IF + nhận đề Final Test cùng lúc."},
  {id:"da-test",sub:"DA",title:"Nộp Final Test (MindX)",weight:0,mode:"Cá nhân",mandatory:false,due:"2026-10-17",dueTime:"",prov:true,session:null,mark:null,
   where:"Nhận đề buổi 12 (~13/10), nộp buổi 13 (~17/10)",note:"Rơi đúng tuần mid-sem IF. Làm ngay 14–15/10, đừng để tới hạn."},
- {id:"if-mid",sub:"IF",title:"Mid-semester Exam",weight:30,mode:"Cá nhân",mandatory:true,due:"2026-10-16",dueTime:"",prov:true,session:7,mark:null,
-  where:"Sau Session 7 (tuần 12/10) · ngày chính xác chờ Ultra",
+ {id:"if-mid",sub:"IF",title:"Mid-semester Exam",weight:30,mode:"Cá nhân",mandatory:true,due:"2026-10-23",dueTime:"09:00",prov:false,session:8,mark:null,
+  where:"T6 23/10/2026 · 09:00 · phòng D401 (tuần 8)",
   note:"Closed book · 90 phút · 30 MCQ · không trừ điểm sai nên phải làm hết. Phạm vi S1–S7: Multinational Financial Mgmt, International Monetary System, BoP, FX Market, Parity Conditions, FX Derivatives, FX Determination & Forecasting, Transaction Exposure. KHÔNG có thi bù."},
  {id:"da-defend",sub:"DA",title:"Bảo vệ Final Project trước BGK",weight:0,mode:"Nhóm",mandatory:false,due:"2026-10-27",dueTime:"",prov:true,session:null,mark:null,
   where:"Buổi 16 — kết thúc kỳ 2",note:"Xong là đẩy toàn bộ lên GitHub 'data-portfolio' và đưa thẳng vào CV cho LPBS."},
- {id:"bf-pres",sub:"BF",title:"Group Presentation",weight:20,mode:"Nhóm",mandatory:false,due:"2026-10-09",dueTime:"12:00",prov:true,session:null,mark:null,
-  where:"Present T6 trên lớp · nộp Ultra",
-  note:"13–15 phút là vùng điểm cao (dưới 10 hoặc trên 15 = below standard). Mỗi người ≥2 phút. Understanding và voice/body language chấm riêng từng người. BFN CẤM dùng AI hoàn toàn."},
- {id:"bf-report",sub:"BF",title:"Report on Banking Services",weight:40,mode:"Cá nhân",mandatory:false,due:"2026-11-08",dueTime:"23:59",prov:false,session:10,mark:null,
-  where:"Turnitin trên Ultra",
-  note:"1.500 từ (không tính figure, table, in-text citation, reference list). Figure/table phải có label, được nhắc trong body, đặt gần đoạn liên quan, có diễn giải. KHÔNG appendix. Harvard referencing, heading cuối là 'Reference List'. BFN cấm AI."},
- {id:"if-final",sub:"IF",title:"Final Exam",weight:60,mode:"Cá nhân",mandatory:true,due:"2026-11-23",dueTime:"",prov:true,session:null,mark:null,
-  where:"Formal Exam Period (từ tuần 23/11) · ngày chính xác chờ Ultra",
+ {id:"bf-pres",sub:"BF",title:"Group Presentation — Market Risk Regulation for G-SIBs",weight:20,mode:"Nhóm",mandatory:false,due:"2026-10-16",dueTime:"12:00",prov:false,session:7,mark:null,
+  where:"Session 7 · T6 16/10 trên lớp · nộp Ultra",
+  note:"Chủ đề: Market Risk Regulation for Global Systemically Important Banks (G-SIBs) — nền là Ch.15 Market Risk + tài liệu gốc BIS/FSB (G-SIB list, Basel III market risk/FRTB). 13–15 phút là vùng điểm cao (dưới 10 hoặc trên 15 = below standard). Mỗi người ≥2 phút. Understanding và voice/body language chấm riêng từng người. BFN CẤM dùng AI hoàn toàn."},
+ {id:"bf-report",sub:"BF",title:"Report on Banking Services",weight:40,mode:"Cá nhân",mandatory:false,due:"2026-11-22",dueTime:"23:59",prov:true,session:12,mark:null,
+  where:"Đề ra tuần 8 (từ 19/10) · nộp tuần 12 — tạm tính CN 22/11 23:59, xác nhận trên Ultra · Turnitin",
+  note:"Chỉ có 5 tuần từ lúc ra đề tới hạn nộp — bắt đầu ngay tuần đề ra. 1.500 từ (không tính figure, table, in-text citation, reference list). Figure/table phải có label, được nhắc trong body, đặt gần đoạn liên quan, có diễn giải. KHÔNG appendix. Harvard referencing, heading cuối là 'Reference List'. BFN cấm AI."},
+ {id:"if-final",sub:"IF",title:"Final Exam",weight:60,mode:"Cá nhân",mandatory:true,due:"2026-11-29",dueTime:"13:00",prov:false,session:null,mark:null,
+  where:"CN 29/11/2026 · 13:00 · phòng chưa xếp",
   note:"2 tiếng · closed book · MCQ + short answer · toàn bộ học kỳ. Short answer chấm: problem solving, economic logic, analytical reasoning, policy, analysis, synthesis, evaluation, written communication."},
- {id:"bf-final",sub:"BF",title:"Final Exam",weight:40,mode:"Cá nhân",mandatory:true,due:"2026-11-26",dueTime:"",prov:true,session:null,mark:null,
-  where:"Formal Exam Period (từ tuần 23/11) · on-campus",
+ {id:"bf-final",sub:"BF",title:"Final Exam",weight:40,mode:"Cá nhân",mandatory:true,due:"2026-12-02",dueTime:"09:00",prov:false,session:null,mark:null,
+  where:"T4 2/12/2026 · 09:00 · on-campus · phòng chưa xếp",
   note:"2 tiếng. Được mang calculator + 1 tờ A4 viết tay 2 mặt (tên & student number góc trên trái). Gom: repricing, duration, credit risk, liquidity risk, capital management. Ôn bằng cách LÀM LẠI BÀI, không đọc chay."}
 ],
 
@@ -502,74 +515,78 @@ tasks:[
  {id:"t06",t:"Chốt nhóm Banking + topic + session present",track:"BF",date:"2026-09-11",start:930,dur:30,pri:5,link:"bf-pres"},
  {id:"t07",t:"Lập file ôn IF: bảng 8 topic S1–S7 (công thức / bẫy / bài mẫu)",track:"IF",date:"2026-09-13",start:840,dur:90,pri:4,link:"if-mid"},
  {id:"t08",t:"IELTS: làm trọn bộ baseline 4 kỹ năng để biết band xuất phát",track:"IELTS",date:"2026-09-13",start:540,dur:180,pri:4},
- {id:"t09",t:"Xin full brief Report 40%: đề chính xác, phạm vi dịch vụ/ngân hàng nào",track:"BF",date:"2026-09-19",start:930,dur:30,pri:5,link:"bf-report"},
- {id:"t10",t:"Report: chọn 3 hướng đề, mỗi hướng 5 nguồn học thuật",track:"BF",date:"2026-09-27",start:840,dur:120,pri:4,link:"bf-report"},
- {id:"t11",t:"Report: chốt đề + outline 5 phần + 8 nguồn academic",track:"BF",date:"2026-10-11",start:840,dur:120,pri:5,link:"bf-report"},
- {id:"t12",t:"IF Mid: học thuộc bộ công thức parity + FX + transaction exposure",track:"IF",date:"2026-10-13",start:600,dur:120,pri:5,link:"if-mid"},
- {id:"t13",t:"IF Mid: mock 60 câu MCQ bấm giờ, chấm và soi lỗi theo topic",track:"IF",date:"2026-10-14",start:600,dur:120,pri:5,link:"if-mid"},
- {id:"t14",t:"IF Mid: ôn lại đúng phần sai, nghỉ sớm ngủ đủ",track:"IF",date:"2026-10-15",start:600,dur:120,pri:5,link:"if-mid"},
- {id:"t15",t:"Report: draft 1 đủ 1.500 từ (thô cũng được, miễn đủ khung)",track:"BF",date:"2026-10-28",start:840,dur:180,pri:5,link:"bf-report"},
- {id:"t16",t:"Report: chèn 2 figure + 1 table, có label và diễn giải",track:"BF",date:"2026-11-01",start:840,dur:120,pri:5,link:"bf-report"},
- {id:"t17",t:"Report: soát Harvard referencing + chạy Turnitin thử",track:"BF",date:"2026-11-05",start:840,dur:120,pri:5,link:"bf-report"},
- {id:"t18",t:"Report: nộp sớm 1 ngày",track:"BF",date:"2026-11-07",start:840,dur:60,pri:5,link:"bf-report"},
+ {id:"t29",t:"BFN present (G-SIBs): họp nhóm chia phần, mỗi người ≥2 phút, chốt outline 15'",track:"BF",date:"2026-09-30",start:840,dur:60,pri:5,link:"bf-pres"},
+ {id:"t30",t:"BFN present: đọc Ch.15 Market Risk + nguồn gốc BIS/FSB (G-SIB list, Basel III market risk / FRTB), ghi nguồn",track:"BF",date:"2026-10-02",start:570,dur:120,pri:5,link:"bf-pres"},
+ {id:"t31",t:"BFN present: viết phần của mình + slide có số liệu thật — KHÔNG dùng AI",track:"BF",date:"2026-10-07",start:840,dur:120,pri:5,link:"bf-pres"},
+ {id:"t32",t:"BFN present: ghép slide nhóm, tập cả nhóm bấm giờ 13–15'",track:"BF",date:"2026-10-11",start:840,dur:90,pri:5,link:"bf-pres"},
+ {id:"t33",t:"BFN present: tập phần của mình 3 lần không nhìn note",track:"BF",date:"2026-10-14",start:840,dur:45,pri:5,link:"bf-pres"},
+ {id:"t12",t:"IF Mid: bảng công thức S1–S7 (parity, forward premium, option payoff, hedge transaction exposure)",track:"IF",date:"2026-10-14",start:600,dur:90,pri:5,link:"if-mid"},
+ {id:"t13",t:"IF Mid: mock 1 — 30 câu MCQ S1–S7, bấm giờ 90'",track:"IF",date:"2026-10-19",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t14",t:"IF Mid: soi lỗi mock 1 theo topic, ôn lại đúng phần sai",track:"IF",date:"2026-10-20",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t26",t:"IF Mid: mock 2 — 30 câu mới, bấm giờ 90'",track:"IF",date:"2026-10-21",start:600,dur:120,pri:5,link:"if-mid"},
+ {id:"t27",t:"IF Mid: đọc lại bảng công thức + lỗi hay sai, ngủ trước 23h",track:"IF",date:"2026-10-22",start:1260,dur:60,pri:5,link:"if-mid"},
+ {id:"t09",t:"Report: tải đề trên Ultra (tuần 8) — đọc kỹ rubric, gạch 3 hướng",track:"BF",date:"2026-10-19",start:840,dur:60,pri:5,link:"bf-report"},
+ {id:"t10",t:"Report: chọn hướng + tìm 8 nguồn học thuật (Google Scholar, BIS, SBV)",track:"BF",date:"2026-10-24",start:540,dur:120,pri:5,link:"bf-report"},
+ {id:"t11",t:"Report: outline 5 phần + chọn số liệu cho 2 figure / 1 table",track:"BF",date:"2026-10-31",start:540,dur:120,pri:5,link:"bf-report"},
+ {id:"t15",t:"Report: draft 1 đủ 1.500 từ (thô cũng được, miễn đủ khung)",track:"BF",date:"2026-11-07",start:540,dur:180,pri:5,link:"bf-report"},
+ {id:"t16",t:"Report: chèn 2 figure + 1 table, có label và diễn giải",track:"BF",date:"2026-11-12",start:840,dur:120,pri:5,link:"bf-report"},
+ {id:"t17",t:"Report: soát Harvard referencing + chạy Turnitin thử",track:"BF",date:"2026-11-17",start:840,dur:120,pri:5,link:"bf-report"},
+ {id:"t18",t:"Report: nộp sớm 2 ngày",track:"BF",date:"2026-11-20",start:840,dur:60,pri:5,link:"bf-report"},
  {id:"t19",t:"Hồ sơ LPBS: CV + câu chuyện phỏng vấn (dùng Final Project DA)",track:"LIFE",date:"2026-11-03",start:1140,dur:120,pri:3},
- {id:"t20",t:"Check Ultra: exact date/time/room của 2 kỳ final",track:"LIFE",date:"2026-11-09",start:930,dur:30,pri:4},
- {id:"t21",t:"Banking: viết tờ A4 cheat sheet 2 mặt (repricing, duration, credit/liquidity risk, capital)",track:"BF",date:"2026-11-16",start:840,dur:180,pri:5,link:"bf-final"},
- {id:"t22",t:"IF Final: ôn cumulative S1–S12 vòng 1",track:"IF",date:"2026-11-17",start:540,dur:240,pri:5,link:"if-final"},
- {id:"t23",t:"IF Final: luyện 10 short-answer theo rubric (policy + analysis + evaluation)",track:"IF",date:"2026-11-19",start:540,dur:180,pri:5,link:"if-final"},
- {id:"t24",t:"Banking: làm lại toàn bộ bài tính toán Ch.5–6, Ch.10–11, Ch.14",track:"BF",date:"2026-11-20",start:540,dur:240,pri:5,link:"bf-final"},
- {id:"t25",t:"IF Final: ôn vòng 2, chỉ đọc phần đánh dấu đỏ",track:"IF",date:"2026-11-22",start:540,dur:240,pri:5,link:"if-final"}
+ {id:"t20",t:"Check Ultra: phòng thi 2 môn final (IF 29/11 13:00 · BFN 2/12 09:00)",track:"LIFE",date:"2026-11-16",start:930,dur:30,pri:4},
+ {id:"t22",t:"IF Final: ôn cumulative S1–S12 vòng 1",track:"IF",date:"2026-11-23",start:540,dur:240,pri:5,link:"if-final"},
+ {id:"t24",t:"Banking: làm lại toàn bộ problems Ch.8–12, 15, 19, 21",track:"BF",date:"2026-11-24",start:540,dur:240,pri:5,link:"bf-final"},
+ {id:"t23",t:"IF Final: luyện 10 short-answer theo rubric (policy + analysis + evaluation)",track:"IF",date:"2026-11-25",start:540,dur:180,pri:5,link:"if-final"},
+ {id:"t25",t:"IF Final: ôn vòng 2, chỉ đọc phần đánh dấu đỏ",track:"IF",date:"2026-11-27",start:540,dur:240,pri:5,link:"if-final"},
+ {id:"t21",t:"Banking: viết tờ A4 cheat sheet 2 mặt (repricing, duration, market/credit/liquidity risk, capital)",track:"BF",date:"2026-11-30",start:540,dur:180,pri:5,link:"bf-final"},
+ {id:"t28",t:"Banking: làm lại problems sai nhiều nhất + đọc tờ A4, ngủ sớm",track:"BF",date:"2026-12-01",start:540,dur:120,pri:5,link:"bf-final"}
 ],
 
 /* weekly repeating template */
-routine:{tplV:3, tpl:{
- 1:[{id:"r12",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
+routine:{tplV:4, tpl:{
+ 1:[{id:"r12",from:"08:00",to:"09:00",label:"IELTS · Vocab + Speaking (thu âm 2')",track:"IELTS"},
     {id:"r13",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r14",from:"09:30",to:"11:30",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"},
-    {id:"r15",from:"14:00",to:"16:00",label:"Banking — làm bài tính toán",track:"BF"},
+    {id:"r14",from:"09:30",to:"11:30",label:"Ôn IF — slide GV + câu hỏi cuối chương, hỏi lại AI chỗ chưa hiểu",track:"IF",hint:"rev"},
+    {id:"r15",from:"14:00",to:"16:00",label:"Banking — làm problems GV gửi sau buổi T6 (tự làm, không AI)",track:"BF",hint:"rev"},
     {id:"r16",from:"19:30",to:"22:00",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}],
- 2:[{id:"r22",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r23",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+ 2:[{id:"r23",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
     {id:"r24",from:"09:30",to:"11:00",label:"IELTS · Writing (1 bài có chấm)",track:"IELTS"},
-    {id:"r25",from:"14:00",to:"15:30",label:"Banking — đọc chương / Report",track:"BF"},
+    {id:"r25",from:"14:00",to:"15:30",label:"Banking — đọc trước chương tuần này",track:"BF",hint:"pre"},
     {id:"r26",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
- 3:[{id:"r31",from:"09:00",to:"10:00",label:"Tiếng Trung",track:"ZH"},
+ 3:[{id:"r31",from:"09:00",to:"10:00",label:"IELTS · Speaking (Story Bank + thu âm)",track:"IELTS"},
     {id:"r32",from:"10:00",to:"10:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r34",from:"10:30",to:"12:00",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"},
+    {id:"r34",from:"10:30",to:"12:00",label:"Ôn IF — làm câu Preparation của tuần",track:"IF",hint:"rev"},
     {id:"r35",from:"14:00",to:"15:30",label:"IELTS · Reading + error log",track:"IELTS"},
     {id:"r36",from:"19:00",to:"21:00",label:"Bài tập DA — Gemini → Claude/ChatGPT → tự làm lại",track:"DA",note:DA_HOW}],
- 4:[{id:"r42",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r43",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
-    {id:"r45",from:"09:30",to:"11:30",label:"Banking / Report",track:"BF"},
+ 4:[{id:"r43",from:"09:00",to:"09:20",label:"Đọc báo — 1 nguồn quốc tế + bản tin sáng VN",track:"BASE"},
+    {id:"r45",from:"09:30",to:"11:30",label:"Banking / Report / Presentation",track:"BF",hint:"rev"},
     {id:"r48",from:"14:00",to:"16:00",label:"Tìm việc — CV, apply, luyện phỏng vấn",track:"LIFE"},
     {id:"r46",from:"16:00",to:"17:00",label:"IELTS · Listening + dictation",track:"IELTS"},
-    {id:"r47",from:"19:00",to:"20:30",label:"Ôn IF (cumulative, có AI hỗ trợ)",track:"IF"}],
- 5:[{id:"r52",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r53",from:"09:00",to:"10:30",label:"Đọc chương trước buổi Banking",track:"BF"},
-    {id:"r54",from:"12:00",to:"15:15",label:"LỚP FINC3022 · D402 · Lê Anh Tuấn",track:"BF",fixed:true},
+    {id:"r47",from:"19:00",to:"20:30",label:"Ôn IF — Discussion question tuần này",track:"IF",hint:"rev"}],
+ 5:[{id:"r53",from:"09:00",to:"10:30",label:"Đọc chương trước buổi Banking",track:"BF",hint:"pre"},
+    {id:"r54",from:"12:00",to:"15:30",label:"LỚP FINC3022 · D402 · Lê Anh Tuấn",track:"BF",fixed:true},
     {id:"r55",from:"19:00",to:"22:00",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}],
- 6:[{id:"r61",from:"08:00",to:"09:00",label:"Tiếng Trung",track:"ZH"},
-    {id:"r62",from:"09:00",to:"10:30",label:"Đọc chương trước buổi IF",track:"IF"},
-    {id:"r63",from:"12:00",to:"15:15",label:"LỚP ECON3014 · D102 · Bùi Hồng Mai",track:"IF",fixed:true},
+ 6:[{id:"r62",from:"09:00",to:"10:30",label:"Đọc chương trước buổi IF",track:"IF",hint:"pre"},
+    {id:"r63",from:"12:00",to:"15:30",label:"LỚP ECON3014 · D102 · Bùi Hồng Mai",track:"IF",fixed:true},
     {id:"r64",from:"16:00",to:"17:00",label:"Nghỉ thật — ngày nặng nhất tuần",track:"BASE",rest:true},
     {id:"r65",from:"19:15",to:"22:15",label:"DA MindX (buổi học)",track:"DA",fixed:true}],
  7:[{id:"r71",from:"09:00",to:"10:30",label:"IELTS · Full section mock + chấm",track:"IELTS"},
-    {id:"r72",from:"10:30",to:"11:00",label:"Tiếng Trung",track:"ZH"},
+    {id:"r72",from:"10:30",to:"11:00",label:"IELTS · chữa mock, cập nhật error log",track:"IELTS"},
     {id:"r73",from:"11:00",to:"12:00",label:"Review tuần: check Ultra, cập nhật deadline",track:"LIFE"},
     {id:"r74",from:"14:00",to:"16:00",label:"Bài tập DA / Final Project — Gemini → Claude/ChatGPT → tự làm lại",track:"DA",note:DA_HOW},
     {id:"r75",from:"18:30",to:"21:30",label:"🤝 Bạn bè — khoá, không nhét việc",track:"SOC",rest:true}]
 }},
 
 habits:[
- {id:"hz",label:"Tiếng Trung",track:"ZH",rule:"Mỗi ngày, tối thiểu 15'. Rút ngắn được, đứt ngày thì không.",log:{}},
+ {id:"hz",label:"Tiếng Trung",track:"ZH",rule:"TẠM DỪNG tới khi thi xong (sau 2/12) — dồn giờ cho IELTS. Quay lại từ 12/2026.",paused:true,log:{}},
  {id:"hn",label:"Đọc báo",track:"BASE",rule:"20'. Giữ đúng 3 nguồn: 1 quốc tế cho cơ chế · 1 bản tin sáng VN · lịch kinh tế sáng T2. Thời gian tiết kiệm được dồn vào Macro Journal.",log:{}}
 ],
 
 goals:[
  {id:"g-ielts",name:"IELTS 7.0",track:"IELTS",src:"ielts",targetDate:"",note:"Không đặt deadline cứng. Đặt lịch thi khi đạt 7.0 ở 2 mock liên tiếp và không kỹ năng nào dưới 6.5."},
- {id:"g-zh",name:"Tiếng Trung → HSK 2 chắc",track:"ZH",src:"zh",targetDate:"2026-12-31",note:"HSK 2 chắc vào 12/2026 → bắt đầu tìm gia sư 1-kèm-1 từ 1/2027. HSK 3 giữa 2027, đủ tư vấn khách Trung ~2028."},
+ {id:"g-zh",name:"Tiếng Trung → HSK 2 chắc",track:"ZH",src:"zh",targetDate:"",paused:true,note:"TẠM DỪNG tới khi thi xong (sau 2/12), giờ đã dồn cho IELTS. HSK 2 chắc vào 12/2026 → bắt đầu tìm gia sư 1-kèm-1 từ 1/2027. HSK 3 giữa 2027, đủ tư vấn khách Trung ~2028."},
  {id:"g-da",name:"DA MindX kỳ 2",track:"DA",src:"da",targetDate:"2026-10-27",note:"16 buổi, 5/9 → ~31/10. Xong là có Final Project đưa vào CV cho LPBS."},
- {id:"g-school",name:"Tốt nghiệp — 2 môn cuối",track:"IF",src:"school",targetDate:"2026-11-26",note:"Điều kiện: mỗi môn ≥50 tổng. IF cả 3 đầu điểm đều bắt buộc."},
+ {id:"g-school",name:"Tốt nghiệp — 2 môn cuối",track:"IF",src:"school",targetDate:"2026-12-02",note:"Điều kiện: mỗi môn ≥50 tổng. IF cả 3 đầu điểm đều bắt buộc."},
  {id:"g-macro",name:"Macro & Equity Thinking System",track:"MACRO",src:"macro",targetDate:"2026-12-06",note:"12 tuần × 30 phút/ngày = 42h. Kết thúc bằng Macro Note 3 trang dùng được cho hồ sơ Investment Analyst. Module dashboard + regime scorecard được dời sang sau khoá, làm cùng DA L3 vì trùng kỹ năng."}
 ],
 
@@ -648,17 +665,17 @@ da:{note:"Học T3 + T7, 19:15–22:15. Bài tập khoá 4h/tuần: T4 tối + C
 confirm:[
  {id:"c1",t:"IF: present session mấy, problem nào?",done:true},
  {id:"c2",t:"MindX: cohort 5/9 là kỳ mấy, đúng 2 ngày nào trong tuần?",done:true},
- {id:"c3",t:"Banking: nhóm nào, topic gì, present session mấy?",done:false},
+ {id:"c3",t:"Banking: nhóm nào, topic gì, present session mấy? → G-SIBs market risk, Session 7 (16/10)",done:true},
  {id:"c4",t:"Banking Report: đề bài / câu hỏi chính xác (outline mới chỉ có rubric)",done:false},
- {id:"c5",t:"IF Mid: exact date / time / location",done:false},
- {id:"c6",t:"Final 2 môn: exact date / time / location",done:false},
+ {id:"c5",t:"IF Mid: exact date / time / location → T6 23/10 09:00 D401",done:true},
+ {id:"c6",t:"Final 2 môn: phòng thi (ngày giờ đã có: IF CN 29/11 13:00 · BFN T4 2/12 09:00)",done:false},
  {id:"c7",t:"IELTS Academic hay General Training? (đổi hoàn toàn Writing Task 1)",done:false},
  {id:"c8",t:"LPBS: có kỳ tuyển cố định không, deadline nộp, hồ sơ cần gì?",done:false},
  {id:"c9",t:"Website chứng khoán: phạm vi là gì, portfolio hay sản phẩm thật?",done:false},
  {id:"c10",t:"CTV line còn giữ không, tốn bao nhiêu giờ/tuần?",done:false},
  {id:"c11",t:"Lịch thi CCHN UBCKNN 2027 + module cần cho vị trí ở LPBS",done:false}
 ],
-patches:["v6-base","v7-load40"]
+patches:["v6-base","v7-load40","v7b-exams"]
 };}
 
 /* ============================ STATE / SYNC ============================ */
@@ -677,7 +694,7 @@ function upgrade(old){
     ["assess","tasks","habits","goals","confirm","plans","people"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
     ["energy","review","top"].forEach(k=>{ if(old[k]&&typeof old[k]==="object") s[k]=old[k]; });
     if(old.dlog) s.dlog=old.dlog; if(old.placed) s.placed=old.placed; if(old.macro) s.macro=Object.assign(s.macro,old.macro);
-    if(old.routine&&old.routine.tplV>=3) s.routine=old.routine;
+    if(old.routine&&old.routine.tplV>=4) s.routine=old.routine;
     if(old.ielts) s.ielts=Object.assign(s.ielts,old.ielts);
     if(old.zh&&old.zh.phases) s.zh.phases=old.zh.phases;
     if(old.da&&old.da.sessions) s.da=old.da;
@@ -689,6 +706,20 @@ function upgrade(old){
       s.da.note=seed().da.note; s.placed=false;
       if(s.settings.dayStart==="06:00") s.settings.dayStart="07:30";   // the old gym hour is now sleep
       s.patches=s.patches.concat("v7-load40"); patched=true;
+    }
+    if(!s.patches.includes("v7b-exams")){   // real exam dates, BFN presentation topic, Chinese paused
+      const fresh=seed();
+      fresh.assess.forEach(n=>{const o=s.assess.find(a=>a.id===n.id); if(!o){s.assess.push(n);return}
+        ["title","due","dueTime","prov","session","where","note"].forEach(k=>o[k]=n[k]);});
+      s.tasks=s.tasks.filter(x=>!(/^t\d+b$/.test(x.id)&&x.status!=="done"));
+      fresh.tasks.forEach(n=>{const o=s.tasks.find(x=>x.id===n.id);
+        if(!o) s.tasks.push(n); else if(o.status!=="done") ["t","date","start","dur","link","pri","track"].forEach(k=>o[k]=n[k]);});
+      const hz=s.habits.find(x=>x.id==="hz"); if(hz){hz.paused=true;hz.rule=fresh.habits[0].rule}
+      const gz=s.goals.find(x=>x.id==="g-zh"); if(gz){gz.paused=true;gz.targetDate="";gz.note=fresh.goals.find(x=>x.id==="g-zh").note}
+      const gs=s.goals.find(x=>x.id==="g-school"); if(gs)gs.targetDate="2026-12-02";
+      ["c3","c5","c6"].forEach(id=>{const o=s.confirm.find(c=>c.id===id),n=fresh.confirm.find(c=>c.id===id); if(o&&n){o.t=n.t;o.done=n.done}});
+      const ip=s.assess.find(a=>a.id==="if-pres"); if(ip&&ip.mark==null)ip.done=true;   // presented 12/09
+      s.placed=false; s.patches=s.patches.concat("v7b-exams"); patched=true;
     }
     return s;
   }
@@ -944,7 +975,8 @@ function rowHTML(x,date){
   const cls=[rout?(x.fixed?"cls":""):(x.emg?"emg":""), mac?"mac":"", done?"done":"", x.rest?"rest":"", x.status==="skipped"?"done":""].join(" ");
   const drag=(rout||mac)?"":`draggable="true" ondragstart="dragStart(event,'${x.id}')" ondragend="dragEnd(event)"`;
   const pl=x.plan&&planById(x.plan), star=x.kind==="task"&&topTasks(date).some(y=>y.id===x.id);
-  const sub=mac?[x.wk.m+" · "+x.se.o].join(""):[star?"★ Top 3":"", hrs((end-x.start)/60)+"h", pl?"🎯 "+h(pl.name):c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
+  const tp=rout?blockTopic(x,date):"";
+  const sub=mac?[x.wk.m+" · "+x.se.o].join(""):[star?"★ Top 3":"", tp, hrs((end-x.start)/60)+"h", pl?"🎯 "+h(pl.name):c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
   return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${x.id}">
     <button class="tick" onclick="event.stopPropagation();${(rout||mac)?`tgDay('${x.id}','${date}')`:`tgDone('${x.id}')`}" aria-label="Đánh dấu xong">${IC.check}</button>
     <span class="tm">${hhmm(x.start)}</span>
@@ -1044,7 +1076,7 @@ function renderToday(){
   <button class="btn ${eve&&!reviewed?"primary":""}" style="width:100%;margin-top:16px;padding:12px" onclick="openReview('${t}')">🌙 Chốt ngày${reviewed?" · đã chốt ✓":eve?" — 3 phút trước khi nghỉ":""}</button>
 
   <div class="sec-h"><h2>Giữ nếp</h2><div class="rule"></div></div>
-  <div class="hchips">${state.habits.map(hb=>{const on=!!hb.log[t],st=habitStreak(hb);
+  <div class="hchips">${state.habits.filter(hb=>!hb.paused).map(hb=>{const on=!!hb.log[t],st=habitStreak(hb);
     return `<button class="hchip ${on?'on':''}" onclick="tgHabit('${hb.id}')"><span>${on?"✓":"○"} ${h(hb.label)}</span><span class="s">${st||0} ngày</span></button>`}).join("")}</div>
 
   <button class="foldline" style="margin-top:12px" onclick="toggleFold('loadBox')">
@@ -1204,7 +1236,7 @@ function renderTrack(){
   ${schoolAcc()}${macroAcc()}${daAcc()}${ieltsAcc()}${zhAcc()}${baseAcc()}`;
 }
 function goalHTML(g){
-  const c=TR[g.track]||TR.LIFE, s=goalStats(g);
+  const c=TR[g.track]||TR.LIFE, s=goalStats(g); if(g.paused)s.verdict={c:"warn",t:"Tạm dừng — không tính tiến độ lúc này"};
   return `<div class="goal">
     <div class="goal-h">
       <div class="ico" style="background:${c.color}22">${c.ico}</div>
@@ -1244,7 +1276,7 @@ function schoolAcc(){
     let earned=0,doneW=0; items.forEach(a=>{if(a.mark!=null){earned+=a.weight*a.mark/100;doneW+=a.weight}});
     const leftW=100-doneW, need=x=>leftW>0?Math.max(0,Math.min(100,(x-earned)/leftW*100)):null;
     return `<div style="margin-top:12px"><b style="font-size:13.5px"><span class="subject-dot" style="background:${s.color};margin-right:6px"></span>${s.code} · ${s.name}</b>
-      <div class="small muted" style="margin:3px 0 8px">${k==="IF"?"T7":"T6"} 12:00–15:15 · ${k==="IF"?"D102 · Bùi Hồng Mai":"D402 · Lê Anh Tuấn"}</div>
+      <div class="small muted" style="margin:3px 0 8px">${k==="IF"?"T7":"T6"} 12:00–15:30 · ${k==="IF"?"D102 · Bùi Hồng Mai":"D402 · Lê Anh Tuấn"}</div>
       <div class="scroll-x"><table class="grid"><tr><th>Đầu điểm</th><th class="n">%</th><th class="n">Hạn</th><th style="text-align:right">Điểm</th></tr>
       ${items.map(a=>`<tr onclick="openAssess('${a.id}')" style="cursor:pointer"><td><b>${h(a.title)}</b><div class="small muted">${a.mode}${a.mandatory?" · bắt buộc":""}</div></td>
         <td class="n">${a.weight}</td><td class="n">${fmtD(a.due)}${a.prov?'<div class="small" style="color:var(--amber)">tạm</div>':""}</td><td class="n">${a.mark??"—"}</td></tr>`).join("")}
@@ -1271,7 +1303,7 @@ function daAcc(){
   const S=state.da.sessions||[], done=S.filter(x=>x.done).length;
   return `<details class="acc" ${accA("da")}><summary>📊 DA MindX kỳ 2<span class="chip ${done===S.length?'green':''}" style="margin-left:auto">${done}/${S.length} buổi</span></summary>
    <div class="acc-b">
-    <div class="warnbox">Va chạm lớn nhất cả kỳ: <b>13–17/10</b> — nhận đề Final Test (buổi 12) và nộp (buổi 13) kẹp đúng ngày mid-sem IF. Cách xử lý duy nhất là đẩy việc lên tháng 9 và báo nhóm từ đầu tháng 10 rằng phần của mình xong trước 13/10.</div>
+    <div class="warnbox">Hai tuần va chạm liền nhau: <b>12–17/10</b> — BFN thuyết trình (16/10) + nhận đề và nộp Final Test DA (13 → 17/10); rồi <b>19–23/10</b> — thi giữa kỳ IF (23/10) + đề Report BFN ra. Phần Final Project của mình phải xong trước 11/10 — báo nhóm ngay từ buổi chia nhóm.</div>
     <div class="note" style="margin:10px 0">${h(state.da.note)}</div>
     ${S.map(x=>`<div class="ck ${x.done?'done':''}" onclick="tgDaSess(${x.n})"><span class="box">${IC.check}</span>
       <div class="grow"><div class="ck-t">Buổi ${x.n} · ${h(x.t)}</div><div class="ck-s">${fmtFull(x.d)} · 19:15–22:15</div></div></div>`).join("")}
@@ -1287,7 +1319,7 @@ function ieltsAcc(){
   const mx=Math.max(9,...mocks.map(m=>mockOverall(m)||0));
   return `<details class="acc" ${accA("ielts")}><summary>📝 IELTS ${I.aim.toFixed(1)}<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
    <div class="acc-b">
-     <div class="warnbox">Không có deadline cứng — nhưng cửa sổ rẻ nhất là <b>tháng 9 đến giữa tháng 10</b>, và <b>từ 27/11 sau khi thi xong</b>. Tháng 11 gần như không còn chỗ (Report 8/11 + thi từ 23/11).</div>
+     <div class="warnbox">Không có deadline cứng. Tiếng Trung đang tạm dừng nên IELTS được <b>8h/tuần</b>. Tuần thi (23/11 → 2/12) giữ nhịp nhẹ; cửa sổ đẩy mạnh nhất là <b>từ 3/12</b> sau khi thi xong.</div>
      <div class="note" style="margin:10px 0">Cổng đặt lịch thi: đạt ${I.aim.toFixed(1)} ở <b>2 mock liên tiếp</b>, không kỹ năng nào dưới 6.5.${gate?' <b style="color:var(--green)">→ Đủ điều kiện rồi.</b>':""}${lo?` Mock gần nhất: <b>${lo.toFixed(1)}</b>.`:" Chưa có mock nào."}</div>
      ${unitList(I.phases,"ielts")}
      <div class="sec-h" style="margin:16px 0 8px"><h2>Mock log</h2><div class="rule"></div><button class="act" onclick="editMock('')">+ Thêm</button></div>
@@ -1303,7 +1335,7 @@ function zhAcc(){
   const st=unitStats(zhUnits());
   return `<details class="acc" ${accA("zh")}><summary>汉 Tiếng Trung<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
    <div class="acc-b">
-     <div class="warnbox">Thứ tự là <b>bắt buộc</b>: nhảy cóc pinyin là hỏng toàn bộ phần sau. Chưa qua test 16/20 thì chưa được học sang chữ Hán.</div>
+     <div class="warnbox" style="margin-bottom:8px"><b>Đang tạm dừng</b> tới khi thi xong (sau 2/12) để giảm tải — giờ đã dồn cho IELTS. Tiến độ cũ giữ nguyên.</div><div class="warnbox">Thứ tự là <b>bắt buộc</b>: nhảy cóc pinyin là hỏng toàn bộ phần sau. Chưa qua test 16/20 thì chưa được học sang chữ Hán.</div>
      ${unitList(state.zh.phases,"zh")}
      <div class="note" style="margin-top:11px">${state.zh.rules.map(r=>h(r)).join("<br>")}</div>
    </div></details>`;
@@ -1324,19 +1356,19 @@ function renderYear(){
   const t=todayISO();
   const RM=[
    {w:"Tháng 9",d:"2026-09-01",e:"2026-09-30",h:"Vào guồng",p:"Bốn thứ chạy song song lần đầu: trường + DA + tiếng Trung + IELTS. Front-load ôn mid-sem IF ngay từ tuần 1 vì tháng 10 sẽ không còn chỗ. Pinyin xong trong 2 tuần rồi mới sang HSK1."},
-   {w:"Tháng 10",d:"2026-10-01",e:"2026-10-31",h:"Nặng nhất trong kỳ",p:"13–17/10 là điểm va chạm: nhận đề + nộp Final Test DA kẹp quanh mid-sem IF. DA kỳ 2 kết thúc 27/10 → từ 28/10 buổi tối trống hoàn toàn."},
-   {w:"Tháng 11",d:"2026-11-01",e:"2026-11-30",h:"Không còn khoảng nghỉ",p:"Report 40% hạn 8/11, buổi học cuối 20–21/11, thi từ 23/11. Kế hoạch cũ tính thi giữa tháng 12 — lịch mới sớm hơn 2–3 tuần, nên ôn thi phải bắt đầu từ 9/11 chứ không phải 20/11. Tiếng Trung rút còn 15–20'/ngày, IELTS tạm dừng."},
-   {w:"Tháng 12",d:"2026-12-01",e:"2026-12-31",h:"Cửa sổ vừa mở ra",p:"Thi xong sớm hơn dự tính → nửa sau tháng 12 trống hơn kế hoạch cũ. Đây là chỗ đẩy IELTS mạnh nhất, đồng thời nộp hồ sơ LPBS và ghi danh DA kỳ 3."},
+   {w:"Tháng 10",d:"2026-10-01",e:"2026-10-31",h:"Nặng nhất trong kỳ",p:"16/10 BFN thuyết trình G-SIBs · 13–17/10 nhận + nộp Final Test DA · 23/10 thi giữa kỳ IF (09:00, D401) · từ 19/10 đề Report BFN ra. DA kết thúc 27/10 → từ 28/10 hai buổi tối trống thêm."},
+   {w:"Tháng 11",d:"2026-11-01",e:"2026-11-30",h:"Report + ôn thi",p:"Report 40% nộp tuần 12 (tạm tính 22/11). Buổi học cuối 20–21/11. Ôn thi bắt đầu từ 23/11: IF final CN 29/11 13:00. Tiếng Trung tạm dừng, IELTS giữ nhịp nhẹ."},
+   {w:"Tháng 12",d:"2026-12-01",e:"2026-12-31",h:"Cửa sổ vừa mở ra",p:"Thi BFN T4 2/12 09:00 là môn cuối. Từ 3/12: đẩy IELTS mạnh nhất, mở lại tiếng Trung, nộp hồ sơ LPBS và ghi danh DA kỳ 3."},
    {w:"Q1 2027",d:"2027-01-01",e:"2027-03-31",h:"Tốt nghiệp · vào LPBS · DA kỳ 3",p:"Tháng đầu ở chỗ làm mới luôn nặng hơn dự tính — đừng nhét thêm gì. Tiếng Trung chuyển sang gia sư 1-kèm-1. Đăng ký CCHN."},
    {w:"Q2 2027",d:"2027-04-01",e:"2027-06-30",h:"CCHN là mục tiêu duy nhất",p:"CCHN là điều kiện cần để hành nghề ở LPBS — bắt buộc. CFA là bonus. Chạy song song thì thứ bị hy sinh luôn là CCHN."},
    {w:"Q3 2027+",d:"2027-07-01",e:"2027-12-31",h:"CFA Level 1",p:"Nền WSU + L1 prep 10/2025 kéo khối lượng từ ~350h xuống ~250h, không xuống 100h. Ethics, Derivatives, Alternative Investments và độ sâu FRA không overlap. Tiếng Trung lên HSK 3."}
   ];
   const RULES=[
-   "Tiếng Trung mỗi ngày, kể cả 15 phút. Thứ này chết vì đứt quãng chứ không chết vì thiếu giờ.",
+   "Tiếng Trung tạm dừng tới 2/12 để giảm tải — dừng có chủ đích, không phải bỏ. Mở lại ngay tuần 3/12.",
    "Tối T2, tối T6 và tối CN dành cho bạn bè — đã khoá. Nghỉ thật và gặp người kéo mình lên cũng là một phần kế hoạch (#6, #8).",
    "IF được dùng AI (có khai báo) · BFN cấm hoàn toàn · DA thì AI là nội dung học. Ba chế độ, đừng lẫn — đây là rủi ro academic misconduct thật.",
    "Đọc chương trước khi lên lớp. BFN nặng tính toán (repricing, duration, credit risk) — nghe chay không kịp.",
-   "Report 40% là chỗ chốt điểm trước Final: từ 19/9 trở đi, tuần nào cũng phải chạm vào nó ít nhất một lần.",
+   "Report 40%: đề ra tuần 8 (19/10), nộp tuần 12 — chỉ 5 tuần. Tuần nào cũng phải chạm vào nó ít nhất một lần, bắt đầu ngay tuần đề ra.",
    "Vỡ trận thì cắt theo thứ tự: Đọc báo → Macro → 1 buổi IELTS. KHÔNG cắt: giấc ngủ, tiếng Trung 15', deadline, giờ bạn bè."
   ];
   document.getElementById("v-year").innerHTML=`
@@ -1351,7 +1383,7 @@ function renderYear(){
   <details class="acc" ${accA("rules")} style="margin-top:16px"><summary>6 luật tuần</summary><div class="acc-b">${RULES.map((r,i)=>`<div class="kv"><span><b class="num" style="color:var(--accent);margin-right:8px">${i+1}</b>${h(r)}</span></div>`).join("")}</div></details>
   <details class="acc" ${accA("prio")} style="margin-top:9px"><summary>Thứ tự ưu tiên nếu phải chọn</summary><div class="acc-b">
    <div class="kv"><span>1 · IF Final</span><b>60%</b></div>
-   <div class="kv"><span>2 · Banking Report</span><b>40% · hạn cứng 8/11</b></div>
+   <div class="kv"><span>2 · Banking Report</span><b>40% · nộp tuần 12</b></div>
    <div class="kv"><span>3 · Banking Final</span><b>40%</b></div>
    <div class="kv"><span>4 · IF Mid</span><b>30%</b></div>
    <div class="kv"><span>5 · Banking Presentation</span><b>20%</b></div>
