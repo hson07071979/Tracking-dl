@@ -2196,7 +2196,7 @@ function renderPlans(){
 
 /* ======================= PROMPT BUILDER: study prompts for AI tools ======================= */
 const PB_SUBJ={IF:"International Finance (ECON3014, giáo trình Eiteman–Stonehill–Moffett)",BF:"Banking and Finance (FINC3022, giáo trình Saunders & Cornett 11e)",
-  IELTS:"IELTS Academic, mục tiêu 7.0",MACRO:"Macro & Equity Thinking (vĩ mô → thị trường → ngành)",DA:"Data Analytics (Python, pandas, thống kê)",LIFE:"Khác"};
+  IELTS:"IELTS Academic, mục tiêu 7.0",MACRO:"Macro & Equity Thinking (vĩ mô → thị trường → ngành)",DA:"Data Analytics (Python, pandas, thống kê)",TRADE:"Phương pháp giao dịch cổ phiếu Việt Nam của tôi (breakout, mua dò ATC, xác nhận ĐK9 buổi tối, bán sớm nhất T+3)",LIFE:"Khác"};
 const PB_TOOLS={nlm:["NotebookLM","https://notebooklm.google.com/"],claude:["Claude","https://claude.ai/new"],gpt:["ChatGPT","https://chatgpt.com/"],gemini:["Gemini","https://gemini.google.com/"]};
 const PB_PURPOSE=[
  {k:"summary",l:"Tóm tắt bài giảng",tool:"nlm",need:""},
@@ -2209,7 +2209,9 @@ const PB_PURPOSE=[
  {k:"record",l:"Tóm tắt record buổi học",tool:"gemini",need:""},
  {k:"ieltsW",l:"IELTS · chấm Writing",tool:"claude",need:"Dán đề + bài viết",subj:"IELTS"},
  {k:"ieltsS",l:"IELTS · luyện Speaking",tool:"gpt",need:"",subj:"IELTS"},
- {k:"macro",l:"Macro · phản biện chuỗi nhân quả",tool:"claude",need:"Dán headline + chuỗi nhân quả bạn viết",subj:"MACRO"}
+ {k:"macro",l:"Macro · phản biện chuỗi nhân quả",tool:"claude",need:"Dán headline + chuỗi nhân quả bạn viết",subj:"MACRO"},
+ {k:"tradeRule",l:"Giao dịch · soát lệnh theo luật",tool:"nlm",need:"Dán diễn biến lệnh: giá đóng cửa từng phiên, đèn, OrdImb",subj:"TRADE"},
+ {k:"tradePM",l:"Giao dịch · post-mortem",tool:"claude",need:"Dán dòng nhật ký của các lệnh cần xem lại",subj:"TRADE"}
 ];
 const PB_LEVEL={new:"mới học lần đầu, cần hiểu bản chất",review:"đang ôn lại, cần hệ thống và luyện tập",exam:"sát ngày thi, cần tập trung vào dạng hay ra đề và lỗi hay sai"};
 let pb=null;
@@ -2244,6 +2246,8 @@ function buildPrompt(p){
     case "record": return `Đây là record buổi học ${S}${T}.\n1. Tóm tắt theo mốc thời gian (mm:ss), mỗi mốc 1–2 câu.\n2. Liệt kê những chỗ giảng viên nhấn mạnh, nhắc lại, hoặc nói "cái này hay ra đề".\n3. Liệt kê mọi ví dụ, bài tính, đoạn code giảng viên làm, kèm mốc thời gian.\n4. Câu hỏi sinh viên hỏi và câu trả lời.\nTrả lời bằng tiếng Việt, giữ thuật ngữ tiếng Anh.`;
     case "ieltsW": return `You are a strict IELTS examiner. Grade this Academic Writing response using the public band descriptors (Task Response / Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy).\n- Give a band for each criterion and explain why it is not one band higher, quoting my sentences.\n- List my 3 highest-priority fixes.\n- Do NOT rewrite the whole essay. Rewrite only one example sentence per fix.\nMy target is band 7.0. Explanations may be in Vietnamese.${inp||"\n\n---\nTask + my essay: (paste here)"}`;
     case "ieltsS": return `Act as an IELTS Speaking examiner. Run a full test: Part 1 (4 questions), Part 2 (give me a cue card, 1 minute to prepare, I speak for 2 minutes), Part 3 (4 questions). Do not correct me during the test.\nAfter the test: estimated band per criterion (Fluency & Coherence, Lexical Resource, Grammatical Range & Accuracy, Pronunciation), my 3 most frequent errors with examples, and 3 phrases I should start using. My target is 7.0.`;
+    case "tradeRule": return `Tôi đang học lại hệ thống giao dịch của chính mình. Tôi đã nạp 2 tài liệu: bản 27/09/2026 (mới) và bản 26/09/2026 (cũ). Nếu 2 bản mâu thuẫn, luôn theo bản 27/09.\n${vn}\n\nVới diễn biến lệnh dưới đây:\n1. Xét lần lượt từng phiên từ T+3, theo đúng thứ tự luật thoát. Luật nào nổ đầu tiên, ở phiên nào, bán bao nhiêu? Trích mục trong tài liệu.\n2. Nêu các luật đã được kiểm nhưng chưa nổ và vì sao.\n3. Nếu dữ liệu tôi đưa thiếu để kết luận thì nói rõ thiếu gì, đừng đoán.\nĐây là bài học, không phải khuyến nghị mua bán.${inp||"\n\n---\nDiễn biến lệnh: (dán vào đây)"}`;
+    case "tradePM": return `Tôi đang post-mortem các lệnh của hệ thống giao dịch breakout của tôi (mua dò ATC, xác nhận OrdImb buổi tối, luật thoát tính bằng giá đóng cửa, sớm nhất T+3).\n${vn}\n\nVới từng lệnh dưới đây:\n1. Xếp nguyên nhân đúng/sai vào 1 trong 4 nhóm: luận điểm ngành, chất lượng doanh nghiệp, điểm kích hoạt, hay thực thi (khớp lệnh, trượt giá, bỏ lỡ ATC, tự bán non).\n2. Tôi có làm đúng luật không? Chỗ nào tôi tự làm khác luật?\n3. Lợi nhuận quý có phải khoản một lần hoặc do chu kỳ ngành không (nếu tôi có đưa số)?\nTuyệt đối không đề xuất đổi ngưỡng dựa trên vài lệnh. Nếu thấy một mẫu lặp lại, chỉ ghi nó thành câu hỏi nghiên cứu để kiểm bằng walk-forward và Monte Carlo.${inp||"\n\n---\nNhật ký lệnh: (dán vào đây)"}`;
     case "macro": return `${base}\n${vn}\n\nPhản biện chuỗi nhân quả vĩ mô dưới đây:\n1. Chỉ ra mắt xích nào đang nhảy cóc hoặc là narrative chứ không phải cơ chế.\n2. Tin này chạm vào cửa nào: (a) lợi nhuận, (b) lãi suất chiết khấu, (c) phần bù rủi ro / thanh khoản?\n3. Ai được, ai mất, và nhánh ngược mà tôi bỏ sót.\n4. Thị trường có thể đã phản ánh vào giá bao nhiêu rồi? Dựa vào tín hiệu giá nào?\nĐừng viết lại chuỗi cho tôi. Chỉ hỏi và chỉ ra chỗ sai.${inp||"\n\n---\nHeadline + chuỗi nhân quả của tôi: (dán vào đây)"}`;
   }
   return base;
@@ -2253,7 +2257,7 @@ function renderPB(msg){
   const bfWarn=pb.subj==="BF";
   openSheet(`<h3>✨ Tạo prompt học với AI</h3><div class="sh-sub">Chọn mục đích → copy → dán vào tool gợi ý. Prompt đã có sẵn nguyên tắc: dựa trên tài liệu, không làm hộ.</div>
    <div class="fld"><span class="mlab">Mục đích</span><div class="pill-row">${PB_PURPOSE.map(x=>`<button type="button" class="pill ${x.k===pb.purpose?"on":""}" onclick="pbSet('purpose','${x.k}')">${x.l}</button>`).join("")}</div></div>
-   <div class="two"><label class="fld"><span>Môn</span><select id="pbS" onchange="pbSet('subj',this.value)">${Object.keys(PB_SUBJ).map(k=>`<option value="${k}" ${pb.subj===k?"selected":""}>${k==="BF"?"BFN":k}</option>`).join("")}</select></label>
+   <div class="two"><label class="fld"><span>Môn</span><select id="pbS" onchange="pbSet('subj',this.value)">${Object.keys(PB_SUBJ).map(k=>`<option value="${k}" ${pb.subj===k?"selected":""}>${k==="BF"?"BFN":k==="TRADE"?"Giao dịch":k}</option>`).join("")}</select></label>
      <label class="fld"><span>Mức độ</span><select id="pbL" onchange="pbSet('level',this.value)">${[["new","Mới học"],["review","Đang ôn"],["exam","Sát thi"]].map(([k,l])=>`<option value="${k}" ${pb.level===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
    <label class="fld"><span>Chương / chủ đề</span><input type="text" id="pbT" value="${h(pb.topic)}" placeholder="VD: S6 · Market Risk (Ch.15)" onchange="pbSet('topic',this.value)"></label>
    ${P.need?`<label class="fld"><span>${h(P.need)}</span><textarea id="pbI" oninput="pbRead()" onchange="pbSet('input',this.value)" placeholder="Dán vào đây (không bắt buộc, có thể dán thẳng trong tool)">${h(pb.input)}</textarea></label>`:`<input type="hidden" id="pbI" value="">`}

@@ -14,7 +14,7 @@ Lịch hằng ngày nằm trong app [Sơn Study OS](../). Bấm vào block ôn I
 | BFN · FINC3022 | [Mở →](bfn/) | Session 1–4 xong (theo problems thầy đã phát) |
 | IELTS 7.0 | [Luồng học ở dưới](#ielts) | |
 | Macro | [Luồng học ở dưới](#macro) | Giáo trình 12 tuần nằm sẵn trong app |
-| Phương pháp giao dịch | [Ở dưới](#trading) | **Cần bạn gửi tài liệu** |
+| Phương pháp giao dịch | [Học lại PP giao dịch](https://claude.ai/artifact/Wi1JueCe86jHCnUienopke) | Trang riêng, chỉ chủ tài khoản mở được |
 | **Lời giải** (Discussion IF, Problems BFN, slide thầy) | [Sổ lời giải](https://claude.ai/artifact/Hp2Q6ngHBPzbwjTvepmgiA) | Trang riêng, chỉ chủ tài khoản mở được |
 
 ---
@@ -117,9 +117,11 @@ Lớp BFN học **T6**, lớp IF học **T7** (12:00–15:30). Các block dướ
 
 <a id="trading"></a>
 ## 7. Phương pháp giao dịch của bạn
-Tui **chưa có tài liệu** nào về phương pháp giao dịch của bạn nên chưa soạn phần này. Bạn gửi tui:
-- Phương pháp đang dùng: phân tích kỹ thuật, cơ bản, hay kết hợp? Khung thời gian nào? Thị trường nào (cổ phiếu Việt Nam, phái sinh, crypto…)?
-- Tài liệu gốc bạn đã học (khoá học, sách, ghi chú, video) và nhật ký lệnh nếu có.
-- Bạn muốn "học lại" để làm gì: chuẩn hoá quy trình, tìm lỗi, hay chuẩn bị đi làm ở công ty chứng khoán?
+Luật và con số của hệ thống **không đăng ở đây** vì là hệ thống giao dịch cá nhân. Bài học đầy đủ nằm ở trang riêng [Học lại PP giao dịch](https://claude.ai/artifact/Wi1JueCe86jHCnUienopke): khung học theo bản 26/09, luật và số theo bản 27/09, có bảng "bản mới đổi gì", checklist trước lệnh, mẫu nhật ký, 14 câu tự kiểm tra và lộ trình 4 tuần.
 
-Có tài liệu rồi thì tui làm cho phần này giống các môn khác: bài tóm tắt, checklist trước khi vào lệnh, luồng ôn hằng tuần, và nạp vào NotebookLM.
+Cách học:
+1. **Tuần 1–3:** mỗi tuần 2 buổi ngắn (dùng khối Macro 17:00 của 2 ngày trong tuần, hoặc 30 phút sau tin nhắn buổi tối), học theo lộ trình trong trang riêng.
+2. **Tuần 4:** học ngành bạn đang cầm nhiều nhất, post-mortem 3 lệnh theo 4 nguyên nhân: luận điểm ngành, doanh nghiệp, điểm kích hoạt, thực thi.
+3. **Sau đó:** mỗi cuối tuần 20 phút xem lại nhật ký, ghi trượt giá thật, học thêm 1 ngành.
+
+NotebookLM: nạp 2 file docx (bản mới và bản cũ) vào một notebook riêng. Trong mọi prompt, dặn *"nếu 2 tài liệu mâu thuẫn thì ưu tiên bản mới"*. Nút **✨ Tạo prompt** trong app có môn **Giao dịch**.
