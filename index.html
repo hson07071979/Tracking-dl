@@ -435,11 +435,30 @@ const BF_W=[null,["Why are FIs special?","Ch.1"],["FI Risks","Ch.7"],["Interest 
  ["Interest Rate Risk Management","Ch.23–27"],["Market Risk","Ch.15"],["Credit Risk — Individual Loan","Ch.10"],["Credit Risk — Loan Portfolio","Ch.11"],
  ["Liquidity Risk","Ch.12"],["Liability & Liquidity Management","Ch.19"],["Capital Management","Ch.21"],["Revision","ôn tổng"]];
 /* which session a study block is about: "pre" = this week's class, "rev" = the latest class already held */
-function blockTopic(b,date){
-  const W=b.track==="IF"?IF_W:b.track==="BF"?BF_W:null; if(!W||!b.hint) return "";
-  const n=sessOfWeek(mondayOf(date)); if(!n) return "";
+function blockSession(b,date){
+  if(!(b.track==="IF"||b.track==="BF")||!b.hint||!date) return 0;
+  const n=sessOfWeek(mondayOf(date)); if(!n) return 0;
   const classDay=b.track==="IF"?6:5, k=b.hint==="pre"?n:(dow(date)>=classDay?n:n-1);
-  return W[k]?`S${k} · ${W[k][0]} (${W[k][1]})`:"";
+  return k>=1&&k<=N_SESS?k:0;
+}
+function blockTopic(b,date){
+  const k=blockSession(b,date), W=b.track==="IF"?IF_W:BF_W;
+  return k&&W[k]?`S${k} · ${W[k][0]} (${W[k][1]})`:"";
+}
+/* study notes published next to the app (GitHub Pages renders study/*.md) */
+const STUDY="study/";
+const IF_NOTE=[null,["ch01","ch02"],["ch03"],["ch05"],["ch06"],["ch07"],["ch09"],["ch10"],["ch13"],["ch14"],["ch16"],["ch17"],[]];
+const BF_NOTE=[null,["ch01"],["ch07"],["ch08"],["ch09"],[],[],[],[],[],[],[],[]];   // BFN notes follow the problem sets (up to Session 4 so far)
+const STUDY_HOW={pre:"Đọc trước bài: ① xem Video Overview trong NotebookLM 10–15' ② đọc phần 1–2 của bài tóm tắt ③ ghi 3 câu hỏi mang lên lớp.",
+  rev:"Ôn sau lớp (trong 48h): ① tải slide GV / problems từ Ultra, nạp vào NotebookLM ② hỏi 'slide GV khác gì bài tóm tắt?' ③ làm phần Tự kiểm tra KHÔNG nhìn đáp án ④ chữa, ghi lỗi sai. BFN: tự làm problems, không dùng AI."};
+function studyLinks(b,date){
+  const k=blockSession(b,date); if(!k) return "";
+  const L=(b.track==="IF"?IF_NOTE:BF_NOTE)[k]||[], dir=b.track==="IF"?"if/":"bfn/";
+  const btns=L.map(c=>`<a class="btn sm" href="${STUDY}${dir}${c}.html" target="_blank" rel="noopener">📖 Ch.${parseInt(c.slice(2),10)}</a>`).join("");
+  return `<div class="mblk"><span class="mlab">Tuần này: ${h(blockTopic(b,date))}</span>
+    <div class="row wrap" style="gap:6px;margin:4px 0 8px">${btns||'<span class="small muted">Chưa có bài tóm tắt cho tuần này — mở mục lục</span>'}<a class="btn sm ghost" href="${STUDY}${dir}" target="_blank" rel="noopener">Mục lục</a></div>
+    <div class="small" style="color:var(--ink2)">${h(STUDY_HOW[b.hint]||"")}</div>
+    <button class="btn sm" style="margin-top:8px" onclick="openPromptBuilder({subj:'${b.track}',topic:'${h(blockTopic(b,date))}',purpose:'${b.hint==="pre"?"summary":"quiz"}'})">✨ Tạo prompt cho buổi này</button></div>`;
 }
 const DA_HOW="Cách học với AI (3 bước, ~2h): ① Gemini ~15' — tải record buổi học lên, xin tóm tắt theo mốc thời gian + danh sách đoạn code/ví dụ thầy làm. ② Claude hoặc ChatGPT ~30' — hỏi lại chỗ chưa hiểu, nhờ giải thích từng dòng code; cần chạy thử dữ liệu / vẽ biểu đồ thì dùng ChatGPT (có chạy Python). ③ Tự làm lại bài thực hành từ đầu, không nhìn note ~75'. Không để AI làm hộ bước ③ — Final Project ~20h cần kỹ năng thật.";
 
@@ -985,7 +1004,7 @@ function rowHTML(x,date){
   return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${x.id}">
     <button class="tick" onclick="event.stopPropagation();${(rout||mac)?`tgDay('${x.id}','${date}')`:`tgDone('${x.id}')`}" aria-label="Đánh dấu xong">${IC.check}</button>
     <span class="tm">${hhmm(x.start)}</span>
-    <div class="rt" onclick="${mac?`openMacro('${date}')`:rout?`editBlock(${dow(date)},'${x.id}')`:`openTask('${x.id}')`}">
+    <div class="rt" onclick="${mac?`openMacro('${date}')`:rout?`editBlock(${dow(date)},'${x.id}','${date}')`:`openTask('${x.id}')`}">
       <b>${h(x.t||x.label)}</b><div class="sub">${sub}</div>
       ${(x.progress>0&&!done&&!rout)?`<div class="prog"><i style="width:${x.progress}%"></i></div>`:""}
     </div></div>`;
@@ -1237,6 +1256,8 @@ function renderTrack(){
   document.getElementById("v-track").innerHTML=`
   <div class="sec-h"><h2>Mục tiêu & thời gian đạt</h2><div class="rule"></div><button class="act" onclick="editGoal('')">+ Goal</button></div>
   ${goals}
+  <a class="foldline" href="${STUDY}" target="_blank" rel="noopener" style="margin-top:14px;text-decoration:none;color:inherit">📚 Study Kit — tóm tắt từng chương, luồng học, tool nào dùng khi nào<span style="margin-left:auto;color:var(--accent)">→</span></a>
+  <button class="foldline" style="margin-top:8px" onclick="openPromptBuilder()">✨ Tạo prompt học với AI — tóm tắt, giải thích, đề thử, chấm bài<span style="margin-left:auto;color:var(--accent)">→</span></button>
   <div class="sec-h"><h2>Chi tiết từng mảng</h2><div class="rule"></div><span class="small muted">bấm để mở</span></div>
   ${schoolAcc()}${macroAcc()}${daAcc()}${ieltsAcc()}${zhAcc()}${baseAcc()}`;
 }
@@ -1461,6 +1482,7 @@ function quickAdd(){
   openSheet(`<h3>Thêm nhanh</h3><div class="sh-sub">Chọn loại</div>
    <div style="display:flex;flex-direction:column;gap:8px">
     <button class="btn primary" onclick="openPlanEdit('')">🎯 Mục tiêu dài hạn — AI chia ra từng ngày</button>
+    <button class="btn" onclick="openPromptBuilder()">✨ Tạo prompt học với AI</button>
     <button class="btn" onclick="closeSheet();addTask({date:'${todayISO()}'})">📌 Việc có ngày giờ</button>
     <button class="btn" onclick="editPerson('')">🤝 Người đáng đầu tư thời gian</button>
     <button class="btn" onclick="closeSheet();openAssess('')">🎯 Mốc chấm điểm / deadline</button>
@@ -1510,11 +1532,12 @@ function setStatus(id,s){const x=state.tasks.find(t=>t.id===id);if(x){x.status=x
 function pushNext(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
   const s=nextFreeSlot(x.date,x.start+15,x.dur,x.id); if(s){x.date=s.date;x.start=s.start} closeSheet(); save()}
 
-function editBlock(day,id){
+function editBlock(day,id,date){
   const list=state.routine.tpl[day]||[];
   const b=list.find(x=>x.id===id)||{id:"",from:"08:00",to:"09:30",label:"",track:"IF",fixed:false};
   const isNew=!b.id;
   openSheet(`<h3>${isNew?"Block lặp tuần":"Sửa block"}</h3><div class="sh-sub">${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][day]} · lặp mỗi tuần</div>
+   ${studyLinks(b,date)}
    ${b.note?`<div class="mblk out"><span class="mlab">Cách làm</span>${h(b.note)}</div>`:""}
    <label class="fld"><span>Nội dung</span><input type="text" id="bL" value="${h(b.label)}"></label>
    <div class="two"><label class="fld"><span>Từ</span><input type="time" id="bF" value="${b.from}"></label>
@@ -2169,6 +2192,79 @@ function renderPlans(){
       ${due?'<span class="chip amber">đến hạn</span>':'<span class="chip green">ổn</span>'}</div>`}).join("")}</div>`
    :`<div class="card small muted">#6 — Thêm 3–5 người kéo mình lên (mentor, anh chị trong ngành, bạn học nghiêm túc). App nhắc liên hệ đều, bạn chỉ cần tick khi đã nhắn / gặp.</div>`}
   <div class="note" style="margin-top:14px"><b>Cách dùng mỗi ngày:</b> sáng mở <b>Hôm nay</b> → chấm năng lượng → làm Top 3 → gõ việc phát sinh vào ô thêm nhanh → tối bấm <b>Chốt ngày</b>. Mục tiêu dài hạn tự rải buổi vào lịch; lỡ thì Xếp lại, không bỏ.</div>`;
+}
+
+/* ======================= PROMPT BUILDER: study prompts for AI tools ======================= */
+const PB_SUBJ={IF:"International Finance (ECON3014, giáo trình Eiteman–Stonehill–Moffett)",BF:"Banking and Finance (FINC3022, giáo trình Saunders & Cornett 11e)",
+  IELTS:"IELTS Academic, mục tiêu 7.0",MACRO:"Macro & Equity Thinking (vĩ mô → thị trường → ngành)",DA:"Data Analytics (Python, pandas, thống kê)",LIFE:"Khác"};
+const PB_TOOLS={nlm:["NotebookLM","https://notebooklm.google.com/"],claude:["Claude","https://claude.ai/new"],gpt:["ChatGPT","https://chatgpt.com/"],gemini:["Gemini","https://gemini.google.com/"]};
+const PB_PURPOSE=[
+ {k:"summary",l:"Tóm tắt bài giảng",tool:"nlm",need:""},
+ {k:"video",l:"Video Overview",tool:"nlm",need:""},
+ {k:"explain",l:"Giải thích chỗ chưa hiểu",tool:"claude",need:"Dán đoạn / câu bạn chưa hiểu"},
+ {k:"quiz",l:"Tạo câu hỏi / đề thử",tool:"nlm",need:""},
+ {k:"diff",l:"So slide thầy với bài tóm tắt",tool:"nlm",need:""},
+ {k:"check",l:"Chấm bài tôi đã làm",tool:"claude",need:"Dán đề + bài làm của bạn"},
+ {k:"cards",l:"Flashcard Anki",tool:"claude",need:""},
+ {k:"record",l:"Tóm tắt record buổi học",tool:"gemini",need:""},
+ {k:"ieltsW",l:"IELTS · chấm Writing",tool:"claude",need:"Dán đề + bài viết",subj:"IELTS"},
+ {k:"ieltsS",l:"IELTS · luyện Speaking",tool:"gpt",need:"",subj:"IELTS"},
+ {k:"macro",l:"Macro · phản biện chuỗi nhân quả",tool:"claude",need:"Dán headline + chuỗi nhân quả bạn viết",subj:"MACRO"}
+];
+const PB_LEVEL={new:"mới học lần đầu, cần hiểu bản chất",review:"đang ôn lại, cần hệ thống và luyện tập",exam:"sát ngày thi, cần tập trung vào dạng hay ra đề và lỗi hay sai"};
+let pb=null;
+function pbCurrentTopic(subj){
+  const t=todayISO(), n=sessOfWeek(mondayOf(t)); if(!n) return "";
+  if(subj==="IF"||subj==="BF"){ const W=subj==="IF"?IF_W:BF_W, cd=subj==="IF"?6:5, k=dow(t)>=cd?n:n-1; return W[k]?`S${k} · ${W[k][0]} (${W[k][1]})`:""; }
+  return "";
+}
+function openPromptBuilder(pre){
+  pre=pre||{};
+  const subj=pre.subj||(pb&&pb.subj)||"IF";
+  pb={subj,topic:pre.topic!=null?pre.topic:pbCurrentTopic(subj),purpose:pre.purpose||"summary",level:pre.level||"review",input:"",out:""};
+  renderPB();
+}
+function pbRead(){ if(!pb||!document.getElementById("pbS"))return; pb.subj=v("pbS"); pb.topic=v("pbT"); pb.level=v("pbL"); pb.input=v("pbI"); }
+function pbSet(k,val){ pbRead(); pb[k]=val; const P=PB_PURPOSE.find(x=>x.k===pb.purpose); if(k==="purpose"&&P&&P.subj){pb.subj=P.subj}
+  if(k==="subj"){pb.topic=pbCurrentTopic(val)} renderPB(); }
+function buildPrompt(p){
+  const P=PB_PURPOSE.find(x=>x.k===p.purpose)||PB_PURPOSE[0], S=PB_SUBJ[p.subj]||p.subj, T=p.topic?` — chủ đề: ${p.topic}`:"", L=PB_LEVEL[p.level];
+  const base=`Tôi là sinh viên năm cuối ngành tài chính ở Việt Nam, học bằng tiếng Anh. Môn: ${S}${T}. Mức độ: ${L}.`;
+  const src="Chỉ dựa trên tài liệu tôi đã đưa (slide, bài tóm tắt). Chỗ nào tài liệu không có thì nói rõ là không có, đừng tự bịa.";
+  const vn="Trả lời bằng tiếng Việt, giữ nguyên thuật ngữ tiếng Anh (lần đầu xuất hiện thì giải thích ngắn).";
+  const inp=p.input.trim()?`\n\n---\nNội dung của tôi:\n${p.input.trim()}`:"";
+  switch(P.k){
+    case "summary": return `${base}\n${src}\n${vn}\n\nHãy tóm tắt bài giảng này theo đúng thứ tự:\n1. Bức tranh lớn trong 3 câu.\n2. 4–6 khái niệm cốt lõi, mỗi khái niệm: định nghĩa, vì sao quan trọng, 1 ví dụ.\n3. Toàn bộ công thức, ghi rõ đơn vị và cách đọc từng ký hiệu.\n4. 5 lỗi sinh viên hay nhầm khi làm trắc nghiệm.\n5. 3 câu hỏi để tôi tự kiểm tra (chưa đưa đáp án).${inp}`;
+    case "video": return `Tạo Video Overview cho ${S}${T}.\nKhán giả: sinh viên năm cuối, mức độ: ${L}.\nNói tiếng Việt, giữ thuật ngữ tiếng Anh. Thứ tự: bức tranh lớn → 3–5 khái niệm cốt lõi → 1 ví dụ số làm từng bước → các lỗi hay nhầm → 3 câu hỏi cuối video.\nKhông thêm kiến thức ngoài tài liệu đã nạp.`;
+    case "explain": return `${base}\n${vn}\n\nTôi chưa hiểu phần dưới đây. Hãy giải thích theo 3 tầng:\n1. Giải thích như cho người mới (dùng một phép so sánh đời thường).\n2. Giải thích đúng chuẩn giáo trình, có công thức hoặc cơ chế.\n3. Một ví dụ số làm từng bước.\nSau đó hỏi tôi 2 câu để kiểm tra tôi đã hiểu chưa, và chờ tôi trả lời.${inp||"\n\n---\nNội dung tôi chưa hiểu: (dán vào đây)"}`;
+    case "quiz": return `${base}\n${src}\n\nTạo 10 câu hỏi kiểm tra cho chủ đề này:\n- 6 câu trắc nghiệm 4 lựa chọn, đúng kiểu đề thi (có bẫy), trong đó ít nhất 3 câu có tính toán.\n- 2 câu tính toán nhiều bước.\n- 2 câu tự luận ngắn (giải thích, đánh giá).\nChưa đưa đáp án. Khi tôi trả lời xong thì chấm từng câu, giải thích câu sai, và chỉ ra tôi đang hổng phần nào.\nDùng số liệu mới, không lặp lại số liệu có sẵn trong slide.`;
+    case "diff": return `${base}\nTôi đã nạp 2 nguồn: slide của giảng viên, và bài tóm tắt tôi tự ôn.\n\nHãy so sánh và liệt kê:\n1. Nội dung có trong slide giảng viên nhưng bài tóm tắt KHÔNG có (xếp theo mức quan trọng cho thi).\n2. Chỗ hai nguồn nói khác nhau hoặc dùng số liệu khác nhau.\n3. Ví dụ, bảng, case riêng của giảng viên (thường là chỗ dễ ra đề).\nMỗi ý ghi rõ trích từ slide số mấy.`;
+    case "check": return `${base}\n${vn}\n\nChấm bài làm của tôi như một giảng viên khắt khe:\n- Kiểm tra từng bước tính và từng lập luận. Chỉ ra đúng chỗ sai đầu tiên và vì sao sai.\n- Không viết lại lời giải hoàn chỉnh. Chỉ gợi ý bước tiếp theo để tôi tự sửa.\n- Cuối cùng cho điểm trên 10 và nêu 1 thói quen cần sửa.${inp||"\n\n---\nĐề bài và bài làm của tôi: (dán vào đây)"}`;
+    case "cards": return `${base}\n${src}\n\nTạo 20 flashcard cho Anki, mỗi dòng dạng: mặt trước;mặt sau\n- Mặt trước là một câu hỏi ngắn hoặc thuật ngữ (tiếng Anh).\n- Mặt sau trả lời ngắn gọn bằng tiếng Việt, có công thức nếu có.\n- Gồm: định nghĩa, công thức, dấu và chiều tác động, các cặp khái niệm dễ nhầm.\nChỉ in các dòng flashcard, không thêm chữ nào khác.`;
+    case "record": return `Đây là record buổi học ${S}${T}.\n1. Tóm tắt theo mốc thời gian (mm:ss), mỗi mốc 1–2 câu.\n2. Liệt kê những chỗ giảng viên nhấn mạnh, nhắc lại, hoặc nói "cái này hay ra đề".\n3. Liệt kê mọi ví dụ, bài tính, đoạn code giảng viên làm, kèm mốc thời gian.\n4. Câu hỏi sinh viên hỏi và câu trả lời.\nTrả lời bằng tiếng Việt, giữ thuật ngữ tiếng Anh.`;
+    case "ieltsW": return `You are a strict IELTS examiner. Grade this Academic Writing response using the public band descriptors (Task Response / Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy).\n- Give a band for each criterion and explain why it is not one band higher, quoting my sentences.\n- List my 3 highest-priority fixes.\n- Do NOT rewrite the whole essay. Rewrite only one example sentence per fix.\nMy target is band 7.0. Explanations may be in Vietnamese.${inp||"\n\n---\nTask + my essay: (paste here)"}`;
+    case "ieltsS": return `Act as an IELTS Speaking examiner. Run a full test: Part 1 (4 questions), Part 2 (give me a cue card, 1 minute to prepare, I speak for 2 minutes), Part 3 (4 questions). Do not correct me during the test.\nAfter the test: estimated band per criterion (Fluency & Coherence, Lexical Resource, Grammatical Range & Accuracy, Pronunciation), my 3 most frequent errors with examples, and 3 phrases I should start using. My target is 7.0.`;
+    case "macro": return `${base}\n${vn}\n\nPhản biện chuỗi nhân quả vĩ mô dưới đây:\n1. Chỉ ra mắt xích nào đang nhảy cóc hoặc là narrative chứ không phải cơ chế.\n2. Tin này chạm vào cửa nào: (a) lợi nhuận, (b) lãi suất chiết khấu, (c) phần bù rủi ro / thanh khoản?\n3. Ai được, ai mất, và nhánh ngược mà tôi bỏ sót.\n4. Thị trường có thể đã phản ánh vào giá bao nhiêu rồi? Dựa vào tín hiệu giá nào?\nĐừng viết lại chuỗi cho tôi. Chỉ hỏi và chỉ ra chỗ sai.${inp||"\n\n---\nHeadline + chuỗi nhân quả của tôi: (dán vào đây)"}`;
+  }
+  return base;
+}
+function renderPB(msg){
+  const P=PB_PURPOSE.find(x=>x.k===pb.purpose)||PB_PURPOSE[0], tool=PB_TOOLS[P.tool], out=buildPrompt(pb);
+  const bfWarn=pb.subj==="BF";
+  openSheet(`<h3>✨ Tạo prompt học với AI</h3><div class="sh-sub">Chọn mục đích → copy → dán vào tool gợi ý. Prompt đã có sẵn nguyên tắc: dựa trên tài liệu, không làm hộ.</div>
+   <div class="fld"><span class="mlab">Mục đích</span><div class="pill-row">${PB_PURPOSE.map(x=>`<button type="button" class="pill ${x.k===pb.purpose?"on":""}" onclick="pbSet('purpose','${x.k}')">${x.l}</button>`).join("")}</div></div>
+   <div class="two"><label class="fld"><span>Môn</span><select id="pbS" onchange="pbSet('subj',this.value)">${Object.keys(PB_SUBJ).map(k=>`<option value="${k}" ${pb.subj===k?"selected":""}>${k==="BF"?"BFN":k}</option>`).join("")}</select></label>
+     <label class="fld"><span>Mức độ</span><select id="pbL" onchange="pbSet('level',this.value)">${[["new","Mới học"],["review","Đang ôn"],["exam","Sát thi"]].map(([k,l])=>`<option value="${k}" ${pb.level===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
+   <label class="fld"><span>Chương / chủ đề</span><input type="text" id="pbT" value="${h(pb.topic)}" placeholder="VD: S6 · Market Risk (Ch.15)" onchange="pbSet('topic',this.value)"></label>
+   ${P.need?`<label class="fld"><span>${h(P.need)}</span><textarea id="pbI" oninput="pbRead()" onchange="pbSet('input',this.value)" placeholder="Dán vào đây (không bắt buộc, có thể dán thẳng trong tool)">${h(pb.input)}</textarea></label>`:`<input type="hidden" id="pbI" value="">`}
+   ${bfWarn?`<div class="warnbox" style="margin-bottom:10px">BFN <b>cấm AI trong bài chấm điểm</b>. Chỉ dùng để tự hiểu và luyện problems. <b>Không</b> dán đề Report hay nội dung thuyết trình.</div>`:""}
+   ${pb.subj==="IF"&&pb.purpose==="check"?`<div class="note" style="margin-bottom:10px">IF được dùng AI nhưng phải <b>khai báo</b> nếu dùng trong bài nộp.</div>`:""}
+   <div class="mblk out"><span class="mlab">Dán vào ${tool[0]}</span><textarea id="pbOut" readonly style="min-height:190px;font-size:12.5px;background:var(--surface)">${h(out)}</textarea></div>
+   <div class="row wrap" style="gap:7px">
+     <button class="btn primary grow" onclick="pbRead();document.getElementById('pbOut').value=buildPrompt(pb);copyText('pbOut')">Copy prompt</button>
+     <a class="btn grow" href="${tool[1]}" target="_blank" rel="noopener">Mở ${tool[0]} ↗</a></div>
+   ${P.tool==="nlm"?`<div class="small muted" style="margin-top:8px">NotebookLM: nạp slide (PDF) + link bài tóm tắt của chương vào notebook của môn trước, rồi dán prompt vào ô chat (Video Overview thì dán vào ô tuỳ chỉnh của Video Overview).</div>`:""}
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
 }
 
 /* ================================= BOOT ================================= */
