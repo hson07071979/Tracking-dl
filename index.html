@@ -410,15 +410,20 @@ function todayISO(){return iso(new Date())}
 function dow(s){const d=D(s).getDay();return d===0?7:d}
 function mondayOf(s){return addD(s,-(dow(s)-1))}
 function dbet(a,b){return Math.round((D(b)-D(a))/86400000)}
-function fmtD(s){const d=D(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")}
-function fmtFull(s){const d=D(s);return ["CN","T2","T3","T4","T5","T6","T7"][d.getDay()]+", "+fmtD(s)+"/"+d.getFullYear()}
+function fmtD(s){if(!s)return "—";const d=D(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")}
+function fmtFull(s){if(!s)return "chưa có ngày";const d=D(s);return ["CN","T2","T3","T4","T5","T6","T7"][d.getDay()]+", "+fmtD(s)+"/"+d.getFullYear()}
 function sessOfWeek(m){const n=Math.round(dbet(WEEK1_MON,m)/7)+1;return(n>=1&&n<=N_SESS)?n:null}
 function sessDates(n){const m=addD(WEEK1_MON,(n-1)*7);return{mon:m,fri:addD(m,4),sat:addD(m,5),sun:addD(m,6)}}
 function mm(t){const[a,b]=String(t).split(":").map(Number);return a*60+(b||0)}
 function hhmm(m){m=Math.max(0,Math.round(m));return String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
 function hrs(n){return (Math.round(n*10)/10).toString().replace(".0","")}
 function h(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function aDone(a){return !!a.done||a.mark!=null}
 function uid(){return Math.random().toString(36).slice(2,9)}
+/* open/closed state of accordions survives re-render */
+const accState={};
+function accA(k,def){const o=(k in accState)?accState[k]:!!def;return `data-acc="${k}" ${o?"open":""}`}
+document.addEventListener("toggle",e=>{const k=e.target&&e.target.dataset&&e.target.dataset.acc;if(k)accState[k]=e.target.open},true);
 
 const MACRO_WEEKS=[{"n":1,"d":"2026-09-14","m":"M1","p":"A","f":"Ba câu hỏi thay thế · Price = Earnings × Multiple","o":"Macro Journal chạy + 5 chuỗi nhân quả","g":"","s":[{"t":"Dựng Macro Journal + lịch dữ liệu tuần","l":"Tạo bảng 7 cột: ngày · headline · cửa (a/b/c) · chuỗi nhân quả · hàm ý tài sản · đoán price-in · kiểm chứng sau. Mở lịch kinh tế, đánh dấu 3 số quan trọng nhất tuần.","q":"Tuần này có số liệu vĩ mô Mỹ và VN nào, xếp theo mức thị trường quan tâm?|Consensus cho từng số đang là bao nhiêu?","o":"File Macro Journal tồn tại + 3 số đã đánh dấu"},{"t":"Ba câu hỏi thay thế","l":"Bỏ câu 'tin này tốt hay xấu'. Thay bằng: (1) cơ chế là gì — viết từng mắt xích; (2) ai được ai mất; (3) thị trường đã trả trước bao nhiêu.","q":"Cho tôi 5 headline vĩ mô hôm nay, hỏi ngược tôi 3 câu này từng cái và chấm câu trả lời|Câu nào của tôi là narrative chứ không phải cơ chế?","o":"5 headline trả lời đủ 3 câu"},{"t":"Ba cửa — Price ≈ Earnings × Multiple","l":"Multiple ≈ f(discount rate, risk premium, liquidity, growth). Mọi biến vĩ mô phải chạm (a) earnings, (b) discount rate, hoặc (c) risk premium/liquidity. Không chỉ được cửa nào là chưa hiểu tin đó.","q":"Tôi xếp headline này vào cửa (b), phản biện giúp tôi|Tin nào chạm nhiều hơn một cửa, cửa nào mạnh hơn?","o":"1 dòng journal + 5 headline đã phân cửa"},{"t":"Viết chuỗi nhân quả","l":"Chuỗi ≥4 mắt xích, mỗi mắt xích là một cơ chế có thể sai, bắt buộc có cả nhánh thắng lẫn nhánh thua. Học ví dụ chuỗi dầu 9 mắt xích trong tài liệu.","q":"Đây là chuỗi tôi viết — mắt xích nào đang nhảy cóc?|Mắt xích nào dễ đứt nhất, đứt thì hệ quả đảo chiều ra sao?","o":"2 chuỗi ≥4 mắt xích có nhánh ngược"},{"t":"Journal + ép viết nhánh ngược","l":"Cùng một cú sốc luôn có bên thắng và bên thua. Đọc một chiều ('dầu tăng là xấu') chính là lỗi bị chặn bởi câu hỏi số 2.","q":"Với cú sốc này, ai là bên thắng mà ít người nghĩ tới?|Bên thua chịu qua kênh doanh thu, chi phí hay tài chính?","o":"1 dòng journal đủ 2 nhánh"},{"t":"Bốn lớp bằng chứng","l":"Số liệu cứng · khảo sát · giá thị trường · narrative. Giá thị trường là lớp duy nhất đã chứa kỳ vọng — dùng nó để đo price-in, không dùng để xác nhận cơ chế.","q":"Bằng chứng tôi đang dựa vào thuộc lớp nào?|Lớp giá thị trường đang nói thị trường tin điều gì?","o":"Bảng 4 lớp cho 5 tin trong tuần"},{"t":"Chốt tuần 1","l":"Đọc lại 7 dòng journal. Đếm số tin không phân loại được cửa — đó là danh sách lỗ hổng kiến thức, mang sang các module sau.","q":"Từ 7 dòng journal này, tôi yếu nhất ở khâu nào?|Lỗ hổng nào nên vá trước vì nó chặn module sau?","o":"5 chuỗi hoàn chỉnh + danh sách lỗ hổng"}]},{"n":2,"d":"2026-09-21","m":"M1→M2","p":"A","f":"Surprise > level · leading vs lagging","o":"Qua cổng M1 + bảng phân loại chỉ số","g":"M1: cho 5 headline lạ, viết chuỗi ≥4 mắt xích mỗi cái, không tra cứu, trong 15 phút","s":[{"t":"Reset tuần + bài tập phản xạ","l":"Trước mỗi số công bố, viết ra con số bạn nghĩ thị trường đang chờ. Sau công bố ghi: thực tế, lệch bao nhiêu, thị trường phản ứng thế nào. Làm 30 lần sẽ có cảm giác số nào thực sự làm giá.","q":"Consensus cho các số tuần này là bao nhiêu?|Số nào nếu lệch sẽ làm thị trường phản ứng mạnh nhất?","o":"3 dự đoán consensus ghi trước"},{"t":"Surprise > Level","l":"Thị trường không trả tiền cho mức tuyệt đối mà cho phần lệch khỏi kỳ vọng. CPI 3% là tin tốt hay xấu tuỳ consensus đang chờ bao nhiêu.","q":"Ví dụ thật tuần qua: số tốt nhưng giá giảm — vì sao?|Đo 'kỳ vọng' bằng gì khi không có consensus chính thức?","o":"3 ví dụ số tốt/giá giảm và ngược lại"},{"t":"Journal + đo price-in","l":"Mỗi dòng journal phải có cột 'đoán price-in': thị trường đã trả trước bao nhiêu phần của tin này, dựa trên bằng chứng giá.","q":"Bằng chứng nào cho thấy tin này đã được price-in?|Nếu price-in hết rồi thì còn gì để giao dịch?","o":"1 dòng journal có cột price-in"},{"t":"🚧 Cổng M1 — bấm giờ 15 phút","l":"5 headline lạ, viết chuỗi ≥4 mắt xích cho mỗi cái, không tra cứu. Không qua thì lặp M1 thêm vài buổi, đừng đi tiếp.","q":"Cho tôi 5 headline vĩ mô ngẫu nhiên 12 tháng qua để làm bài 15 phút|Chấm 5 chuỗi này, chỉ chỗ nhảy cóc","o":"Qua/không qua cổng M1 (ghi vào journal)"},{"t":"Leading · coincident · lagging","l":"Trước khi đọc bất kỳ số nào, xếp nó vào 3 nhóm. Đọc lagging như leading là lỗi tốn tiền nhất.","q":"Xếp 10 chỉ số vĩ mô hay gặp vào 3 nhóm|Chỉ số nào bị dùng sai nhóm nhiều nhất?","o":"Bảng phân loại 10 chỉ số"},{"t":"PMI — đọc cho đúng","l":"PMI là khảo sát dạng diffusion: 50 là ngưỡng, nhưng thông tin nằm ở cấu phần. New orders là leading, inventories là mẫu số ẩn.","q":"Vì sao new orders − inventories dẫn được chu kỳ sản xuất?|PMI trên 50 nhưng giảm so tháng trước thì đọc thế nào?","o":"Ghi cấu phần PMI cần theo dõi"},{"t":"Chốt tuần 2","l":"Dựng nhanh chart PMI new orders − inventories (Mỹ + VN, 3 năm), đặt cạnh IIP của VN trễ 2 tháng.","q":"Nguồn lấy PMI new orders và inventories cho VN?|Cách kiểm tra quan hệ dẫn dắt mà không bị nhiễu?","o":"Chart 3 năm + nhận xét độ dẫn"}]},{"n":3,"d":"2026-09-28","m":"M2","p":"A","f":"Inflation: bóc rổ · 3m SAAR · CPI Việt Nam","o":"Tự tính 3m SAAR core CPI","g":"M2: nhìn bản tin CPI Mỹ, trong 5 phút nói được nóng ở nhóm nào, lệch consensus bao nhiêu, Fed path bị đẩy hướng nào","s":[{"t":"Reset tuần + 4 thước đo lạm phát","l":"CPI vs core CPI vs PCE vs core PCE: khác rổ, khác trọng số, khác cách xử lý nhà ở và y tế. Fed nhìn core PCE, thị trường phản ứng theo CPI.","q":"Bảng so sánh 4 thước đo: rổ, trọng số, độ trễ, ai dùng|Vì sao CPI và PCE lệch nhau kéo dài?","o":"Bảng so sánh 4 thước đo"},{"t":"Bóc rổ — đừng đọc headline","l":"Tách shelter, năng lượng, thực phẩm, core services ex-housing. Phần dính (sticky) mới quyết định Fed path.","q":"Trong bản tin CPI gần nhất, nhóm nào đóng góp nhiều nhất vào phần lệch?|Nhóm nào là sticky và vì sao?","o":"Bảng đóng góp theo nhóm"},{"t":"3m SAAR — tách momentum khỏi base effect","l":"y/y chứa base effect, m/m quá nhiễu. 3m SAAR (annualised 3 tháng) là cách nhìn động lượng thật.","q":"Hướng dẫn tôi tính 3m SAAR từ chuỗi chỉ số, từng bước|3m SAAR và y/y lệch nhau thì đọc cái nào trước?","o":"Tự tính 3m SAAR core CPI 24 tháng"},{"t":"Lạm phát Việt Nam khác gì","l":"Rổ CPI VN nặng lương thực-thực phẩm và có nhóm giá điều hành (điện, y tế, giáo dục). Phần do điều hành không phải tín hiệu cầu.","q":"Bóc CPI VN gần nhất: bao nhiêu phần là giá điều hành, bao nhiêu là cầu?|Vì sao lạm phát VN ít dẫn dắt chính sách hơn tỷ giá?","o":"Bảng bóc CPI VN theo nhóm"},{"t":"Journal + ma trận Growth × Inflation","l":"Bốn ô: tăng trưởng lên/xuống × lạm phát lên/xuống. Mỗi ô thưởng cho một loại tài sản và một loại doanh nghiệp khác nhau.","q":"Mỗi ô trong ma trận: tài sản nào thắng, ngành VN nào thắng?|Hiện đang ở ô nào, bằng chứng gì?","o":"Ma trận 4 ô + xác định ô hiện tại"},{"t":"Payrolls & GDP","l":"Payrolls là coincident nhưng thị trường coi như leading vì nó lái Fed path. GDP là lagging, gần như không giao dịch được.","q":"Trong bản tin việc làm, cấu phần nào thị trường thực sự nhìn?|Vì sao GDP ít làm giá dù là số lớn nhất?","o":"Ghi 3 cấu phần payrolls đáng nhìn"},{"t":"🚧 Cổng M2 — bấm giờ 5 phút","l":"Một bản tin CPI bất kỳ: nóng ở nhóm nào, lệch consensus bao nhiêu, Fed path bị đẩy hướng nào.","q":"Đưa tôi một bản tin CPI lịch sử không nói ngày, tôi trả lời trong 5 phút rồi chấm giúp","o":"Qua/không qua cổng M2"}]},{"n":4,"d":"2026-10-05","m":"M3","p":"A","f":"Fed reaction function · dot plot vs market pricing","o":"Reaction function Fed bằng 5 câu","g":"","s":[{"t":"Reset tuần","l":"Cập nhật lịch tuần, đánh dấu cuộc họp NHTW và số liệu lái chính sách.","q":"Tuần này có cuộc họp NHTW nào, thị trường đang định giá gì?","o":"Lịch tuần + 1 dòng journal"},{"t":"Reaction function là gì","l":"NHTW không phản ứng với số liệu, họ phản ứng với khoảng cách giữa số liệu và mục tiêu, có trọng số. Biết trọng số là đoán được hành động.","q":"Viết reaction function của Fed dạng hàm: biến nào, trọng số nào?|Taylor rule khác gì reaction function thực tế của Fed hiện nay?","o":"Công thức reaction function Fed"},{"t":"Dot plot vs market pricing","l":"Dot plot là ý định của Fed, FedWatch/OIS là kỳ vọng thị trường. Khoảng lệch giữa hai cái là nơi rủi ro nằm.","q":"Dot plot và thị trường đang lệch bao nhiêu bps cho 12 tháng tới?|Lịch sử cho thấy bên nào thường đúng hơn?","o":"Ghi khoảng lệch dot plot vs market"},{"t":"Cùng một hành động, hai ý nghĩa","l":"Cắt lãi suất vì lạm phát hạ (tốt) khác hẳn cắt vì tăng trưởng sụp (xấu). Bối cảnh quyết định dấu.","q":"Cho 2 ví dụ lịch sử cùng là cắt lãi suất nhưng thị trường phản ứng ngược|Phân biệt hai trường hợp bằng chỉ báo nào?","o":"Ghi 2 ví dụ đối lập"},{"t":"Financial conditions","l":"Thứ Fed thực sự điều khiển không phải lãi suất chính sách mà là điều kiện tài chính tổng thể: lợi suất, spread, USD, giá cổ phiếu.","q":"Chỉ số financial conditions gồm gì và đọc thế nào?|Vì sao thị trường tăng mạnh lại làm Fed khó cắt lãi suất hơn?","o":"Ghi cấu phần financial conditions"},{"t":"Journal + theo dõi FedWatch","l":"Ghi xác suất FedWatch mỗi lần có số liệu mới. Đây là cách trực quan nhất để thấy 'surprise' hoạt động.","q":"FedWatch đổi thế nào sau số liệu gần nhất và vì sao?","o":"1 dòng journal + số FedWatch"},{"t":"Viết reaction function Fed — 5 câu","l":"Đúng 5 câu: Fed lo gì nhất, ngưỡng nào khiến họ đổi hướng, dot plot ở đâu, thị trường định giá gì, khoảng lệch bao nhiêu.","q":"Chấm 5 câu reaction function của tôi, chỉ câu nào là narrative","o":"Reaction function Fed 5 câu"}]},{"n":5,"d":"2026-10-12","m":"M3","p":"A","f":"SBV reaction function · bộ ba bất khả thi","o":"Reaction function SBV bằng 5 câu","g":"M3: cho 3 kịch bản dữ liệu giả định, dự đoán phản ứng của Fed và SBV có lập luận","s":[{"t":"Reset tuần (tuần mid-sem IF — giữ nhẹ)","l":"Tuần này trường nặng: giữ journal và đọc, không nhận bài tập dữ liệu mới.","q":"Tuần này SBV có động thái nào trên thị trường mở không?","o":"Lịch tuần + 1 dòng journal"},{"t":"Bộ ba bất khả thi","l":"Không thể đồng thời có tỷ giá ổn định + dòng vốn tự do + chính sách tiền tệ độc lập. SBV chọn 2, và lựa chọn đó giải thích gần như mọi hành động.","q":"SBV đang ưu tiên hai cạnh nào, bằng chứng gì?|Khi tỷ giá căng, cạnh nào bị hy sinh trước?","o":"Ghi lựa chọn bộ ba hiện tại"},{"t":"Công cụ của SBV","l":"Tín phiếu, OMO, bán/mua ngoại tệ, trần lãi suất, room tín dụng. Mỗi công cụ phát một thông điệp khác nhau.","q":"Liệt kê công cụ SBV kèm thông điệp mỗi công cụ phát ra|Phát hành tín phiếu khác gì bán ngoại tệ về mặt tín hiệu?","o":"Bảng công cụ → thông điệp"},{"t":"Journal — đọc lãi suất liên ngân hàng","l":"Một dòng gắn với tỷ giá hoặc lãi suất O/N. Đây là chỉ báo thanh khoản hệ thống nhạy nhất của VN.","q":"Lãi suất O/N tuần này nói gì về thanh khoản hệ thống?","o":"1 dòng journal"},{"t":"Bảng quyết định SBV 12 tháng","l":"Bảng: ngày · công cụ · bối cảnh tỷ giá/lạm phát/tín dụng lúc đó · phản ứng lãi suất liên ngân hàng sau 1–2 tuần.","q":"Giúp tôi tìm mốc các quyết định SBV 12 tháng qua|Từ bảng này, ngưỡng nào khiến SBV hành động?","o":"Bảng quyết định SBV 12 tháng"},{"t":"Viết reaction function SBV — 5 câu","l":"Đúng 5 câu như đã làm với Fed, nhưng biến số chính là tỷ giá chứ không phải lạm phát.","q":"Chấm 5 câu reaction function SBV của tôi","o":"Reaction function SBV 5 câu"},{"t":"🚧 Cổng M3","l":"Tự cho 3 kịch bản dữ liệu giả định, dự đoán phản ứng của cả Fed và SBV, có lập luận reaction function.","q":"Cho tôi 3 kịch bản dữ liệu giả định để dự đoán phản ứng Fed và SBV, rồi chấm lập luận","o":"Qua/không qua cổng M3"}]},{"n":6,"d":"2026-10-19","m":"M4","p":"B","f":"Decompose US10Y: breakeven · real yield · 2Y","o":"Dashboard FRED 6 chuỗi","g":"","s":[{"t":"Reset tuần + vì sao M4 quan trọng nhất","l":"US10Y là mẫu số của mọi định giá. Không decompose được nó thì mọi kết luận về multiple đều là đoán.","q":"Vì sao lợi suất tăng đôi khi tốt cho cổ phiếu, đôi khi giết cổ phiếu?","o":"1 đoạn ghi vì sao 10Y là mẫu số"},{"t":"Decompose US10Y","l":"10Y danh nghĩa = real yield + breakeven inflation. Real yield tách tiếp thành kỳ vọng lãi suất thực ngắn hạn + term premium.","q":"Giải thích 5 nguồn làm 10Y thay đổi và cách phân biệt bằng dữ liệu|Chuỗi FRED nào đọc được từng thành phần?","o":"Sơ đồ decompose 10Y"},{"t":"Phân biệt bằng dữ liệu","l":"Breakeven tăng + real yield đứng = chuyện lạm phát. Real yield tăng + breakeven đứng = chuyện tăng trưởng hoặc term premium. 2Y dẫn = chuyện chính sách.","q":"Cho 3 tình huống lợi suất tăng, tôi phân loại rồi bạn kiểm tra lại|Trường hợp nào nén multiple mạnh nhất?","o":"Bảng 3 tình huống → nguồn gốc"},{"t":"Journal — đọc lợi suất mỗi ngày","l":"Mỗi dòng ghi: 10Y đổi bao nhiêu bps, do breakeven hay real yield, hàm ý cho multiple.","q":"Hôm nay 10Y đổi do thành phần nào, bằng chứng ở chuỗi nào?","o":"1 dòng journal có phân rã 10Y"},{"t":"Dựng dashboard FRED 6 chuỗi","l":"DGS2, DGS10, T10YIE, DFII10, T10Y2Y, BAMLH0A0HYM2 — một chart hai trục. Cập nhật hằng tuần đến hết khoá.","q":"Cách lấy 6 chuỗi FRED này tự động và vẽ 2 trục|Chuẩn hoá thế nào để nhìn chung một chart?","o":"Dashboard FRED 6 chuỗi chạy được"},{"t":"Journal + đọc dashboard","l":"Dùng chính dashboard vừa dựng để viết dòng journal hôm nay.","q":"Từ 6 chuỗi này, thị trường trái phiếu đang định giá kịch bản gì?","o":"1 dòng journal đọc từ dashboard"},{"t":"Chốt tuần 6","l":"Ghi trạng thái hiện tại của 6 chuỗi và câu chuyện chúng đang kể.","q":"Phản biện cách đọc 6 chuỗi của tôi","o":"Note trạng thái 6 chuỗi"}]},{"n":7,"d":"2026-10-26","m":"M4","p":"B","f":"Yield curve 4 chế độ · credit spread · TT1 vs TT2","o":"Note 1 trang: US10Y 12 tháng qua","g":"M4: cho một tuần US10Y tăng 20bps, chỉ ra nguồn gốc bằng bằng chứng breakeven / real yield / 2Y","s":[{"t":"Reset tuần","l":"Cập nhật dashboard FRED, ghi thay đổi tuần.","q":"Tuần này số nào có thể làm đổi đường cong lợi suất?","o":"Dashboard cập nhật + 1 dòng journal"},{"t":"Yield curve — 4 chế độ","l":"Bull steepening, bear steepening, bull flattening, bear flattening. Mỗi chế độ là một câu chuyện khác về chính sách và tăng trưởng.","q":"Giải thích 4 chế độ kèm ví dụ lịch sử và hàm ý cổ phiếu|Đường cong hiện tại đang ở chế độ nào?","o":"Bảng 4 chế độ + chế độ hiện tại"},{"t":"Credit spread — giá của rủi ro","l":"HY OAS nhạy hơn VIX. Spread nới trước khi cổ phiếu giảm là tín hiệu đáng tin nhất về khẩu vị rủi ro.","q":"Vì sao credit spread dẫn cổ phiếu?|Nới bao nhiêu bps thì đáng báo động?","o":"Ghi ngưỡng HY OAS theo dõi"},{"t":"Journal + spread","l":"Một dòng, ưu tiên tin liên quan lợi suất hoặc spread.","q":"Spread tuần này nói gì về khẩu vị rủi ro?","o":"1 dòng journal"},{"t":"TT1 vs TT2 — lỗi phổ biến nhất","l":"TT1 (dân cư–doanh nghiệp) và TT2 (liên ngân hàng) là hai thị trường khác nhau. TT2 căng không tự động kéo TT1 lên.","q":"Chart lãi suất O/N vs huy động 12 tháng 3 năm — TT2 căng thì TT1 phản ứng sau bao lâu?|Khi nào TT2 mới truyền sang TT1?","o":"Chart TT1 vs TT2 + độ trễ"},{"t":"Viết note 1 trang","l":"'US10Y đã đi đâu trong 12 tháng qua và vì sao' — bắt buộc decompose theo 5 nguồn, có bằng chứng breakeven và real yield cho từng đoạn.","q":"Chấm note này: chỗ nào tôi kết luận mà không có bằng chứng phân rã?","o":"Note 1 trang hoàn chỉnh"},{"t":"🚧 Cổng M4","l":"Cho một tuần 10Y tăng 20bps bất kỳ, chỉ ra nguồn gốc bằng bằng chứng.","q":"Cho tôi một tuần lịch sử 10Y tăng mạnh, tôi phân rã rồi bạn chấm","o":"Qua/không qua cổng M4"}]},{"n":8,"d":"2026-11-02","m":"M5","p":"B","f":"USD/VND · carry trade · cơ chế tín phiếu SBV","o":"Chuỗi 8 mắt xích tín phiếu","g":"M5: giải thích trọn một đợt SBV phát hành tín phiếu, từ chênh lệch lãi suất VND–USD đến giá cổ phiếu nhóm chứng khoán","s":[{"t":"Reset tuần (tuần Report 40% — chỉ đọc)","l":"Hạn Report FINC3022 ngày 08/11. Tuần này khoá macro giảm tải theo thiết kế: đọc và journal, không bài tập nặng.","q":"Tuần này có tin gì đủ lớn để đổi Fed path hoặc tỷ giá không?","o":"1 dòng journal"},{"t":"USD là hệ thống funding, không phải một đồng tiền","l":"Phần lớn nợ ngoài nước Mỹ vay bằng USD. USD mạnh = điều kiện tài chính toàn cầu thắt lại, kể cả khi Fed không làm gì.","q":"Cơ chế USD mạnh siết thanh khoản toàn cầu là gì?|Vì sao EM chịu nặng hơn DM?","o":"Ghi cơ chế USD → thanh khoản EM"},{"t":"DXY và cái bẫy của nó","l":"DXY nặng EUR (~58%) và JPY. DXY giảm không có nghĩa USD yếu với VND — phải nhìn tỷ giá song phương và rổ thương mại.","q":"Trọng số DXY và vì sao nó gây hiểu nhầm với thị trường VN|Nên dùng chỉ số USD nào thay thế?","o":"Ghi trọng số DXY + chỉ số thay thế"},{"t":"Carry trade và USD/JPY","l":"Vay đồng lãi suất thấp đầu tư đồng lãi suất cao. Khi biến động tăng, carry unwind cưỡng bức gây bán tháo đồng loạt không phân biệt cơ bản.","q":"Cơ chế carry unwind lan sang cổ phiếu EM thế nào?|Dấu hiệu sớm của một đợt unwind?","o":"Ghi cơ chế + dấu hiệu sớm"},{"t":"USD/VND — chuỗi phải thuộc lòng","l":"Chênh lệch lãi suất VND–USD âm → áp lực USD/VND → SBV phát hành tín phiếu hút VND → lãi suất liên ngân hàng lên → chi phí vốn margin của CTCK lên → nhóm chứng khoán chịu áp lực.","q":"Chạy lại chuỗi này với số liệu hiện tại: mắt xích nào đang chạy, mắt xích nào đứt?|Độ trễ giữa tín phiếu và phản ứng giá nhóm CTCK?","o":"Chuỗi 8 mắt xích với số liệu thật"},{"t":"FX ở tầng doanh nghiệp","l":"Nơi macro biến thành earnings: % doanh thu ngoại tệ, % chi phí ngoại tệ, dư nợ ngoại tệ, có hedge không. Lấy số từ thuyết minh BCTC, không đoán.","q":"Tìm mục nào trong thuyết minh BCTC cho biết exposure ngoại tệ?|Net effect khi VND mất giá 3% tính thế nào?","o":"Bảng FX exposure 5 mã watchlist"},{"t":"🚧 Cổng M5","l":"Giải thích trọn một đợt tín phiếu từ chênh lệch lãi suất đến giá cổ phiếu CTCK, không nhảy cóc.","q":"Nghe tôi giải thích và bắt lỗi nhảy cóc từng mắt xích","o":"Qua/không qua cổng M5"}]},{"n":9,"d":"2026-11-09","m":"M6+M7","p":"B","f":"Commodity spread · credit impulse · thanh khoản TTCK VN","o":"Chart spread ngành + ADTV vs margin","g":"M6–M7: chỉ ra biên lợi nhuận gộp của một doanh nghiệp thép/phân bón bám theo spread nào, trễ bao nhiêu quý","s":[{"t":"Reset tuần","l":"Report đã nộp. Quay lại nhịp đủ, cập nhật dashboard.","q":"Bức tranh vĩ mô tuần này đổi gì so với tuần trước?","o":"Dashboard cập nhật + 1 dòng journal"},{"t":"Cung hay cầu — câu hỏi đầu tiên","l":"Sốc cung đẩy lạm phát và giết tăng trưởng; sốc cầu thì giá và tăng trưởng cùng chiều. Phải phân loại trước khi đi tiếp chuỗi.","q":"Cách phân biệt sốc cung và sốc cầu bằng dữ liệu công khai|Hai loại sốc tác động khác nhau thế nào lên ngành VN?","o":"Tiêu chí phân biệt cung/cầu"},{"t":"Tư duy spread","l":"Doanh nghiệp hàng hoá sống bằng chênh lệch giá bán − giá đầu vào, không phải giá bán. Thép: HRC − quặng/than. Phân bón: urê − khí.","q":"Với thép và phân bón VN, spread chính xác là gì, lấy dữ liệu ở đâu?|Spread dẫn biên lợi nhuận gộp bao nhiêu quý?","o":"Định nghĩa spread cho 2 ngành"},{"t":"Dựng chart spread vs biên lợi nhuận","l":"Chọn một ngành, chart spread 5 năm đặt cạnh biên lợi nhuận gộp theo quý của 2 doanh nghiệp đầu ngành. Xác định độ trễ.","q":"Độ trễ tôi đo được có ổn định qua các chu kỳ không?|Đây có dùng được làm leading indicator thật không?","o":"Chart spread + độ trễ đo được"},{"t":"Credit impulse","l":"Đạo hàm bậc hai của tín dụng — thay đổi của tốc độ tăng trưởng tín dụng. Nó dẫn hoạt động kinh tế thực tốt hơn mức tăng trưởng tín dụng.","q":"Hướng dẫn tính credit impulse VN từ số liệu tăng trưởng tín dụng SBV|Credit impulse dẫn doanh thu bất động sản và xây dựng bao lâu?","o":"Chart credit impulse 5 năm"},{"t":"Thanh khoản TTCK Việt Nam","l":"ADTV, dư nợ margin, VN-Index. Khi margin tăng nhanh hơn ADTV là dấu hiệu đòn bẩy chạy trước dòng tiền thật.","q":"ADTV, margin và VN-Index: cái nào dẫn cái nào?|Điều gì xảy ra khi margin tăng nhanh hơn ADTV?","o":"Chart ADTV vs margin vs VN-Index"},{"t":"Chốt tuần 9","l":"Ghép spread ngành + credit impulse + thanh khoản → môi trường hiện tại đang thưởng cho loại doanh nghiệp nào.","q":"Phản biện kết luận của tôi bằng bằng chứng ngược","o":"Note 5 câu về môi trường hiện tại"}]},{"n":10,"d":"2026-11-16","m":"M8","p":"C","f":"Chuỗi truyền dẫn 8 bước · độ trễ · mắt xích đứt","o":"Bảng 8 mắt xích có số liệu thật","g":"M8: truy ngược một đợt biến động lớn của VN-Index qua đủ 8 mắt xích, chỉ ra mắt xích nào đứt","s":[{"t":"Reset tuần (tuần học cuối, thi từ 23/11 — giữ 30 phút)","l":"Tuần cuối trước thi. Macro giữ đúng 30 phút/ngày, không lấn vào giờ ôn thi.","q":"Chọn giúp tôi một đợt VN-Index biến động ≥10% trong 2 tháng, 3 năm qua để phân tích","o":"Chọn được đợt biến động + lý do"},{"t":"Chuỗi 8 bước — bản đầy đủ","l":"Cú sốc gốc → lạm phát → kỳ vọng lạm phát → Fed path → US yield → USD → thanh khoản toàn cầu → áp lực USD/VND → thị trường VN.","q":"Chạy chuỗi 8 bước cho đợt tôi chọn, từng mắt xích, đừng nhảy|Số liệu thực tế từng mắt xích tại thời điểm đó?","o":"Bảng 8 dòng có số liệu thật"},{"t":"Độ trễ giữa các mắt xích","l":"Mỗi mắt xích có độ trễ riêng — đó là thứ quyết định bạn thấy tín hiệu sớm hay muộn hơn thị trường.","q":"Mắt xích nào trễ nhất, mắt xích nào quan sát được sớm nhất bằng dữ liệu công khai?","o":"Ghi độ trễ từng mắt xích"},{"t":"Mắt xích nào đứt","l":"Mỗi mắt xích đều có thể đứt: chính sách trong nước bù đắp, dòng vốn nội địa hấp thụ, kỳ vọng đã price-in. Chỉ ra chỗ đứt mới là phân tích thật.","q":"Trong bảng của tôi, mắt xích nào đứt và vì sao?|Nếu theo dõi dashboard, tôi thấy tín hiệu đầu tiên ở đâu, sớm mấy ngày?","o":"Đánh dấu mắt xích đứt + tín hiệu sớm"},{"t":"Journal + thesis breaker","l":"Tập viết phần 'điều gì có thể khiến phân tích này sai' — tối thiểu 3 khả năng. Đây là kỷ luật falsification.","q":"Phần thesis breaker của tôi đã đủ nghiêm khắc chưa?","o":"3 khả năng làm phân tích sai"},{"t":"Từ macro xuống ngành — 3 kênh","l":"Mọi cú sốc chạm doanh nghiệp qua đúng 3 kênh: doanh thu · chi phí · tài chính. Macro không chọn cổ phiếu, nó chọn môi trường.","q":"Chạy cú sốc trong bài của tôi qua 3 kênh cho 5 ngành|Kênh nào có độ trễ dài nhất?","o":"Bảng 5 ngành × 3 kênh"},{"t":"🚧 Cổng M8","l":"Trình bày lại chuỗi 8 mắt xích không nhìn giấy. Ghi vào journal qua hay chưa.","q":"Nghe tôi trình bày chuỗi 8 mắt xích và bắt mọi chỗ nhảy cóc","o":"Qua/không qua cổng M8"}]},{"n":11,"d":"2026-11-23","m":"—","p":"C","f":"TUẦN THI — chỉ duy trì Journal","o":"Journal không đứt ngày","g":"","s":[{"t":"Duy trì · 15 phút","l":"Tuần thi. Chỉ đọc 1 bản tin sáng + ghi 1 dòng journal. Không nạp lý thuyết mới.","q":"Tóm tắt 3 tin vĩ mô đáng chú ý hôm nay trong 5 gạch đầu dòng","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp, không đứt ngày.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Giữ nhịp.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì · 15 phút","l":"Tuần sau thi xong là tuần chốt khoá.","q":"Tuần qua có tin nào tôi nên quay lại đọc kỹ sau khi thi xong?","o":"1 dòng journal + danh sách đọc bù"}]},{"n":12,"d":"2026-11-30","m":"M8+","p":"C","f":"Chốt khoá: Macro Note 3 trang + chế độ duy trì","o":"MACRO NOTE 3 trang (capstone)","g":"","s":[{"t":"Duy trì · thi chưa xong","l":"Vẫn trong đợt thi. Giữ journal, chuẩn bị đề cương note.","q":"Tóm tắt 3 tin vĩ mô hôm nay","o":"1 dòng journal"},{"t":"Duy trì + đề cương note","l":"Dựng khung note: bối cảnh → chuỗi 8 mắt xích có số liệu → mắt xích đứt → tín hiệu sớm → thesis breaker.","q":"Review đề cương note của tôi, thiếu phần nào?","o":"Đề cương note"},{"t":"Đọc bù 2 tuần thi","l":"Đọc lại danh sách đọc bù, chọn 3 tin quan trọng nhất, viết chuỗi cho từng cái.","q":"Dựng lại bối cảnh vĩ mô 2 tuần thi vừa qua theo trình tự nhân quả","o":"3 chuỗi nhân quả bù"},{"t":"Viết Macro Note — phần 1","l":"Bối cảnh + bảng 8 mắt xích có số liệu thật.","q":"Chấm phần 1: chỗ nào là narrative, chỗ nào thiếu bằng chứng?","o":"Note phần 1"},{"t":"Viết Macro Note — phần 2","l":"Mắt xích đứt + tín hiệu sớm + hàm ý ngành qua 3 kênh.","q":"Chấm phần 2: kết luận ngành của tôi có bằng chứng không?","o":"Note phần 2"},{"t":"Viết Macro Note — phần 3 + nộp","l":"Thesis breaker tối thiểu 3 khả năng. Đây là portfolio piece dùng được cho hồ sơ Investment Analyst và LPBS.","q":"Chấm toàn bộ note như một nhà tuyển dụng Investment Analyst sẽ chấm","o":"MACRO NOTE 3 trang hoàn thành"},{"t":"Post-mortem + chế độ duy trì","l":"Đọc lại ~84 dòng journal. Bốn loại sai: sai cơ chế · sai độ trễ · sai định lượng · sai vì đã price-in. Sau đó chuyển sang duy trì ~3h/tuần: cập nhật dashboard, 1 dòng journal/ngày, 1 note mỗi quý.","q":"Từ journal 12 tuần, loại sai nào của tôi lặp nhiều nhất?|Viết lịch duy trì 3h/tuần cụ thể theo ngày cho tôi","o":"Post-mortem 1 trang + lịch duy trì"}]}];
 
@@ -804,6 +809,7 @@ function paceOf(list){ // real h/week over last 21 days
 }
 function weeklyFor(track){
   let t=0; for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{ if(b.track===track&&!b.rest) t+=(mm(b.to)-mm(b.from))/60; });
+  if(track==="MACRO"&&state.macro&&state.macro.on) t+=state.macro.dur/60*7;
   return t;
 }
 function goalStats(g){
@@ -820,7 +826,7 @@ function goalStats(g){
     pct:g.totalH?Math.round((g.doneH||0)/g.totalH*100):0,n:0,nd:0}; }
   pace=list?paceOf(list):0;
   if(g.src==="school"){
-    const nx=state.assess.filter(a=>a.mark==null&&a.weight>0&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
+    const nx=state.assess.filter(a=>!aDone(a)&&a.weight>0&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
     return {st,planned:weeklyFor(g.track),pace:0,etaPlan:null,etaPace:null,need:null,byPoints:true,
       verdict:nx?{c:dbet(todayISO(),nx.due)<=10?"warn":"ok",t:`Còn ${st.n-st.nd} đầu điểm · gần nhất: ${nx.title} (${nx.weight}%) ngày ${fmtD(nx.due)}`}:null};
   }
@@ -915,7 +921,7 @@ function renderToday(){
   const items=dayItems(t).sort((a,b)=>a.start-b.start);
   const shown=state.settings.hideDone?items.filter(x=>!isDone(x,t)):items;
   const pg=dayProgress(t);
-  const up=state.assess.filter(a=>a.mark==null&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
+  const up=state.assess.filter(a=>!aDone(a)&&a.due).sort((x,y)=>x.due.localeCompare(y.due))[0];
   const load=weekLoad();
   const late=state.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<t);
   const cf=audit();
@@ -952,14 +958,14 @@ function renderToday(){
   <button class="foldline" style="margin-top:12px" onclick="toggleFold('loadBox')">
     Tải tuần <b class="num" style="margin-left:auto">${hrs(load.total)}h</b>
     <span class="chip ${load.total>55?'red':load.total>46?'amber':'green'}">${load.total>55?'quá tải':load.total>46?'nặng':'vừa'}</span></button>
-  <div id="loadBox" hidden><div class="card" style="margin-top:8px">
+  <div id="loadBox" ${accState.loadBox?"":"hidden"}><div class="card" style="margin-top:8px">
     <div class="bar tall">${TKEYS.filter(k=>load[k]>0).map(k=>`<i style="width:${load[k]/load.total*100}%;background:${TR[k].color}"></i>`).join("")}</div>
     <div class="legend">${TKEYS.filter(k=>load[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(load[k])}h</span>`).join("")}</div>
     <div class="note" style="margin-top:11px">Trong đó <b>12.5h cố định</b>: lớp 6.5h + DA 6h. Vỡ trận thì cắt theo thứ tự: đọc báo → 1 buổi gym → IELTS. Không cắt: ngủ, tiếng Trung 15', deadline.</div>
   </div></div>`;
 }
 function toggleHideDone(){state.settings.hideDone=!state.settings.hideDone;save()}
-function toggleFold(id){const e=document.getElementById(id);if(e)e.hidden=!e.hidden}
+function toggleFold(id){const e=document.getElementById(id);if(e){e.hidden=!e.hidden;accState[id]=!e.hidden}}
 function tgHabit(id){const hb=state.habits.find(x=>x.id===id);if(!hb)return;const t=todayISO();
   if(hb.log[t])delete hb.log[t];else hb.log[t]=true;save()}
 function tgDone(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
@@ -972,7 +978,8 @@ function doReflow(){const m=reflow();save();
    <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Xong</button></div>`)}
 function pullOverdue(){const t=todayISO();
   state.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<t).forEach(x=>{
-    const s=nextFreeSlot(t,0,x.dur,x.id); if(s){x.date=s.date;x.start=s.start}else{x.date=t}});
+    const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+    const s=nextFreeSlot(t,Math.ceil(nowM/15)*15,x.dur,x.id); if(s){x.date=s.date;x.start=s.start}else{x.date=t}});
   save()}
 
 /* =============================== CALENDAR =============================== */
@@ -1069,21 +1076,21 @@ function renderDead(){
   const t=todayISO();
   const A=state.assess.slice().sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
   const rows=A.map(a=>{
-    const dd=a.due?dbet(t,a.due):null, done=a.mark!=null;
-    const sv=done?"done":(dd<0?"red":dd<=3?"red":dd<=10?"amber":"green");
+    const dd=a.due?dbet(t,a.due):null, done=aDone(a);
+    const sv=done?"done":dd==null?"green":(dd<0?"red":dd<=3?"red":dd<=10?"amber":"green");
     return `<button class="dl s-${sv}" onclick="openAssess('${a.id}')">
       <div class="dl-main"><div class="dl-t">${h(a.title)}
         ${a.weight?`<span class="w-badge ${a.weight>=40?'big':''}">${a.weight}%</span>`:`<span class="chip" style="background:${TR[a.sub].color};color:#fff;border-color:transparent">mốc</span>`}
         ${a.mandatory?'<span class="chip">bắt buộc</span>':''}${a.mode==="Nhóm"?'<span class="chip blue">nhóm</span>':''}
         ${a.prov?'<span class="chip amber">tạm tính</span>':''}</div>
         <div class="dl-sub"><span class="subject-dot" style="background:${TR[a.sub].color};display:inline-block;margin-right:5px"></span>${TR[a.sub].code} · ${a.due?fmtFull(a.due):"chưa có ngày"}${a.dueTime?" "+a.dueTime:""}</div></div>
-      <div class="dl-r">${done?`<span class="chip green">${a.mark}%</span>`:`<div class="cd ${sv}">${dd<0?"trễ":dd}<small>${dd<0?Math.abs(dd)+" ngày":"ngày"}</small></div>`}</div></button>`;
+      <div class="dl-r">${done?`<span class="chip green">${a.mark!=null?a.mark+"%":"xong"}</span>`:dd==null?`<span class="chip">chưa có ngày</span>`:`<div class="cd ${sv}">${dd<0?"trễ":dd}<small>${dd<0?Math.abs(dd)+" ngày":"ngày"}</small></div>`}</div></button>`;
   }).join("");
   const open=state.tasks.slice().sort((a,b)=>a.date.localeCompare(b.date));
   const months={}; open.forEach(x=>{const k=x.date.slice(0,7);(months[k]=months[k]||[]).push(x)});
   const acc=Object.keys(months).sort().map(k=>{
     const[y,m]=k.split("-"), left=months[k].filter(x=>x.status!=="done").length;
-    return `<details class="acc" ${(k>=t.slice(0,7)&&left)?"open":""}><summary>Tháng ${+m}/${y}<span class="chip ${left?'':'green'}" style="margin-left:auto">${left?left+" việc":"xong"}</span></summary>
+    return `<details class="acc" ${accA("dm-"+k,k>=t.slice(0,7)&&left)}><summary>Tháng ${+m}/${y}<span class="chip ${left?'':'green'}" style="margin-left:auto">${left?left+" việc":"xong"}</span></summary>
       <div class="acc-b" style="padding:0 0 6px"><div class="list" style="border:none">${months[k].map(x=>rowHTML({...x,kind:"task"},x.date).replace('<div class="sub">','<div class="sub">'+fmtD(x.date)+' · ')).join("")}</div></div></details>`;
   }).join("");
   document.getElementById("v-dead").innerHTML=`
@@ -1127,7 +1134,7 @@ function unitList(phases,kind){
   return phases.map(p=>{
     const n=p.units.length,nd=p.units.filter(u=>u.done).length;
     const hh=p.units.reduce((s,u)=>s+u.hh,0),hd=p.units.filter(u=>u.done).reduce((s,u)=>s+u.hh,0);
-    return `<details class="acc" style="margin-top:8px"><summary>${h(p.name)}<span class="chip ${nd===n?'green':''}" style="margin-left:auto">${nd}/${n}</span></summary>
+    return `<details class="acc" ${accA(kind+"-"+p.id)} style="margin-top:8px"><summary>${h(p.name)}<span class="chip ${nd===n?'green':''}" style="margin-left:auto">${nd}/${n}</span></summary>
     <div class="acc-b"><div class="small muted" style="margin-bottom:8px">${h(p.goal)} · ${hrs(hd)}/${hrs(hh)}h</div>
     ${p.units.map(u=>`<div class="ck ${u.done?'done':''}" onclick="tgUnit('${kind}','${p.id}','${u.id}')"><span class="box">${IC.check}</span>
       <div class="grow"><div class="ck-t">${h(u.t)}</div><div class="ck-s">${u.hh}h${u.at?" · xong "+fmtD(u.at):""}</div></div></div>`).join("")}
@@ -1157,7 +1164,7 @@ function schoolAcc(){
       </div></div>`}).join("");
   const sess=[];for(let n=2;n<=N_SESS;n++){const d=sessDates(n);
     sess.push(`<tr><td class="n">S${n}</td><td class="n">${fmtD(d.fri)}</td><td class="n">${fmtD(d.sat)}</td></tr>`)}
-  return `<details class="acc"><summary>🎓 Trường — 2 môn cuối<span class="chip" style="margin-left:auto">180% trọng số</span></summary>
+  return `<details class="acc" ${accA("school")}><summary>🎓 Trường — 2 môn cuối<span class="chip" style="margin-left:auto">180% trọng số</span></summary>
    <div class="acc-b">
      <div class="warnbox">90% điểm IF nằm ở Mid + Final → môn này phải học cumulative. Banking ngược lại: 60% là coursework, chốt được điểm <b>trước</b> Final. Ưu tiên: IF Final → Report 40% → IF Mid → Banking present → IF present.</div>
      ${cards}
@@ -1169,7 +1176,7 @@ function schoolAcc(){
 }
 function daAcc(){
   const S=state.da.sessions||[], done=S.filter(x=>x.done).length;
-  return `<details class="acc"><summary>📊 DA MindX kỳ 2<span class="chip ${done===S.length?'green':''}" style="margin-left:auto">${done}/${S.length} buổi</span></summary>
+  return `<details class="acc" ${accA("da")}><summary>📊 DA MindX kỳ 2<span class="chip ${done===S.length?'green':''}" style="margin-left:auto">${done}/${S.length} buổi</span></summary>
    <div class="acc-b">
     <div class="warnbox">Va chạm lớn nhất cả kỳ: <b>13–17/10</b> — nhận đề Final Test (buổi 12) và nộp (buổi 13) kẹp đúng ngày mid-sem IF. Cách xử lý duy nhất là đẩy việc lên tháng 9 và báo nhóm từ đầu tháng 10 rằng phần của mình xong trước 13/10.</div>
     <div class="note" style="margin:10px 0">${h(state.da.note)}</div>
@@ -1182,9 +1189,10 @@ function tgDaSess(n){const s=(state.da.sessions||[]).find(x=>x.n===n);if(s){s.do
 function ieltsAcc(){
   const I=state.ielts, st=unitStats(ielUnits()), mocks=I.mocks.slice().sort((a,b)=>a.date.localeCompare(b.date));
   const last=mocks[mocks.length-1], lo=last?mockOverall(last):null;
-  const gate=mocks.length>=2&&mockOverall(mocks[mocks.length-1])>=I.aim&&mockOverall(mocks[mocks.length-2])>=I.aim;
+  const okM=m=>m&&mockOverall(m)>=I.aim&&[m.r,m.l,m.w,m.s].every(x=>+x>=6.5);
+  const gate=mocks.length>=2&&okM(mocks[mocks.length-1])&&okM(mocks[mocks.length-2]);
   const mx=Math.max(9,...mocks.map(m=>mockOverall(m)||0));
-  return `<details class="acc"><summary>📝 IELTS ${I.aim.toFixed(1)}<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
+  return `<details class="acc" ${accA("ielts")}><summary>📝 IELTS ${I.aim.toFixed(1)}<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
    <div class="acc-b">
      <div class="warnbox">Không có deadline cứng — nhưng cửa sổ rẻ nhất là <b>tháng 9 đến giữa tháng 10</b>, và <b>từ 27/11 sau khi thi xong</b>. Tháng 11 gần như không còn chỗ (Report 8/11 + thi từ 23/11).</div>
      <div class="note" style="margin:10px 0">Cổng đặt lịch thi: đạt ${I.aim.toFixed(1)} ở <b>2 mock liên tiếp</b>, không kỹ năng nào dưới 6.5.${gate?' <b style="color:var(--green)">→ Đủ điều kiện rồi.</b>':""}${lo?` Mock gần nhất: <b>${lo.toFixed(1)}</b>.`:" Chưa có mock nào."}</div>
@@ -1200,7 +1208,7 @@ function ieltsAcc(){
 }
 function zhAcc(){
   const st=unitStats(zhUnits());
-  return `<details class="acc"><summary>汉 Tiếng Trung<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
+  return `<details class="acc" ${accA("zh")}><summary>汉 Tiếng Trung<span class="chip" style="margin-left:auto">${st.pct}%</span></summary>
    <div class="acc-b">
      <div class="warnbox">Thứ tự là <b>bắt buộc</b>: nhảy cóc pinyin là hỏng toàn bộ phần sau. Chưa qua test 16/20 thì chưa được học sang chữ Hán.</div>
      ${unitList(state.zh.phases,"zh")}
@@ -1208,7 +1216,7 @@ function zhAcc(){
    </div></details>`;
 }
 function baseAcc(){
-  return `<details class="acc"><summary>🌱 Nền & những thứ chưa chốt<span class="chip" style="margin-left:auto">${state.confirm.filter(c=>!c.done).length} cần hỏi</span></summary>
+  return `<details class="acc" ${accA("base")}><summary>🌱 Nền & những thứ chưa chốt<span class="chip" style="margin-left:auto">${state.confirm.filter(c=>!c.done).length} cần hỏi</span></summary>
    <div class="acc-b">
      ${state.habits.map(hb=>`<div class="kv"><span><b>${h(hb.label)}</b><div class="small muted">${h(hb.rule)}</div></span><b>${habitStreak(hb)} ngày</b></div>`).join("")}
      <div class="sec-h" style="margin:14px 0 6px"><h2>Cần xác nhận</h2><div class="rule"></div></div>
@@ -1247,8 +1255,8 @@ function renderYear(){
   <div class="sec-h"><h2>Đường đi 12 tháng</h2><div class="rule"></div></div>
   <div class="card"><div class="rm">${RM.map(r=>`<div class="rmi ${t>=r.d&&t<=r.e?'now':''}">
     <div class="when">${r.w}${t>=r.d&&t<=r.e?" · đang ở đây":""}</div><h4>${r.h}</h4><p>${r.p}</p></div>`).join("")}</div></div>
-  <details class="acc" style="margin-top:16px"><summary>6 luật tuần</summary><div class="acc-b">${RULES.map((r,i)=>`<div class="kv"><span><b class="num" style="color:var(--accent);margin-right:8px">${i+1}</b>${h(r)}</span></div>`).join("")}</div></details>
-  <details class="acc" style="margin-top:9px"><summary>Thứ tự ưu tiên nếu phải chọn</summary><div class="acc-b">
+  <details class="acc" ${accA("rules")} style="margin-top:16px"><summary>6 luật tuần</summary><div class="acc-b">${RULES.map((r,i)=>`<div class="kv"><span><b class="num" style="color:var(--accent);margin-right:8px">${i+1}</b>${h(r)}</span></div>`).join("")}</div></details>
+  <details class="acc" ${accA("prio")} style="margin-top:9px"><summary>Thứ tự ưu tiên nếu phải chọn</summary><div class="acc-b">
    <div class="kv"><span>1 · IF Final</span><b>60%</b></div>
    <div class="kv"><span>2 · Banking Report</span><b>40% · hạn cứng 8/11</b></div>
    <div class="kv"><span>3 · Banking Final</span><b>40%</b></div>
@@ -1286,7 +1294,7 @@ function macroAcc(){
     const d=macroWeekDone(w.n), end=addD(w.d,6);
     const head=(w.p!==lastPh)?`<div class="sec-h" style="margin:14px 0 6px"><h2>${PH[w.p]}</h2><div class="rule"></div></div>`:"";
     lastPh=w.p;
-    return head+`<details class="acc" style="margin-top:7px"><summary>Tuần ${w.n} · ${h(w.m)}
+    return head+`<details class="acc" ${accA("mw-"+w.n)} style="margin-top:7px"><summary>Tuần ${w.n} · ${h(w.m)}
       <span class="chip ${d===7?'green':''}" style="margin-left:auto">${d}/7</span></summary>
       <div class="acc-b">
         <div class="small muted" style="margin-bottom:8px">${fmtD(w.d)} – ${fmtD(end)} · ${h(w.f)}</div>
@@ -1301,7 +1309,7 @@ function macroAcc(){
         }).join("")}</div>
       </div></details>`;
   }).join("");
-  return `<details class="acc"><summary>🧭 Macro & Equity Thinking<span class="chip ${st.pct===100?'green':''}" style="margin-left:auto">${st.done}/${st.n}</span></summary>
+  return `<details class="acc" ${accA("macro")}><summary>🧭 Macro & Equity Thinking<span class="chip ${st.pct===100?'green':''}" style="margin-left:auto">${st.done}/${st.n}</span></summary>
    <div class="acc-b">
      <div class="warnbox">12 tuần × 30 phút/ngày, cố định ${M.time}. Rút gọn từ khoá 24 tuần: giữ trọn phần tư duy (M1→M8) và phần macro→ngành; <b>bỏ phần xây dashboard và regime scorecard</b> — hai module đó trùng kỹ năng với DA L3 nên để làm sau, một lần tính cho cả hai.</div>
      <div class="bar tall" style="margin-top:10px"><i style="width:${st.pct}%;background:${TR.MACRO.color}"></i></div>
@@ -1314,6 +1322,7 @@ function macroAcc(){
 /* ================================ SHEETS ================================ */
 function openSheet(html){document.getElementById("sheet").innerHTML=html;document.getElementById("back").classList.add("open")}
 function closeSheet(){document.getElementById("back").classList.remove("open")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 function v(id){const e=document.getElementById(id);return e?e.value:""}
 function ck(id){const e=document.getElementById(id);return e?e.checked:false}
 function trackOpts(sel){return TKEYS.map(k=>`<option value="${k}" ${sel===k?"selected":""}>${TR[k].ico} ${TR[k].name}</option>`).join("")}
@@ -1356,7 +1365,7 @@ function saveTask(id){
   if(!x){x={id:"x"+uid(),status:"pending",progress:0};state.tasks.push(x)}
   x.t=v("xT")||"Việc mới"; x.date=v("xD")||todayISO(); x.start=mm(v("xS")||"09:00");
   x.dur=+v("xU")||60; x.track=v("xK"); x.link=v("xL"); x.locked=ck("xLk");
-  const p=document.getElementById("xP"); if(p){x.progress=+p.value; if(x.progress===100)x.status="done"}
+  const p=document.getElementById("xP"); if(p){x.progress=+p.value; if(x.progress===100){x.status="done";x.doneAt=x.doneAt||todayISO()} else if(x.status==="done"){x.status="pending";x.doneAt=null}}
   closeSheet(); save();
 }
 function delTask(id){state.tasks=state.tasks.filter(t=>t.id!==id);closeSheet();save()}
@@ -1381,9 +1390,12 @@ function editBlock(day,id){
 }
 function saveBlock(day,id){
   const nd=+v("bD")||day;
+  const from=v("bF")||"08:00", to=v("bT")||"09:00";
+  if(mm(to)<=mm(from)){alert("Giờ kết thúc phải sau giờ bắt đầu.");return}
+  const old=(state.routine.tpl[day]||[]).find(x=>x.id===id)||{};
   state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);
   state.routine.tpl[nd]=state.routine.tpl[nd]||[];
-  state.routine.tpl[nd].push({id:id||("b"+uid()),label:v("bL")||"Block",from:v("bF"),to:v("bT"),track:v("bK"),fixed:ck("bX")});
+  state.routine.tpl[nd].push(Object.assign({},old,{id:id||("b"+uid()),label:v("bL")||"Block",from,to,track:v("bK"),fixed:ck("bX")}));
   closeSheet(); save();
 }
 function delBlock(day,id){state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);closeSheet();save()}
@@ -1422,6 +1434,7 @@ function openAssess(id){
    <div class="two"><label class="fld"><span>Session</span><select id="aSe"><option value="">—</option>${Array.from({length:N_SESS},(_,i)=>i+1).map(n=>`<option value="${n}" ${a.session===n?"selected":""}>S${n} (${fmtD(sessDates(n).fri)}–${fmtD(sessDates(n).sat)})</option>`).join("")}</select></label>
      <label class="fld"><span>Điểm đã có (%)</span><input type="number" id="aM" value="${a.mark??""}" min="0" max="100" placeholder="—"></label></div>
    <label class="fld"><span><input type="checkbox" id="aP" ${a.prov?"checked":""} style="width:auto;margin-right:7px">Ngày còn là tạm tính</span></label>
+   <label class="fld"><span><input type="checkbox" id="aX" ${a.done?"checked":""} style="width:auto;margin-right:7px">Đã nộp / đã diễn ra (chưa cần có điểm)</span></label>
    <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delAssess('${a.id}')">Xoá</button>`:""}
      <button class="btn ghost" onclick="closeSheet()">Đóng</button>
      <button class="btn primary" onclick="saveAssess('${a.id}')">Lưu</button></div>`);
@@ -1430,7 +1443,7 @@ function saveAssess(id){
   let a=state.assess.find(x=>x.id===id);
   if(!a){a={id:"a"+uid(),where:"",note:""};state.assess.push(a)}
   a.title=v("aT")||"Mốc mới"; a.sub=v("aS"); a.weight=+v("aW")||0; a.due=v("aD"); a.dueTime=v("aTi");
-  const se=v("aSe"); a.session=se?+se:null; const mk=v("aM"); a.mark=mk===""?null:+mk; a.prov=ck("aP");
+  const se=v("aSe"); a.session=se?+se:null; const mk=v("aM"); a.mark=mk===""?null:+mk; a.prov=ck("aP"); a.done=ck("aX");
   if(a.session&&!a.due)a.due=sessDates(a.session).sun;
   closeSheet(); save();
 }
@@ -1495,7 +1508,7 @@ function openSettings(){
    <div class="note">Session 1 = tuần ${fmtD(WEEK1_MON)}. T6 FINC3022 D402 · T7 ECON3014 D102, 12:00–15:15. DA MindX giả định T3 + T7 19:15–22:15.</div>
    <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button>
      <button class="btn primary" onclick="state.settings.dayStart=v('sA');state.settings.dayEnd=v('sB');state.ielts.aim=+v('sAim')||7;closeSheet();save()">Lưu</button></div>
-   <button class="btn danger" style="width:100%;margin-top:10px" onclick="if(confirm('Xoá hết và về bản gốc?')){state=seed();save();closeSheet()}">Reset về bản gốc</button>`);
+   <button class="btn danger" style="width:100%;margin-top:10px" onclick="if(confirm('Xoá hết và về bản gốc?')){const r=state.rev||1;state=seed();state.rev=r;normalizeOnce();save();closeSheet()}">Reset về bản gốc</button>`);
 }
 function exportJSON(){
   openSheet(`<h3>Dữ liệu</h3><div class="sh-sub">Copy để backup</div>
