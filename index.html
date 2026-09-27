@@ -583,7 +583,7 @@ habits:[
 ],
 
 goals:[
- {id:"g-ielts",name:"IELTS 7.0",track:"IELTS",src:"ielts",targetDate:"",note:"Không đặt deadline cứng. Đặt lịch thi khi đạt 7.0 ở 2 mock liên tiếp và không kỹ năng nào dưới 6.5."},
+ {id:"g-ielts",name:"IELTS 7.0",track:"IELTS",src:"ielts",targetDate:"2027-01-15",note:"Mục tiêu tạm: thi giữa 1/2027 (8h/tuần tới 2/12, 15h/tuần từ 3/12). Chốt lại sau mock baseline: ≥6.5 và Writing ổn → kéo lên cuối 12; ra 6.0 → giữ hoặc lùi sang 2/2027. Đặt lịch thi khi đạt 7.0 ở 2 mock liên tiếp và không kỹ năng nào dưới 6.5 (CD-IELTS, đăng ký trước 3–4 tuần)."},
  {id:"g-zh",name:"Tiếng Trung → HSK 2 chắc",track:"ZH",src:"zh",targetDate:"",paused:true,note:"TẠM DỪNG tới khi thi xong (sau 2/12), giờ đã dồn cho IELTS. HSK 2 chắc vào 12/2026 → bắt đầu tìm gia sư 1-kèm-1 từ 1/2027. HSK 3 giữa 2027, đủ tư vấn khách Trung ~2028."},
  {id:"g-da",name:"DA MindX kỳ 2",track:"DA",src:"da",targetDate:"2026-10-27",note:"16 buổi, 5/9 → ~31/10. Xong là có Final Project đưa vào CV cho LPBS."},
  {id:"g-school",name:"Tốt nghiệp — 2 môn cuối",track:"IF",src:"school",targetDate:"2026-12-02",note:"Điều kiện: mỗi môn ≥50 tổng. IF cả 3 đầu điểm đều bắt buộc."},
@@ -675,7 +675,7 @@ confirm:[
  {id:"c10",t:"CTV line còn giữ không, tốn bao nhiêu giờ/tuần?",done:false},
  {id:"c11",t:"Lịch thi CCHN UBCKNN 2027 + module cần cho vị trí ở LPBS",done:false}
 ],
-patches:["v6-base","v7-load40","v7b-exams"]
+patches:["v6-base","v7-load40","v7b-exams","v7c-ielts"]
 };}
 
 /* ============================ STATE / SYNC ============================ */
@@ -720,6 +720,11 @@ function upgrade(old){
       ["c3","c5","c6"].forEach(id=>{const o=s.confirm.find(c=>c.id===id),n=fresh.confirm.find(c=>c.id===id); if(o&&n){o.t=n.t;o.done=n.done}});
       const ip=s.assess.find(a=>a.id==="if-pres"); if(ip&&ip.mark==null)ip.done=true;   // presented 12/09
       s.placed=false; s.patches=s.patches.concat("v7b-exams"); patched=true;
+    }
+    if(!s.patches.includes("v7c-ielts")){   // IELTS 7.0 target: mid-Jan 2027
+      const gi=s.goals.find(x=>x.id==="g-ielts"), ng=seed().goals.find(x=>x.id==="g-ielts");
+      if(gi){gi.targetDate=ng.targetDate;gi.note=ng.note} else s.goals.unshift(ng);
+      s.patches=s.patches.concat("v7c-ielts"); patched=true;
     }
     return s;
   }
