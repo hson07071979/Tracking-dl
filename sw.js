@@ -1,8 +1,8 @@
 /* Sơn Study OS — service worker.
    Network-first cho file của chính site (luôn lấy bản mới khi có mạng, offline thì dùng bản đã lưu).
    Không đụng tới request sang domain khác (đồng bộ cloud, API, font). */
-const CACHE = "study-os-v1";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE = "study-os-v8";
+const CORE = ["./", "./index.html", "./kit.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

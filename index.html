@@ -382,6 +382,17 @@ details.acc .acc-b{padding:0 15px 14px}
 #toast button{color:inherit;text-decoration:underline;margin-left:8px;font-weight:800}
 @media(min-width:821px){#toast{bottom:28px}}
 button:disabled{opacity:.6;cursor:progress}
+
+/* ---- v8 ---- */
+.matl{display:block;padding:7px 10px;margin:5px 0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13.5px;overflow-wrap:anywhere}
+a.matl:hover{border-color:var(--accent)}
+.matl.off{color:var(--ink3);background:var(--surface2)}
+ol.steps{margin:4px 0 0;padding-left:20px}ol.steps li{margin:4px 0;font-size:14px}
+.drag-ghost{position:fixed;z-index:200;pointer-events:none;opacity:.92;box-shadow:var(--shadow);border-radius:var(--r-sm);background:var(--surface)}
+.drop-on{outline:2px dashed var(--accent);outline-offset:2px}
+.rowit.rest{opacity:.62}
+.row.wrap .btn,.btn.grow{white-space:normal;text-align:center}
+.rowit.rest .rt b{font-weight:600}
 </style>
 </head>
 <body>
@@ -411,6 +422,7 @@ button:disabled{opacity:.6;cursor:progress}
 <main>
   <section class="view on" id="v-today"></section>
   <section class="view" id="v-cal"></section>
+  <section class="view" id="v-kit"></section>
   <section class="view" id="v-plans"></section>
   <section class="view" id="v-dead"></section>
   <section class="view" id="v-track"></section>
@@ -424,9 +436,10 @@ button:disabled{opacity:.6;cursor:progress}
 <div class="back" id="back" onclick="if(event.target===this)closeSheet()">
   <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
 </div>
+<script src="kit.js"></script>
 <script>
 /* ==================================================================
-   SƠN STUDY OS v6 — engine
+   SƠN STUDY OS v8 — engine
    ================================================================== */
 const WEEK1_MON="2026-08-31", N_SESS=12, LS_KEY="son-study-os-v6";
 const TR={
@@ -438,7 +451,10 @@ const TR={
  MACRO:{code:"Macro",    name:"Macro & Equity Thinking",short:"Macro", color:"#8A6A1F", ico:"🧭"},
  TRADE:{code:"Giao dịch", name:"Học lại PP giao dịch", short:"Giao dịch", color:"#3E4C9E", ico:"📈"},
  BASE :{code:"Nền",      name:"Nền & sức khoẻ",       short:"Nền",     color:"#5C7A52", ico:"🌱"},
- SOC  :{code:"Bạn bè",   name:"Bạn bè & kết nối",     short:"Bạn bè",  color:"#B0577F", ico:"🤝"},
+ CH   :{code:"Kênh",     name:"Kênh '5 phút đọc báo'", short:"Kênh",    color:"#C2410C", ico:"🎬"},
+ BRK  :{code:"Broker",   name:"Học nghề broker",      short:"Broker",  color:"#0E7490", ico:"🎧"},
+ WORK :{code:"Công ty",  name:"Công ty (8h/tuần)",    short:"Công ty", color:"#57534E", ico:"🏢"},
+ SOC  :{code:"Tối riêng",name:"Tối riêng & bạn bè",   short:"Tối riêng",color:"#B0577F", ico:"💞"},
  LIFE :{code:"Khác",     name:"Khác",                 short:"Khác",    color:"#7E888F", ico:"•"}
 };
 const TKEYS=Object.keys(TR);
@@ -729,7 +745,8 @@ function upgrade(old){
   if(old.v===6){
     // same shape: carry everything the user owns
     ["assess","tasks","habits","goals","confirm","plans","people"].forEach(k=>{ if(Array.isArray(old[k])) s[k]=old[k]; });
-    ["energy","review","top"].forEach(k=>{ if(old[k]&&typeof old[k]==="object") s[k]=old[k]; });
+    ["energy","review","top","cdone","bx","curOver"].forEach(k=>{ if(old[k]&&typeof old[k]==="object"&&!Array.isArray(old[k])) s[k]=old[k]; });
+    if(Array.isArray(old.kitLinks)) s.kitLinks=old.kitLinks; if(old.lastExport) s.lastExport=old.lastExport; if(typeof old.aiCtx==="string") s.aiCtx=old.aiCtx;
     if(old.dlog) s.dlog=old.dlog; if(old.placed) s.placed=old.placed; if(old.macro) s.macro=Object.assign(s.macro,old.macro);
     if(old.routine&&old.routine.tplV>=4) s.routine=old.routine;
     if(old.ielts) s.ielts=Object.assign(s.ielts,old.ielts);
@@ -767,7 +784,7 @@ function upgrade(old){
     if(!s.patches.includes("v7d-trade")){   // trading-method lessons Mon/Wed 16:15 → re-place tasks around them
       s.placed=false; s.patches=s.patches.concat("v7d-trade"); patched=true;
     }
-    return s;
+    return applyV8(s);
   }
   // v5 → v6: carry progress by id
   patched=true;
@@ -779,7 +796,7 @@ function upgrade(old){
     s.ielts.aim=old.ielts.aim||7; s.ielts.examDate=old.ielts.examDate||""; s.ielts.mocks=old.ielts.mocks||[];
     s.ielts.phases.forEach(p=>{const op=byId(old.ielts.phases,p.id); if(op)p.units.forEach(u=>{const ou=byId(op.units,u.id); if(ou&&ou.done){u.done=true;u.at=ou.at}});});
   }
-  return s;
+  return applyV8(s);
 }
 function save(){
   state.rev=(state.rev||1)+1; lsSave(); render();
@@ -791,7 +808,7 @@ function save(){
   },700);
 }
 async function initCloud(){
-  const local=lsLoad(); if(local) state=upgrade(local);
+  const local=lsLoad(); state=local?upgrade(local):upgrade(seed());
   if(normalizeOnce()) patched=true;
   render(); if(patched) lsSave();
   let c=null; try{ if(typeof claude!=="undefined"&&claude&&claude.use) c=await claude.use("db"); }catch(e){c=null}
@@ -815,14 +832,10 @@ async function initCloud(){
 /* ========================= SCHEDULER ENGINE ========================= */
 function dayStart(){return mm(state.settings.dayStart||"07:30")}
 function dayEnd(){return mm(state.settings.dayEnd||"23:00")}
-function routineOn(date){ return (state.routine.tpl[dow(date)]||[]).map(b=>({...b,kind:"rout",start:mm(b.from),end:mm(b.to)})); }
-function fixedOn(date){ const r=routineOn(date); const m=macroFor(date); if(m) r.push(m); const g=tradeFor(date); if(g) r.push(g); return r; }
 function tasksOn(date){ return state.tasks.filter(t=>t.date===date); }
 function taskEnd(t){ return (t.start||0)+(t.dur||60); }
 function isActive(t){ return t.status!=="skipped"; }
 /* --- per-day completion (routine blocks get ticked per date) --- */
-function isDone(x,date){ return x.kind==="task" ? x.status==="done" : !!((state.dlog||{})[date]||{})[x.id]; }
-function tgDay(id,date){ state.dlog=state.dlog||{}; const d=state.dlog[date]=state.dlog[date]||{}; if(d[id]) delete d[id]; else d[id]=1; save(); }
 /* --- macro curriculum --- */
 function macroFor(date){
   const M=state.macro; if(!M||!M.on) return null;
@@ -851,20 +864,7 @@ function macroWeekDone(w){
 }
 function dayProgress(date){ const it=dayItems(date).filter(x=>!x.rest); return {n:it.length, d:it.filter(x=>isDone(x,date)).length}; }
 /* every occupied interval on a day */
-function busy(date,ignoreId){
-  const out=[];
-  fixedOn(date).forEach(b=>out.push({start:b.start,end:b.end,type:b.fixed?"fixed":"rout",label:b.label||b.t}));
-  tasksOn(date).forEach(t=>{ if(t.id!==ignoreId&&isActive(t)) out.push({start:t.start,end:taskEnd(t),type:t.emg?"emg":(t.locked?"lock":"task"),label:t.t,id:t.id}); });
-  return out.sort((a,b)=>a.start-b.start);
-}
 function overlap(a1,a2,b1,b2){ return a1<b2&&b1<a2 }
-function conflictsAt(date,start,end,ignoreId){ return busy(date,ignoreId).filter(b=>overlap(start,end,b.start,b.end)); }
-function freeSlots(date,dur,ignoreId,after){
-  const b=busy(date,ignoreId), out=[]; let cur=Math.max(dayStart(),after||0);
-  b.forEach(x=>{ if(x.start-cur>=dur) out.push({start:cur,end:x.start}); cur=Math.max(cur,x.end); });
-  if(dayEnd()-cur>=dur) out.push({start:cur,end:dayEnd()});
-  return out;
-}
 function nextFreeSlot(fromDate,fromMin,dur,ignoreId,maxDays){
   let d=fromDate;
   for(let i=0;i<(maxDays||45);i++){
@@ -875,19 +875,6 @@ function nextFreeSlot(fromDate,fromMin,dur,ignoreId,maxDays){
   return null;
 }
 /* auto-reflow: push every movable task out of a collision, keeping order */
-function reflow(){
-  const moved=[];
-  const movable=state.tasks.filter(t=>!t.locked&&!t.emg&&isActive(t)&&t.status!=="done")
-    .sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
-  movable.forEach(t=>{
-    const hard=busy(t.date,t.id).filter(b=>b.type==="fixed"||b.type==="emg"||b.type==="lock"||b.type==="rout"||b.type==="task");
-    const hit=hard.some(b=>overlap(t.start,taskEnd(t),b.start,b.end));
-    if(!hit) return;
-    const slot=nextFreeSlot(t.date,t.start,t.dur,t.id);
-    if(slot&&(slot.date!==t.date||slot.start!==t.start)){ moved.push({t:t.t,from:t.date+" "+hhmm(t.start),to:slot.date+" "+hhmm(slot.start)}); t.date=slot.date; t.start=slot.start; }
-  });
-  return moved;
-}
 /* same day first, then up to 6 days earlier, then later — but never on/after the linked deadline */
 function placeNear(z){
   const due=(z.link&&(state.assess.find(a=>a.id===z.link)||{}).due)||"9999", base=z.date, tries=[base];
@@ -917,14 +904,6 @@ function normalizeOnce(){
   state.placed=true;
   return moved>0;
 }
-function audit(){
-  const out=[];
-  state.tasks.filter(t=>isActive(t)&&t.status!=="done"&&!t.locked&&!t.emg).forEach(t=>{
-    const c=conflictsAt(t.date,t.start,taskEnd(t),t.id);
-    if(c.length) out.push({id:t.id,t:t.t,date:t.date,with:c[0].label});
-  });
-  return out;
-}
 
 /* ============================ GOAL MATH ============================ */
 function ielUnits(){ return state.ielts.phases.flatMap(p=>p.units) }
@@ -936,11 +915,6 @@ function unitStats(list){
 function paceOf(list){ // real h/week over last 21 days
   const cut=addD(todayISO(),-21);
   return list.filter(u=>u.done&&u.at&&u.at>=cut).reduce((s,u)=>s+(u.hh||0),0)/3;
-}
-function weeklyFor(track){
-  let t=0; for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{ if(b.track===track&&!b.rest) t+=(mm(b.to)-mm(b.from))/60; });
-  if(track==="MACRO"&&state.macro&&state.macro.on) t+=state.macro.dur/60*7;
-  return t;
 }
 function goalStats(g){
   let st,pace,list=null;
@@ -977,17 +951,6 @@ function goalStats(g){
 }
 function bandRound(x){return Math.round(x*2)/2}
 function mockOverall(m){const v=[m.r,m.l,m.w,m.s].map(Number).filter(x=>!isNaN(x)&&x>0);return v.length?bandRound(v.reduce((a,b)=>a+b,0)/v.length):null}
-function weekLoad(){
-  const o={}; TKEYS.forEach(k=>o[k]=0);
-  let rest=0;
-  for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{const hh=(mm(b.to)-mm(b.from))/60; if(b.rest){rest+=hh;return} o[b.track]=(o[b.track]||0)+hh});
-  o.rest=rest;
-  o.fixed=0; for(let i=1;i<=7;i++)(state.routine.tpl[i]||[]).forEach(b=>{if(b.fixed)o.fixed+=(mm(b.to)-mm(b.from))/60});
-  if(state.macro&&state.macro.on) o.MACRO=(o.MACRO||0)+state.macro.dur/60*7;
-  if(state.trade&&state.trade.on&&TRADE_LESSONS.some(x=>x.d>=todayISO())) o.TRADE=(o.TRADE||0)+state.trade.dur/60*2;
-  o.total=TKEYS.reduce((a,k)=>a+o[k],0); o.self=o.total-o.fixed;
-  return o;
-}
 function habitStreak(hb){
   let n=0,d=todayISO();
   if(!hb.log[d]) d=addD(d,-1);
@@ -1012,42 +975,13 @@ const IC={
 const TABS=[["today","Hôm nay",IC.today],["cal","Lịch",IC.cal],["plans","Mục tiêu",IC.target],["dead","Deadline",IC.dead],["track","Mảng",IC.track],["year","Năm",IC.year]];
 
 function go(t){tab=t;render();window.scrollTo({top:0,behavior:"instant"})}
-function render(){
-  document.getElementById("nav").innerHTML=TABS.map(([k,l,i])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')"><span class="glyph">${i}</span>${l}</button>`).join("");
-  TABS.forEach(([k])=>{const e=document.getElementById("v-"+k);if(e)e.classList.toggle("on",tab===k)});
-  const t=todayISO(),s=sessOfWeek(mondayOf(t));
-  document.getElementById("ctxLine").textContent=fmtFull(t)+" · "+(s?("Tuần "+s+" / Session "+s):"Ngoài kỳ học");
-  renderToday();renderCal();renderPlans();renderDead();renderTrack();renderYear();
-}
 
 /* ============================== ITEM CARD ============================== */
-function rowHTML(x,date){
-  const c=TR[x.track]||TR.LIFE, done=isDone(x,date), rout=x.kind==="rout";
-  const end=rout?x.end:taskEnd(x);
-  const mac=x.kind==="macro"||x.kind==="trade", trd=x.kind==="trade";
-  const cls=[rout?(x.fixed?"cls":""):(x.emg?"emg":""), mac?(trd?"trd":"mac"):"", done?"done":"", x.rest?"rest":"", x.status==="skipped"?"done":""].join(" ");
-  const drag=(rout||mac)?"":`draggable="true" ondragstart="dragStart(event,'${x.id}')" ondragend="dragEnd(event)"`;
-  const pl=x.plan&&planById(x.plan), star=x.kind==="task"&&topTasks(date).some(y=>y.id===x.id);
-  const tp=rout?blockTopic(x,date):"";
-  const sub=trd?"Bài "+x.L.n+"/10 · "+hrs(x.dur/60)+"h · "+c.short:mac?[x.wk.m+" · "+x.se.o].join(""):[star?"★ Top 3":"", tp, hrs((end-x.start)/60)+"h", pl?"🎯 "+h(pl.name):c.short, x.locked?"🔒":"", rout&&!x.fixed?"lặp tuần":"", x.fixed?"lớp":""].filter(Boolean).join(" · ");
-  return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${x.id}">
-    <button class="tick" onclick="event.stopPropagation();${(rout||mac)?`tgDay('${x.id}','${date}')`:`tgDone('${x.id}')`}" aria-label="Đánh dấu xong">${IC.check}</button>
-    <span class="tm">${hhmm(x.start)}</span>
-    <div class="rt" onclick="${trd?`openTrade('${date}')`:mac?`openMacro('${date}')`:rout?`editBlock(${dow(date)},'${x.id}','${date}')`:`openTask('${x.id}')`}">
-      <b>${h(x.t||x.label)}</b><div class="sub">${sub}</div>
-      ${(x.progress>0&&!done&&!rout)?`<div class="prog"><i style="width:${x.progress}%"></i></div>`:""}
-    </div></div>`;
-}
 function dlRowHTML(a){
   return `<div class="rowit dl" onclick="openAssess('${a.id}')" style="cursor:pointer">
     <span class="tick" style="border:none;background:none;color:var(--red);font-size:15px">!</span>
     <span class="tm">${a.dueTime||"hạn"}</span>
     <div class="rt"><b>${h(a.title)}</b><div class="sub">${TR[a.sub].code}${a.weight?" · "+a.weight+"%":""}${a.prov?" · tạm tính":""}</div></div></div>`;
-}
-function dayItems(date){
-  const r=fixedOn(date).map(b=>(b.kind==="macro"||b.kind==="trade"?b:{...b,kind:"rout"}));
-  const t=tasksOn(date).map(x=>({...x,kind:"task"}));
-  return r.concat(t).sort((a,b)=>a.start-b.start);
 }
 
 /* ================================ TODAY ================================ */
@@ -1138,7 +1072,7 @@ function renderToday(){
   <div id="loadBox" ${accState.loadBox?"":"hidden"}><div class="card" style="margin-top:8px">
     <div class="bar tall">${TKEYS.filter(k=>load[k]>0).map(k=>`<i style="width:${load[k]/load.total*100}%;background:${TR[k].color}"></i>`).join("")}</div>
     <div class="legend">${TKEYS.filter(k=>load[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(load[k])}h</span>`).join("")}</div>
-    <div class="note" style="margin-top:11px">Mục tiêu ~40h tự học/tuần (chưa tính lớp). Việc có hạn và buổi của mục tiêu dài hạn nằm <b>ngoài</b> con số này — tuần nào nhiều deadline thì cắt theo thứ tự: đọc báo → Macro → 1 buổi IELTS. Không cắt: ngủ, tiếng Trung 15', deadline, giờ bạn bè.</div>
+    <div class="note" style="margin-top:11px">Mục tiêu ~40h tự học/tuần (chưa tính lớp). Việc có hạn và buổi của mục tiêu dài hạn nằm <b>ngoài</b> con số này — tuần nào nhiều deadline thì cắt theo thứ tự: kênh → broker → 1 buổi Macro → 1 buổi IELTS (đọc báo 30' giữ nguyên). Không cắt: ngủ, tiếng Trung 15', deadline, giờ bạn bè.</div>
   </div></div>`;
   const q2=document.getElementById("qaIn"); if(q2&&prevQ){q2.value=prevQ; if(hadFocus)q2.focus()}
 }
@@ -1191,30 +1125,6 @@ function renderCal(){
     ttl.innerHTML=`<b style="font-size:14.5px">Tháng ${d.getMonth()+1}/${d.getFullYear()}</b>`; }
 }
 function moveMonth(n){const c=monthCur||todayISO().slice(0,7)+"-01";const d=D(c);d.setMonth(d.getMonth()+n,1);monthCur=iso(d)}
-function weekHTML(){
-  const t=todayISO(), mon=addD(mondayOf(t),weekOff*7), out=[];
-  for(let i=0;i<7;i++){
-    const d=addD(mon,i);
-    const all=dayItems(d).sort((a,b)=>a.start-b.start);
-    const items=state.settings.hideDone?all.filter(x=>!isDone(x,d)):all;
-    const dl=state.assess.filter(a=>a.due===d);
-    const pg=dayProgress(d), open=openDays.has(d)||d===t;
-    const tracks=[...new Set(all.map(x=>x.track))];
-    out.push(`<div class="daybox ${d===t?'today':''}" ondragover="dragOver(event)" ondrop="dropDay(event,'${d}')">
-      <button class="dayhead" onclick="tgDay2('${d}')">
-        <b>${["T2","T3","T4","T5","T6","T7","CN"][i]}</b><span class="dn2">${fmtD(d)}</span>
-        ${dl.length?`<span class="chip red">${dl.length} hạn</span>`:""}
-        <span class="cnt"><span class="dots">${tracks.map(k=>`<i style="background:${(TR[k]||TR.LIFE).color}"></i>`).join("")}</span>${pg.d}/${pg.n}<span style="opacity:.5">${open?"▾":"▸"}</span></span>
-      </button>
-      ${open?`<div class="list" style="border:none;border-radius:0;border-top:1px solid var(--line)">
-        ${dl.map(a=>dlRowHTML(a)).join("")}
-        ${items.length?items.map(x=>rowHTML(x,d)).join(""):'<div class="empty">Trống — kéo việc vào đây</div>'}
-        <div class="rowit" style="justify-content:center"><button class="btn sm ghost" onclick="addTask({date:'${d}'})">+ Thêm việc ngày này</button></div>
-      </div>`:""}
-    </div>`);
-  }
-  return out.join("");
-}
 let openDays=new Set();
 function tgDay2(d){ if(openDays.has(d))openDays.delete(d); else openDays.add(d); render(); }
 function monthHTML(){
@@ -1236,18 +1146,6 @@ function monthHTML(){
   <div class="note" style="margin-top:12px">Bấm vào ngày để mở tuần đó. Trên máy tính có thể kéo thẳng việc từ ngày này sang ngày khác.</div>`;
 }
 /* drag & drop */
-let dragId=null;
-function dragStart(e,id){dragId=id;e.dataTransfer.setData("text/plain",id);e.dataTransfer.effectAllowed="move";e.target.classList.add("dragging")}
-function dragEnd(e){e.target.classList.remove("dragging");document.querySelectorAll(".drop-on").forEach(x=>x.classList.remove("drop-on"))}
-function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect="move"}
-function dropDay(e,date){
-  e.preventDefault();
-  const id=dragId||e.dataTransfer.getData("text/plain"); dragId=null;
-  const x=state.tasks.find(t=>t.id===id); if(!x)return;
-  const s=freeSlots(date,x.dur,x.id,x.start)[0]||freeSlots(date,x.dur,x.id,0)[0];
-  x.date=date; if(s)x.start=s.start;
-  save();
-}
 
 /* =============================== DEADLINE =============================== */
 function renderDead(){
@@ -1280,36 +1178,6 @@ function renderDead(){
 }
 
 /* ================================ TRACKS ================================ */
-function renderTrack(){
-  const goals=state.goals.map(g=>goalHTML(g)).join("");
-  document.getElementById("v-track").innerHTML=`
-  <div class="sec-h"><h2>Mục tiêu & thời gian đạt</h2><div class="rule"></div><button class="act" onclick="editGoal('')">+ Goal</button></div>
-  ${goals}
-  <a class="foldline" href="${STUDY}" target="_blank" rel="noopener" style="margin-top:14px;text-decoration:none;color:inherit">📚 Study Kit — tóm tắt từng chương, luồng học, tool nào dùng khi nào<span style="margin-left:auto;color:var(--accent)">→</span></a>
-  <button class="foldline" style="margin-top:8px" onclick="openPromptBuilder()">✨ Tạo prompt học với AI — tóm tắt, giải thích, đề thử, chấm bài<span style="margin-left:auto;color:var(--accent)">→</span></button>
-  <div class="sec-h"><h2>Chi tiết từng mảng</h2><div class="rule"></div><span class="small muted">bấm để mở</span></div>
-  ${schoolAcc()}${macroAcc()}${tradeAcc()}${daAcc()}${ieltsAcc()}${zhAcc()}${baseAcc()}`;
-}
-function goalHTML(g){
-  const c=TR[g.track]||TR.LIFE, s=goalStats(g); if(g.paused)s.verdict={c:"warn",t:"Tạm dừng — không tính tiến độ lúc này"};
-  return `<div class="goal">
-    <div class="goal-h">
-      <div class="ico" style="background:${c.color}22">${c.ico}</div>
-      <div class="grow"><b style="font-size:14.5px">${h(g.name)}</b>
-        <div class="small muted">${c.name}${g.targetDate?" · mục tiêu "+fmtD(g.targetDate):" · không đặt hạn cứng"}</div></div>
-      <button class="mini-btn" onclick="editGoal('${g.id}')">${IC.more}</button>
-    </div>
-    <div class="bar tall"><i style="width:${s.st.pct}%;background:${c.color}"></i></div>
-    <div class="legend"><span>${s.st.pct}% · ${hrs(s.st.done)}/${hrs(s.st.all)}${g.src==="school"?" điểm":"h"}</span>
-      <span style="margin-left:auto">còn ${hrs(s.st.left)}${g.src==="school"?" điểm":"h"}</span></div>
-    ${s.byPoints?"":`<div class="eta">
-      <div><span>Theo khung tuần (${hrs(s.planned)}h)</span><b>${s.etaPlan?fmtD(s.etaPlan)+" · "+Math.ceil(dbet(todayISO(),s.etaPlan)/7)+" tuần":"chưa cấp giờ"}</b></div>
-      <div><span>Theo nhịp thật (${hrs(s.pace)}h)</span><b>${s.etaPace?fmtD(s.etaPace)+" · "+Math.ceil(dbet(todayISO(),s.etaPace)/7)+" tuần":"chưa có dữ liệu"}</b></div>
-    </div>`}
-    ${s.verdict?`<div class="verdict ${s.verdict.c}">${s.verdict.t}</div>`:""}
-    ${g.note?`<div class="note" style="margin-top:10px">${h(g.note)}</div>`:""}
-  </div>`;
-}
 function unitList(phases,kind){
   return phases.map(p=>{
     const n=p.units.length,nd=p.units.filter(u=>u.done).length;
@@ -1545,19 +1413,6 @@ function v(id){const e=document.getElementById(id);return e?e.value:""}
 function ck(id){const e=document.getElementById(id);return e?e.checked:false}
 function trackOpts(sel){return TKEYS.map(k=>`<option value="${k}" ${sel===k?"selected":""}>${TR[k].ico} ${TR[k].name}</option>`).join("")}
 
-function quickAdd(){
-  openSheet(`<h3>Thêm nhanh</h3><div class="sh-sub">Chọn loại</div>
-   <div style="display:flex;flex-direction:column;gap:8px">
-    <button class="btn primary" onclick="openPlanEdit('')">🎯 Mục tiêu dài hạn — AI chia ra từng ngày</button>
-    <button class="btn" onclick="openPromptBuilder()">✨ Tạo prompt học với AI</button>
-    <button class="btn" onclick="closeSheet();addTask({date:'${todayISO()}'})">📌 Việc có ngày giờ</button>
-    <button class="btn" onclick="editPerson('')">🤝 Người đáng đầu tư thời gian</button>
-    <button class="btn" onclick="closeSheet();openAssess('')">🎯 Mốc chấm điểm / deadline</button>
-    <button class="btn" onclick="closeSheet();editBlock(${dow(todayISO())},'')">🔁 Block lặp mỗi tuần</button>
-    <button class="btn" onclick="closeSheet();editGoal('')">🏁 Goal mới</button>
-    <button class="btn" onclick="closeSheet();openEmergency()">⚡ Lịch khẩn cấp</button>
-   </div><div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
-}
 function addTask(pre){ openTask("",pre||{}) }
 function openTask(id,pre){
   const x=state.tasks.find(t=>t.id===id)||Object.assign({id:"",t:"",track:"IF",date:todayISO(),start:540,dur:60,pri:3,status:"pending",progress:0,note:"",link:"",locked:false},pre||{});
@@ -1599,34 +1454,6 @@ function setStatus(id,s){const x=state.tasks.find(t=>t.id===id);if(x){x.status=x
 function pushNext(id){const x=state.tasks.find(t=>t.id===id);if(!x)return;
   const s=nextFreeSlot(x.date,x.start+15,x.dur,x.id); if(s){x.date=s.date;x.start=s.start} closeSheet(); save()}
 
-function editBlock(day,id,date){
-  const list=state.routine.tpl[day]||[];
-  const b=list.find(x=>x.id===id)||{id:"",from:"08:00",to:"09:30",label:"",track:"IF",fixed:false};
-  const isNew=!b.id;
-  openSheet(`<h3>${isNew?"Block lặp tuần":"Sửa block"}</h3><div class="sh-sub">${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][day]} · lặp mỗi tuần</div>
-   ${studyLinks(b,date)}
-   ${b.note?`<div class="mblk out"><span class="mlab">Cách làm</span>${h(b.note)}</div>`:""}
-   <label class="fld"><span>Nội dung</span><input type="text" id="bL" value="${h(b.label)}"></label>
-   <div class="two"><label class="fld"><span>Từ</span><input type="time" id="bF" value="${b.from}"></label>
-     <label class="fld"><span>Đến</span><input type="time" id="bT" value="${b.to}"></label></div>
-   <label class="fld"><span>Mảng</span><select id="bK">${trackOpts(b.track)}</select></label>
-   <label class="fld"><span>Đổi sang thứ</span><select id="bD">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===day?"selected":""}>${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][n]}</option>`).join("")}</select></label>
-   <label class="fld"><span><input type="checkbox" id="bX" ${b.fixed?"checked":""} style="width:auto;margin-right:7px">Cố định (giờ lên lớp — không dời được)</span></label>
-   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delBlock(${day},'${b.id}')">Xoá</button>`:""}
-     <button class="btn ghost" onclick="closeSheet()">Đóng</button>
-     <button class="btn primary" onclick="saveBlock(${day},'${b.id}')">Lưu</button></div>`);
-}
-function saveBlock(day,id){
-  const nd=+v("bD")||day;
-  const from=v("bF")||"08:00", to=v("bT")||"09:00";
-  if(mm(to)<=mm(from)){alert("Giờ kết thúc phải sau giờ bắt đầu.");return}
-  const old=(state.routine.tpl[day]||[]).find(x=>x.id===id)||{};
-  state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);
-  state.routine.tpl[nd]=state.routine.tpl[nd]||[];
-  state.routine.tpl[nd].push(Object.assign({},old,{id:id||("b"+uid()),label:v("bL")||"Block",from,to,track:v("bK"),fixed:ck("bX")}));
-  closeSheet(); save();
-}
-function delBlock(day,id){state.routine.tpl[day]=(state.routine.tpl[day]||[]).filter(x=>x.id!==id);closeSheet();save()}
 
 function openEmergency(){
   openSheet(`<h3>⚡ Lịch khẩn cấp</h3><div class="sh-sub">Chèn việc đột xuất — mọi việc đụng giờ sẽ tự dồn sang chỗ trống gần nhất</div>
@@ -1638,14 +1465,6 @@ function openEmergency(){
    <div class="note">Việc đang bị khoá 🔒 và giờ lên lớp sẽ không bị dời — những việc còn lại sẽ nhường chỗ.</div>
    <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Huỷ</button>
      <button class="btn primary" onclick="createEmergency()">Chèn & dồn lịch</button></div>`);
-}
-function createEmergency(){
-  const d=v("eD")||todayISO(), f=mm(v("eF")||"14:00"), tt=mm(v("eT")||"16:00");
-  state.tasks.push({id:"e"+uid(),t:(v("eL")||"Việc khẩn cấp"),track:v("eK"),date:d,start:f,dur:Math.max(15,tt-f),pri:5,status:"pending",progress:0,emg:true,locked:true});
-  const moved=reflow(); save();
-  openSheet(`<h3>Đã chèn</h3><div class="sh-sub">${moved.length} việc được dời</div>
-   ${moved.length?moved.map(x=>`<div class="kv"><span>${h(x.t)}</span><b class="small">${x.to}</b></div>`).join(""):'<div class="note">Không việc nào bị ảnh hưởng.</div>'}
-   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Xong</button></div>`);
 }
 
 function openAssess(id){
@@ -1747,11 +1566,6 @@ function openSettings(){
      <button class="btn primary" onclick="state.settings.dayStart=v('sA');state.settings.dayEnd=v('sB');state.ielts.aim=+v('sAim')||7;closeSheet();save()">Lưu</button></div>
    <button class="btn danger" style="width:100%;margin-top:10px" onclick="if(confirm('Xoá hết và về bản gốc?')){const r=state.rev||1;state=seed();state.rev=r;normalizeOnce();save();closeSheet()}">Reset về bản gốc</button>`);
 }
-function exportJSON(){
-  openSheet(`<h3>Dữ liệu</h3><div class="sh-sub">Copy để backup</div>
-   <textarea style="min-height:240px;font-family:var(--f-num);font-size:11px">${h(JSON.stringify(state))}</textarea>
-   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Đóng</button></div>`);
-}
 
 /* ======================= DAILY TO-DO: focus · energy · review ======================= */
 /* the 5 habits being fixed (video "10 sai lầm") — #2 #3 #5 #6 #8 */
@@ -1806,41 +1620,6 @@ function deferLow(date){
 }
 
 /* ---------- evening review (Chốt ngày) ---------- */
-function openReview(date){
-  const top=topTasks(date), open=tasksOn(date).filter(isOpen).sort((a,b)=>a.start-b.start);
-  const r=(state.review||{})[date]||{}, en=(state.energy||{})[date];
-  openSheet(`<h3>🌙 Chốt ngày — ${fmtFull(date)}</h3><div class="sh-sub">3 phút. Không để việc nào treo lơ lửng sang ngày mai.</div>
-   <div class="mblk"><span class="mlab">Top 3</span>${top.length?top.map(x=>`<div class="kv"><span>${h(x.t)}</span><b style="color:var(--${x.status==="done"?"green":"red"})">${x.status==="done"?"✓":"✗"}</b></div>`).join(""):'<div class="small muted">Hôm nay không có Top 3.</div>'}</div>
-   <div class="mblk"><span class="mlab">Chưa xong — chốt từng việc (#5)</span>
-    ${open.length?open.map(x=>`<div class="kv" style="align-items:center"><span>${h(x.t)}<div class="small muted">${hrs((x.dur||60)/60)}h${x.progress?" · "+x.progress+"%":""}</div></span>
-      <span class="row" style="gap:5px;flex-shrink:0"><button class="btn sm" onclick="reviewAct('${x.id}','next','${date}')">Mai</button>
-      <button class="btn sm" onclick="reviewAct('${x.id}','split','${date}')">Chia đôi</button>
-      <button class="btn sm danger" onclick="reviewAct('${x.id}','drop','${date}')">Bỏ</button></span></div>`).join(""):'<div class="small" style="color:var(--green);font-weight:600">Không còn việc nào treo. Tốt.</div>'}</div>
-   <div class="mblk"><span class="mlab">Năng lượng cuối ngày (#8)</span><div class="pill-row">${[1,2,3,4,5].map(n=>`<button class="pill ${r.en===n?"on":""}" onclick="reviewEn('${date}',${n})">${n}</button>`).join("")}</div></div>
-   <label class="fld"><span>Năng lượng rò rỉ vào đâu hôm nay?</span><textarea id="rvLeak" placeholder="VD: lướt TikTok 40', ngồi cà phê 2 tiếng không mục đích">${h(r.leak||"")}</textarea></label>
-   <label class="fld"><span>Mai làm khác đi điều gì?</span><input type="text" id="rvNext" value="${h(r.next||"")}"></label>
-   ${en?`<div class="small muted">Sáng nay bạn chấm năng lượng ${en}/5.</div>`:""}
-   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn primary" onclick="saveReview('${date}')">Chốt</button></div>`);
-}
-function reviewEn(date,n){state.review=state.review||{};const r=state.review[date]=state.review[date]||{};
-  r.leak=v("rvLeak");r.next=v("rvNext");r.en=n;lsSave();openReview(date)}
-function reviewAct(id,act,date){
-  const x=state.tasks.find(t=>t.id===id); if(!x)return;
-  state.review=state.review||{}; const r=state.review[date]=state.review[date]||{}; r.leak=v("rvLeak"); r.next=v("rvNext");
-  if(act==="drop"){x.status="skipped"}
-  else if(act==="next"){const s=nextFreeSlot(addD(date,1),0,x.dur||60,x.id); if(s){x.date=s.date;x.start=s.start}}
-  else if(act==="split"){
-    const half=Math.max(15,Math.round((x.dur||60)/2/15)*15), base=x.t.replace(/ \(phần \d\/2\)$/,"");
-    const y=Object.assign({},x,{id:"x"+uid(),t:base+" (phần 2/2)",dur:half,progress:0});
-    x.t=base+" (phần 1/2)"; x.dur=half;
-    const s1=nextFreeSlot(addD(date,1),0,half,x.id); if(s1){x.date=s1.date;x.start=s1.start}
-    state.tasks.push(y);
-    const s2=nextFreeSlot(addD(x.date,1),0,half,y.id); if(s2){y.date=s2.date;y.start=s2.start}
-  }
-  save(); openReview(date);
-}
-function saveReview(date){state.review=state.review||{};const r=state.review[date]=state.review[date]||{};
-  r.leak=v("rvLeak");r.next=v("rvNext");r.at=new Date().toISOString();closeSheet();save();toast("Đã chốt ngày. Nghỉ thật đi.")}
 
 /* ---------- people worth investing in (#6) ---------- */
 function peopleDue(date){
@@ -1898,7 +1677,7 @@ function openFix(){
 }
 
 /* ---------- quick add: "Gửi mail thầy mai 9h 30p #if !" ---------- */
-const QTAG={if:"IF",bf:"BF",bank:"BF",banking:"BF",da:"DA",ielts:"IELTS",trung:"ZH",zh:"ZH",tq:"ZH",macro:"MACRO",nen:"BASE",banbe:"SOC",ban:"SOC",khac:"LIFE",job:"LIFE",viec:"LIFE"};
+const QTAG={kenh:"CH",ch:"CH",broker:"BRK",brk:"BRK",work:"WORK",congty:"WORK",if:"IF",bf:"BF",bank:"BF",banking:"BF",da:"DA",ielts:"IELTS",trung:"ZH",zh:"ZH",tq:"ZH",macro:"MACRO",nen:"BASE",banbe:"SOC",ban:"SOC",khac:"LIFE",job:"LIFE",viec:"LIFE"};
 function parseQuick(raw){
   let s=" "+String(raw).replace(/\s+/g," ")+" ", date=null, start=null, dur=null, track=null, pri=3;
   const t=todayISO(), B="(^|\\s)", E="(?=\\s|$)";
@@ -2186,7 +1965,7 @@ const PLAN_SCHEMA={type:"object",additionalProperties:false,required:["summary",
   tips:{type:"array",items:{type:"string"}},
   steps:{type:"array",items:{type:"object",additionalProperties:false,required:["phase","t","min","how","out"],properties:{
     phase:{type:"string"},t:{type:"string"},min:{type:"integer"},how:{type:"string"},out:{type:"string"}}}}}};
-const PLAN_SYSTEM=`Bạn là người lập kế hoạch cho một sinh viên năm cuối ngành tài chính ở Việt Nam (đang học 2 môn cuối, lớp Data Analytics, IELTS, tiếng Trung; hướng tới Investment Analyst). Việc của bạn: chia một mục tiêu dài hạn thành các buổi làm việc cụ thể, theo đúng thứ tự, mỗi buổi làm xong trong một lần ngồi.
+const PLAN_SYSTEM=`Bạn là người lập kế hoạch cho một sinh viên năm cuối ngành tài chính ở Việt Nam (đang học 2 môn cuối (International Finance, Banking & Finance), IELTS Academic 7.0, Macro → Micro, làm kênh TikTok tin tài chính, đi làm 8h/tuần ở CTCK; hướng tới Investment Analyst). Việc của bạn: chia một mục tiêu dài hạn thành các buổi làm việc cụ thể, theo đúng thứ tự, mỗi buổi làm xong trong một lần ngồi.
 
 Người này đang sửa 5 thói quen: thiếu kiên nhẫn (muốn nhanh), không tập trung (ôm đồm), làm không tới nơi tới chốn, giao du chưa chọn lọc, không giữ năng lượng. Kế hoạch phải giúp sửa các điểm đó:
 - Mỗi buổi chỉ một việc chính, có đầu ra kiểm chứng được (bài viết, file, điểm số, bản ghi âm, bảng tính…). Không có buổi kiểu "tìm hiểu", "ôn chung chung", "xem video".
@@ -2374,6 +2153,1072 @@ function installBlock(){
 async function doInstall(){if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}deferredInstall=null;openSettings()}
 if("serviceWorker" in navigator&&location.protocol==="https:"){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* =====================================================================
+   V8 (05/10/2026) — khung tuần theo giai đoạn · dời block từng ngày ·
+   giáo trình gắn vào block (kit.js) · tab Study Kit · nhật ký ·
+   Xuất/Nhập file · Đổi app bằng AI (patch JSON có xem trước + hoàn tác)
+   ===================================================================== */
+const V8_START="2026-10-05";
+const REPO_FALLBACK={owner:"hson07071979",repo:"Tracking-dl",branch:"main"};
+const TRADE_KIT={name:"Học lại PP giao dịch",g:"TRADE",track:"TRADE",sessions:TRADE_LESSONS.map(L=>({id:"tl"+L.n,t:"Bài "+L.n+" · "+L.t,
+  mat:[["Trang luật — bài "+L.n+" ("+L.r.map(r=>r[1]).join(" · ")+")",TRADE_URL+"#bai-"+L.n]],
+  how:[L.l,"Tự kiểm tra: "+L.k+" (tab 'Tự kiểm tra' trong trang luật)."].concat(L.n===7?["🚧 Cổng bài 7: sai Q3, Q4 hoặc Q13 thì học lại bài 7 trước khi qua bài 8."]:[]),
+  q:L.q.split("|").filter(Boolean),out:L.o}))};
+const WDN=["","T2","T3","T4","T5","T6","T7","CN"];
+
+/* ---------- giáo trình ---------- */
+function curDef(k){ const o=state.curOver&&state.curOver[k]; if(o) return o; if(k==="trade") return TRADE_KIT; return (typeof KIT!=="undefined"&&KIT[k])||null; }
+function curKeys(){ return [...new Set(Object.keys(typeof KIT!=="undefined"?KIT:{}).concat(["trade"],Object.keys(state.curOver||{})))]; }
+function sessById(id){ for(const k of curKeys()){ const d=curDef(k); const s=d&&d.sessions&&d.sessions.find(x=>x.id===id); if(s) return {k,d,s}; } return null; }
+function cdone(){ return state.cdone=state.cdone||{}; }
+
+/* ---------- khung tuần: giai đoạn + dời/bỏ từng ngày ---------- */
+function phaseOf(date){
+  const wd=dow(date);
+  const m=(state.routine.phases||[]).filter(p=>p.from<=date&&date<=p.to&&p.tpl&&p.tpl[wd]);
+  if(!m.length) return null;
+  return m.sort((a,b)=>dbet(a.from,a.to)-dbet(b.from,b.to))[0];
+}
+function tplBlocks(date){
+  const p=phaseOf(date), list=p?p.tpl[dow(date)]:(state.routine.tpl[dow(date)]||[]);
+  return list.map(b=>Object.assign({},b,{src:p?p.id:""}));
+}
+function routineOn(date){
+  const bx=state.bx||{}, out=[];
+  tplBlocks(date).forEach(b=>{ const o=bx[date+"|"+b.id]; if(o&&(o.skip||o.to)) return;
+    out.push(Object.assign({},b,{kind:"rout",start:mm(b.from),end:mm(b.to),odate:date,iid:b.id})); });
+  Object.keys(bx).forEach(k=>{ const o=bx[k]; if(!o||o.to!==date) return; const i=k.indexOf("|"), od=k.slice(0,i), id=k.slice(i+1);
+    const b=tplBlocks(od).find(x=>x.id===id); if(!b) return; const dur=mm(b.to)-mm(b.from);
+    out.push(Object.assign({},b,{kind:"rout",start:o.start,end:o.start+dur,odate:od,iid:od+"|"+id,moved:true})); });
+  return out;
+}
+function fixedOn(date){ return routineOn(date); }
+function blockKey(b){ return b.iid||b.id; }
+
+/* ---------- gắn buổi học vào block ---------- */
+let _cm=null,_cmKey="";
+function curMap(){
+  const t=todayISO(), key=(state.rev||0)+"|"+t+"|"+(state.routine.tplV||0);
+  if(_cm&&_cmKey===key) return _cm;
+  const done=cdone(), byInst={}, plan={}, slots={};
+  for(let i=0;i<240;i++){ const d=addD(t,i);
+    routineOn(d).filter(b=>b.cur).sort((a,b)=>a.start-b.start).forEach(b=>{(slots[b.cur]=slots[b.cur]||[]).push({date:d,iid:blockKey(b)})}); }
+  curKeys().forEach(k=>{
+    const def=curDef(k); if(!def||!def.sessions||!def.sessions.length) return;
+    const S=def.sessions, sl=slots[k]||[], todaySl=sl.filter(x=>x.date===t);
+    const doneToday=S.filter(s=>done[s.id]===t), pending=S.filter(s=>!done[s.id]);
+    let i=0;
+    doneToday.forEach((s,j)=>{ plan[s.id]=t; if(todaySl[j]){ byInst[t+"|"+todaySl[j].iid]=s; i++; } });
+    for(let p=0;i<sl.length&&p<pending.length;i++,p++){ const x=sl[i]; byInst[x.date+"|"+x.iid]=pending[p]; plan[pending[p].id]=x.date; }
+  });
+  _cm={byInst,plan}; _cmKey=key; return _cm;
+}
+function sessionAt(b,date){
+  if(!b||!b.cur) return null; const def=curDef(b.cur); if(!def||!def.sessions||!def.sessions.length) return null;
+  const iid=blockKey(b);
+  if(date>=todayISO()) return curMap().byInst[date+"|"+iid]||null;
+  const done=cdone(), ds=def.sessions.filter(s=>done[s.id]===date);
+  const bl=routineOn(date).filter(x=>x.cur===b.cur).sort((a,c)=>a.start-c.start);
+  const j=bl.findIndex(x=>blockKey(x)===iid); return j>=0?(ds[j]||null):null;
+}
+function isDone(x,date){
+  if(x.kind==="task") return x.status==="done";
+  const s=x.cur&&sessionAt(x,date); if(s) return !!cdone()[s.id];
+  return !!((state.dlog||{})[date]||{})[blockKey(x)];
+}
+function tgDay(id,date){ state.dlog=state.dlog||{}; const d=state.dlog[date]=state.dlog[date]||{}; if(d[id]) delete d[id]; else d[id]=1; save(); }
+function tgBlock(date,iid){
+  const b=routineOn(date).find(x=>blockKey(x)===iid); if(!b) return;
+  const s=sessionAt(b,date);
+  if(s){ const c=cdone(); if(c[s.id]) delete c[s.id]; else c[s.id]=date<=todayISO()?date:todayISO(); save(); return; }
+  tgDay(iid,date);
+}
+function tgSess(id){ const c=cdone(); if(c[id]) delete c[id]; else c[id]=todayISO(); save(); }
+
+/* ---------- dời / bỏ / trả lại block của MỘT ngày ---------- */
+function moveBlock(odate,id,toDate,start){
+  const b=tplBlocks(odate).find(x=>x.id===id); if(!b) return false;
+  const dur=mm(b.to)-mm(b.from); state.bx=state.bx||{};
+  const k=odate+"|"+id, prevTo=state.bx[k]&&state.bx[k].to;
+  let st=start!=null?start:autoSlot(odate,id,toDate);
+  if(st==null) return false;
+  if(toDate===odate&&st===mm(b.from)){ delete state.bx[k]; } else state.bx[k]={to:toDate,start:st};
+  return true;
+}
+/* tìm giờ trống cho block khi dời: ưu tiên đúng giờ cũ → giờ trống ban ngày → (cuối cùng) giờ khoá mềm buổi tối */
+function autoSlot(odate,id,toDate){
+  const b=tplBlocks(odate).find(x=>x.id===id); if(!b) return null; const dur=mm(b.to)-mm(b.from), key=odate+"|"+id, keep=(state.bx||{})[key];
+  if(keep) delete state.bx[key];
+  const ok=st=>!busy(toDate,null).some(x=>x.iid!==id&&overlap(st,st+dur,x.start,x.end));
+  let r=null;
+  if(!(toDate===odate)&&ok(mm(b.from))) r=mm(b.from);
+  if(r==null){ const s1=freeSlots(toDate,dur,null,0)[0]; if(s1) r=s1.start; }
+  if(r==null){ const s2=freeSlots(toDate,dur,null,0,true)[0]; if(s2) r=s2.start; }
+  if(keep) state.bx[key]=keep;
+  return r;
+}
+function skipBlock(odate,id){ state.bx=state.bx||{}; state.bx[odate+"|"+id]={skip:true}; }
+function resetBlock(odate,id){ if(state.bx) delete state.bx[odate+"|"+id]; }
+function splitIid(date,iid){ const i=iid.indexOf("|"); return i>0?{od:iid.slice(0,i),id:iid.slice(i+1)}:{od:date,id:iid}; }
+
+/* ---------- free slots: khoá mềm (rest/soft) chỉ né khi app TỰ xếp ---------- */
+function busy(date,ignoreId,allowSoft){
+  const out=[];
+  fixedOn(date).forEach(b=>{ if(allowSoft&&b.soft) return; out.push({start:b.start,end:b.end,type:b.fixed?"fixed":(b.soft?"soft":"rout"),label:b.label||b.t,iid:blockKey(b)}); });
+  tasksOn(date).forEach(t=>{ if(t.id!==ignoreId&&isActive(t)) out.push({start:t.start,end:taskEnd(t),type:t.emg?"emg":(t.locked?"lock":"task"),label:t.t,id:t.id}); });
+  return out.sort((a,b)=>a.start-b.start);
+}
+function conflictsAt(date,start,end,ignoreId){ return busy(date,ignoreId).filter(b=>b.type!=="soft"&&overlap(start,end,b.start,b.end)); }
+function freeSlots(date,dur,ignoreId,after,allowSoft){
+  const b=busy(date,ignoreId,allowSoft), out=[]; let cur=Math.max(dayStart(),after||0);
+  b.forEach(x=>{ if(x.start-cur>=dur) out.push({start:cur,end:x.start}); cur=Math.max(cur,x.end); });
+  if(dayEnd()-cur>=dur) out.push({start:cur,end:dayEnd()});
+  return out;
+}
+
+/* ---------- tải tuần (tính từ lịch thật của tuần) ---------- */
+function weekLoad(mon){
+  const o={}; TKEYS.forEach(k=>o[k]=0); let rest=0, fixed=0;
+  const m=mon||mondayOf(todayISO());
+  for(let i=0;i<7;i++) routineOn(addD(m,i)).forEach(b=>{const hh=(b.end-b.start)/60; if(b.rest){rest+=hh;return} if(b.fixed){fixed+=hh} o[b.track]=(o[b.track]||0)+hh});
+  o.rest=rest; o.fixed=fixed; o.total=TKEYS.reduce((a,k)=>a+(o[k]||0),0); o.self=o.total-o.fixed; return o;
+}
+function weeklyFor(track){ let t=0; const s=todayISO(); for(let i=0;i<28;i++) routineOn(addD(s,i)).forEach(b=>{ if(b.track===track&&!b.rest&&!b.fixed) t+=(b.end-b.start)/60; }); return t/4; }
+
+/* ---------- goal tính theo giáo trình ---------- */
+const _goalStatsOld=goalStats;
+goalStats=function(g){
+  if(!(g.src&&g.src.indexOf("curg:")===0)) return _goalStatsOld(g);
+  const G=g.src.slice(5), cm=curMap(), done=cdone();
+  let n=0,nd=0,last=null,unpl=0;
+  curKeys().forEach(k=>{const d=curDef(k); if(!d||d.g!==G||!d.sessions) return; d.sessions.forEach(s=>{n++; if(done[s.id]) nd++; else {const p=cm.plan[s.id]; if(!p) unpl++; else if(!last||p>last) last=p;}})});
+  const st={all:n,done:nd,left:n-nd,pct:n?Math.round(nd/n*100):0,n,nd};
+  let verdict=null;
+  if(unpl) verdict={c:"bad",t:`${unpl} buổi chưa có chỗ trên lịch 8 tháng tới — thêm block cho mảng này`};
+  else if(g.targetDate&&last) verdict=last>g.targetDate?{c:"warn",t:`Theo lịch hiện tại buổi cuối rơi vào ${fmtD(last)} — trễ ${dbet(g.targetDate,last)} ngày so với mục tiêu ${fmtD(g.targetDate)}`}:{c:"ok",t:`Kịp — buổi cuối dự kiến ${fmtD(last)}`};
+  else if(last) verdict={c:"ok",t:`Buổi cuối dự kiến ${fmtD(last)}`};
+  return {st,planned:weeklyFor(g.track),pace:0,etaPlan:last,etaPace:null,need:null,verdict,bySess:true};
+};
+
+/* ============================ HIỂN THỊ VIỆC/BLOCK ============================ */
+function dayItems(date){
+  const r=routineOn(date);
+  const t=tasksOn(date).map(x=>Object.assign({},x,{kind:"task"}));
+  return r.concat(t).sort((a,b)=>a.start-b.start);
+}
+function rowHTML(x,date){
+  const c=TR[x.track]||TR.LIFE, done=isDone(x,date), rout=x.kind==="rout";
+  const end=rout?x.end:taskEnd(x), ses=rout?sessionAt(x,date):null, iid=rout?blockKey(x):x.id;
+  const cls=[rout?(x.fixed?"cls":""):(x.emg?"emg":""), ses?"mac":"", done?"done":"", x.rest?"rest":"", x.status==="skipped"?"done":""].join(" ");
+  const movable=!rout||(!x.fixed);
+  const drag=movable?`draggable="true" data-drag="${rout?"r":"t"}|${date}|${h(iid)}" ondragstart="dragStart(event,'${rout?"r":"t"}|${date}|${h(iid)}')" ondragend="dragEnd(event)"`:"";
+  const pl=x.plan&&planById(x.plan), star=x.kind==="task"&&topTasks(date).some(y=>y.id===x.id);
+  const tp=rout&&!ses?blockTopic(x,date):"";
+  const title=ses?`${h(x.label.replace(/ — buổi ôn theo giáo trình$/,""))} · ${h(ses.t)}`:h(x.t||x.label);
+  const sub=[star?"★ Top 3":"", tp, hrs((end-x.start)/60)+"h", pl?"🎯 "+h(pl.name):c.short, x.locked?"🔒":"", x.moved?"↪ dời từ "+fmtD(x.odate):"",
+    rout&&!x.fixed&&!ses&&!x.rest?"lặp tuần":"", x.fixed?"cố định":"", x.soft?"khoá mềm":"", ses&&ses.out?"→ "+h(ses.out):""].filter(Boolean).join(" · ");
+  const open=rout?`openBlock('${date}','${h(iid)}')`:`openTask('${x.id}')`;
+  const tick=rout?`tgBlock('${date}','${h(iid)}')`:`tgDone('${x.id}')`;
+  return `<div class="rowit ${cls}" style="--c:${c.color}" ${drag} data-id="${h(iid)}">
+    <button class="tick" onclick="event.stopPropagation();${tick}" aria-label="Đánh dấu xong">${IC.check}</button>
+    <span class="tm">${hhmm(x.start)}</span>
+    <div class="rt" onclick="${open}"><b>${title}</b><div class="sub">${sub}</div>
+      ${(x.progress>0&&!done&&!rout)?`<div class="prog"><i style="width:${x.progress}%"></i></div>`:""}
+    </div></div>`;
+}
+
+/* ---------- link tài liệu: "@KEY#trang" → file trong study/files ---------- */
+let kitFiles=null, kitFilesErr="", kitFilesLoading=false;
+function repoInfo(){
+  const host=location.hostname, seg=location.pathname.split("/").filter(Boolean)[0];
+  if(/\.github\.io$/.test(host)&&seg) return {owner:host.split(".")[0],repo:seg,branch:"main"};
+  return REPO_FALLBACK;
+}
+function rawBase(){ const r=repoInfo(); return `https://raw.githubusercontent.com/${r.owner}/${r.repo}/${r.branch}/`; }
+function siteBase(){ return /\.github\.io$/.test(location.hostname)?"":`https://${REPO_FALLBACK.owner}.github.io/${REPO_FALLBACK.repo}/`; }
+async function loadKitFiles(force){
+  if(kitFilesLoading||(kitFiles&&!force)) return;
+  kitFilesLoading=true;
+  try{
+    const r=repoInfo();
+    const res=await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/git/trees/${r.branch}?recursive=1`,{cache:"no-store"});
+    if(!res.ok) throw new Error("GitHub trả lỗi "+res.status);
+    const j=await res.json();
+    kitFiles=(j.tree||[]).filter(x=>x.type==="blob"&&/^study\/files\//.test(x.path)).map(x=>({path:x.path,size:x.size,name:x.path.split("/").pop(),folder:x.path.split("/").slice(2,-1).join("/")||"chung"}));
+    kitFilesErr="";
+  }catch(e){ kitFilesErr=e.message||String(e); kitFiles=kitFiles||[]; }
+  kitFilesLoading=false;
+  try{ if(tab==="kit") renderKit(); }catch(e){}
+}
+function fileForKey(key){
+  const meta=KIT_FILES.find(f=>f.key===key); if(!meta||!kitFiles) return null;
+  const norm=s=>s.toLowerCase().replace(/[^a-z0-9]+/g," ");
+  return kitFiles.find(f=>meta.match.every(w=>norm(f.name).includes(w)))||null;
+}
+function fileUrl(f){ return siteBase()+f.path.split("/").map(encodeURIComponent).join("/"); }
+function matHref(u){
+  if(!u) return "";
+  if(u[0]==="@"){ const m=u.slice(1).split("#"), f=fileForKey(m[0]); if(!f) return ""; return fileUrl(f)+(m[1]?"#page="+m[1]:""); }
+  if(/^https?:/.test(u)) return u;
+  return siteBase()+u;
+}
+function matHTML(mat){
+  if(!mat||!mat.length) return "";
+  return mat.map(([l,u])=>{ const href=matHref(u), miss=u&&u[0]==="@"&&!href;
+    return href?`<a class="matl" href="${h(href)}" target="_blank" rel="noopener">📎 ${h(l)} ↗</a>`
+      :`<div class="matl off">📎 ${h(l)}${miss?' <span class="small" style="color:var(--amber)">(file chưa có trên repo — xem Study Kit → Tài liệu)</span>':""}</div>`; }).join("");
+}
+function sessHTML(s,k){
+  const def=curDef(k), plan=curMap().plan[s.id], dn=cdone()[s.id];
+  return `${s.ph?`<div class="small muted" style="margin-bottom:6px">${h(def?def.name:"")} · ${h(s.ph)}</div>`:""}
+   ${s.mat&&s.mat.length?`<div class="mblk"><span class="mlab">Tài liệu</span>${matHTML(s.mat)}</div>`:""}
+   ${s.how&&s.how.length?`<div class="mblk"><span class="mlab">Làm thế nào</span><ol class="steps">${s.how.map(x=>`<li>${h(x)}</li>`).join("")}</ol></div>`:""}
+   ${s.q&&s.q.length?`<div class="mblk"><span class="mlab">Câu hỏi mang sang AI (bấm để copy)</span>${s.q.map(q=>`<button class="mq" style="display:block;width:100%;text-align:left" onclick="copyStr(${h(JSON.stringify(q))})">“${h(q)}”</button>`).join("")}</div>`:""}
+   ${s.out?`<div class="mblk out"><span class="mlab">Đầu ra bắt buộc</span><b>${h(s.out)}</b></div>`:""}
+   <div class="small muted" style="margin-top:6px">${dn?"✓ Xong ngày "+fmtD(dn):plan?"Lịch: "+fmtFull(plan):"Chưa có chỗ trên lịch"}${s.by?` · hạn mềm ${fmtD(s.by)}${!dn&&plan&&plan>s.by?' <b style="color:var(--red)">→ đang trễ</b>':""}`:""}</div>`;
+}
+function copyStr(s){ (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>toast("Đã copy"),()=>{const t=document.createElement("textarea");t.value=s;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();toast("Đã copy")}); }
+function sessPrompt(k,id){
+  const def=curDef(k), s=def&&def.sessions.find(x=>x.id===id); if(!s) return;
+  const subj={IF:"IF",BF:"BF",IELTS:"IELTS",MACRO:"MACRO",TRADE:"TRADE"}[def.track]||"LIFE";
+  const p=`Tôi là Sơn, sinh viên năm cuối Applied Finance (WSU Việt Nam), hướng tới Investment Analyst / quản lý tài sản. Tôi đang học buổi: "${s.t}" (${def.name}).
+Mục tiêu buổi (đầu ra bắt buộc): ${s.out||"—"}
+Các bước tôi sẽ làm:
+${(s.how||[]).map((x,i)=>(i+1)+". "+x).join("\n")}
+
+Vai trò của bạn: người kèm học khắt khe. Quy tắc:
+- Không làm hộ phần tôi phải tự làm; chỉ giải thích, hỏi ngược, chấm và chỉ ra lỗi.
+- Trả lời bằng tiếng Việt, giữ thuật ngữ tiếng Anh (giải thích ngắn lần đầu).
+- Nếu tôi đưa tài liệu, chỉ dựa trên tài liệu; chỗ nào không có thì nói rõ.
+${def.track==="BF"?"- ⚠️ Môn này cấm AI trong bài chấm điểm: chỉ giúp tôi hiểu khái niệm, KHÔNG viết hay sửa nội dung Report/Presentation.\n":""}
+Bắt đầu bằng cách hỏi tôi 3 câu kiểm tra nhanh xem tôi đã nắm phần nền chưa.${s.q&&s.q.length?"\n\nCâu tôi muốn hỏi thêm:\n- "+s.q.join("\n- "):""}`;
+  copyStr(p);
+}
+function openBlock(date,iid){
+  const b=routineOn(date).find(x=>blockKey(x)===iid); if(!b) return;
+  const s=sessionAt(b,date), done=isDone(b,date), c=TR[b.track]||TR.LIFE;
+  if(!s&&b.hint&&!b.moved&&!b.src){ return editBlock(dow(date),b.id,date); }
+  const sp=splitIid(date,iid);
+  openSheet(`<h3>${s?h(s.t):h(b.label)}</h3>
+   <div class="sh-sub">${c.ico} ${h(b.label)} · ${fmtFull(date)} · ${hhmm(b.start)}–${hhmm(b.end)}${b.src?" · khung: "+h(((state.routine.phases||[]).find(p=>p.id===b.src)||{}).name||b.src):""}${b.moved?" · ↪ dời từ "+fmtD(b.odate):""}</div>
+   ${s?sessHTML(s,b.cur):""}
+   ${!s&&b.cur&&curDef(b.cur)&&curDef(b.cur).sessions&&curDef(b.cur).sessions.length?`<div class="note">Giáo trình "${h(curDef(b.cur).name)}" ${date<todayISO()?"không có buổi nào được đánh dấu xong vào ngày này.":"đã hết buổi — block này để ôn tự do."}</div>`:""}
+   ${b.note?`<div class="mblk"><span class="mlab">Ghi chú</span>${h(b.note)}</div>`:""}
+   ${!s&&b.hint?studyLinks(b,date):""}
+   ${b.fixed?"":`<div class="mblk"><span class="mlab">Chỉ ngày này</span>
+     <div class="two"><label class="fld"><span>Dời sang ngày</span><input type="date" id="mvD" value="${date}"></label>
+       <label class="fld"><span>Giờ (trống = tự tìm chỗ)</span><input type="time" id="mvS" value=""></label></div>
+     <div class="row wrap" style="gap:6px">
+       <button class="btn sm" onclick="doMove('${date}','${h(iid)}',1)">→ Mai</button>
+       <button class="btn sm" onclick="doMove('${date}','${h(iid)}',0)">Dời theo ô trên</button>
+       <button class="btn sm" onclick="doSkip('${date}','${h(iid)}')">Bỏ hôm nay${s?" (buổi lùi sang block sau)":""}</button>
+       ${b.moved?`<button class="btn sm ghost" onclick="resetBlock('${sp.od}','${sp.id}');closeSheet();save()">Trả về chỗ cũ</button>`:""}</div></div>`}
+   <div class="row wrap" style="gap:7px;margin-top:10px">
+     ${s?`<button class="btn grow" onclick="sessPrompt('${b.cur}','${s.id}')">✨ Copy prompt kèm học</button>`:""}
+     ${b.cur?`<button class="btn grow" onclick="closeSheet();go('kit')">📚 Mở Study Kit</button>`:""}
+     <button class="btn grow ghost" onclick="editBlock(${dow(b.odate||date)},'${sp.id}','${b.odate||date}')">✎ Sửa block lặp tuần</button></div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button>
+     <button class="btn primary" onclick="tgBlock('${date}','${h(iid)}');closeSheet()">${done?"Bỏ đánh dấu":"✓ Xong"}</button></div>`);
+}
+function doMove(date,iid,plus){
+  const sp=splitIid(date,iid); let to=plus?addD(date,1):(v("mvD")||date); const st=!plus&&v("mvS")?mm(v("mvS")):null;
+  const odate=sp.od, id=sp.id;
+  if(moveBlock(odate,id,to,st)){ closeSheet(); save(); toast("Đã dời sang "+fmtFull(to)); } else toast("Ngày đó không còn chỗ trống đủ dài — chọn ngày/giờ khác");
+}
+function doSkip(date,iid){ const sp=splitIid(date,iid); if(sp.od!==date){ resetBlock(sp.od,sp.id); } skipBlock(sp.od,sp.id); closeSheet(); save(); toast("Đã bỏ block hôm nay"); }
+
+/* ---------- kéo–thả: chuột (máy tính) + nhấn giữ (điện thoại) ---------- */
+let dragId=null;
+function dragStart(e,id){dragId=id;try{e.dataTransfer.setData("text/plain",id);e.dataTransfer.effectAllowed="move"}catch(_){}e.target.classList.add("dragging")}
+function dragEnd(e){e.target.classList.remove("dragging");document.querySelectorAll(".drop-on").forEach(x=>x.classList.remove("drop-on"))}
+function dragOver(e){e.preventDefault();try{e.dataTransfer.dropEffect="move"}catch(_){}}
+function dropDay(e,date){
+  if(e&&e.preventDefault) e.preventDefault();
+  let id=dragId; if(!id&&e&&e.dataTransfer) id=e.dataTransfer.getData("text/plain"); dragId=null;
+  dropTo(id,date);
+}
+function dropTo(id,date){
+  if(!id) return;
+  const p=id.split("|"), kind=p[0], from=p[1], iid=p.slice(2).join("|");
+  if(kind==="t"||p.length===1){
+    const x=state.tasks.find(t=>t.id===(p.length===1?id:iid)); if(!x) return;
+    const s=freeSlots(date,x.dur,x.id,x.start)[0]||freeSlots(date,x.dur,x.id,0)[0]||freeSlots(date,x.dur,x.id,0,true)[0];
+    x.date=date; if(s) x.start=s.start; save(); toast("Đã chuyển sang "+fmtFull(date)); return;
+  }
+  const sp=splitIid(from,iid);
+  if(sp.od===date&&!state.bx?.[sp.od+"|"+sp.id]) return;
+  const b=tplBlocks(sp.od).find(x=>x.id===sp.id); if(!b||b.fixed) return;
+  if(moveBlock(sp.od,sp.id,date,null)){ save(); toast("Đã dời block sang "+fmtFull(date)); } else toast("Ngày đó không còn chỗ trống đủ dài");
+}
+/* nhấn giữ 0,4s rồi kéo lên ô ngày khác (tab Lịch → Tuần) */
+(function(){
+  let lp=null, ghost=null, src=null, sx=0, sy=0, active=false;
+  function cancel(){ clearTimeout(lp); lp=null; }
+  document.addEventListener("touchstart",e=>{
+    const r=e.target.closest&&e.target.closest("[data-drag]"); if(!r||e.target.closest(".tick")) return;
+    src=r; sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    lp=setTimeout(()=>{ active=true; if(navigator.vibrate) try{navigator.vibrate(15)}catch(_){}
+      ghost=r.cloneNode(true); ghost.className+=" drag-ghost"; ghost.style.width=r.offsetWidth+"px"; document.body.appendChild(ghost);
+      moveGhost(sx,sy); r.classList.add("dragging"); },400);
+  },{passive:true});
+  function moveGhost(x,y){ if(ghost){ ghost.style.left=(x-30)+"px"; ghost.style.top=(y-20)+"px"; }
+    document.querySelectorAll(".drop-on").forEach(z=>z.classList.remove("drop-on"));
+    const el=document.elementFromPoint(x,y), d=el&&el.closest&&el.closest("[data-date]"); if(d) d.classList.add("drop-on"); }
+  document.addEventListener("touchmove",e=>{
+    if(!active){ if(lp&&(Math.abs(e.touches[0].clientX-sx)>10||Math.abs(e.touches[0].clientY-sy)>10)) cancel(); return; }
+    e.preventDefault(); moveGhost(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  document.addEventListener("touchend",e=>{
+    cancel(); if(!active) return; active=false;
+    const t=e.changedTouches[0], el=document.elementFromPoint(t.clientX,t.clientY), d=el&&el.closest&&el.closest("[data-date]");
+    if(ghost){ghost.remove();ghost=null} if(src) src.classList.remove("dragging");
+    document.querySelectorAll(".drop-on").forEach(z=>z.classList.remove("drop-on"));
+    if(d&&src) dropTo(src.getAttribute("data-drag"),d.getAttribute("data-date"));
+  });
+  document.addEventListener("touchcancel",()=>{cancel();active=false;if(ghost){ghost.remove();ghost=null}});
+})();
+
+/* ---------- khẩn cấp: việc chèn vào thì block không cố định trùng giờ bị bỏ ngày đó ---------- */
+function createEmergency(){
+  const d=v("eD")||todayISO(), f=mm(v("eF")||"14:00"), tt=mm(v("eT")||"16:00");
+  state.tasks.push({id:"e"+uid(),t:(v("eL")||"Việc khẩn cấp"),track:v("eK"),date:d,start:f,dur:Math.max(15,tt-f),pri:5,status:"pending",progress:0,emg:true,locked:true});
+  const bumped=[];
+  routineOn(d).forEach(b=>{ if(b.fixed||b.rest) return; if(overlap(f,tt,b.start,b.end)){ const sp=splitIid(d,blockKey(b)); if(sp.od!==d) resetBlock(sp.od,sp.id); skipBlock(sp.od,sp.id); bumped.push(b.label); } });
+  const moved=reflow(); save();
+  openSheet(`<h3>Đã chèn</h3><div class="sh-sub">${moved.length} việc được dời · ${bumped.length} block bỏ hôm nay</div>
+   ${bumped.map(x=>`<div class="kv"><span>${h(x)}</span><b class="small">bỏ hôm nay — buổi học lùi sang block sau</b></div>`).join("")}
+   ${moved.map(x=>`<div class="kv"><span>${h(x.t)}</span><b class="small">${x.to}</b></div>`).join("")}
+   ${!moved.length&&!bumped.length?'<div class="note">Không việc nào bị ảnh hưởng.</div>':""}
+   <div class="sheet-foot"><button class="btn primary" onclick="closeSheet()">Xong</button></div>`);
+}
+function reflow(){
+  const moved=[];
+  const movable=state.tasks.filter(t=>!t.locked&&!t.emg&&isActive(t)&&t.status!=="done"&&t.date>=todayISO())
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
+  movable.forEach(t=>{
+    const hit=conflictsAt(t.date,t.start,taskEnd(t),t.id).length>0; if(!hit) return;
+    const slot=nextFreeSlot(t.date,t.start,t.dur,t.id);
+    if(slot&&(slot.date!==t.date||slot.start!==t.start)){ moved.push({t:t.t,from:t.date+" "+hhmm(t.start),to:slot.date+" "+hhmm(slot.start)}); t.date=slot.date; t.start=slot.start; }
+  });
+  return moved;
+}
+function audit(){
+  const out=[], t0=todayISO();
+  state.tasks.filter(t=>isActive(t)&&t.status!=="done"&&!t.locked&&!t.emg&&t.date>=t0).forEach(t=>{
+    const c=conflictsAt(t.date,t.start,taskEnd(t),t.id);
+    if(c.length) out.push({id:t.id,t:t.t,date:t.date,with:c[0].label});
+  });
+  return out;
+}
+
+/* ============================ TAB STUDY KIT ============================ */
+let kitOpenG=null;
+function groupKeys(G){ return curKeys().filter(k=>{const d=curDef(k);return d&&d.g===G&&d.sessions&&d.sessions.length}); }
+function nextSess(k){ const d=curDef(k), cm=curMap(), dn=cdone(); const p=d.sessions.filter(s=>!dn[s.id]); return p.length?{s:p[0],date:cm.plan[p[0].id]||null}:null; }
+function renderKit(){
+  const el=document.getElementById("v-kit"); if(!el) return;
+  if(!kitFiles&&!kitFilesLoading) loadKitFiles();
+  const t=todayISO(), cm=curMap(), dn=cdone();
+  const todayS=routineOn(t).filter(b=>b.cur).map(b=>({b,s:sessionAt(b,t)})).filter(x=>x.s);
+  const groups=(typeof KIT_GROUPS!=="undefined"?KIT_GROUPS:[]).map(G=>{
+    const ks=groupKeys(G.g); if(!ks.length&&G.g!=="BF") return "";
+    let n=0,d=0,late=0; ks.forEach(k=>curDef(k).sessions.forEach(s=>{n++; if(dn[s.id]) d++; else if(s.by&&cm.plan[s.id]&&cm.plan[s.id]>s.by) late++;}));
+    const pct=n?Math.round(d/n*100):0, c=TR[G.track]||TR.LIFE, open=kitOpenG===G.g;
+    return `<details class="acc" ${accA("kit-"+G.g, open)} style="margin-top:9px"><summary>${G.ico} ${h(G.name)}
+      <span class="chip ${late?"red":pct===100?"green":""}" style="margin-left:auto">${late?late+" trễ · ":""}${d}/${n}</span></summary>
+      <div class="acc-b">
+        <div class="note" style="margin-bottom:10px">${h(G.note||"")}</div>
+        ${n?`<div class="bar tall"><i style="width:${pct}%;background:${c.color}"></i></div>`:""}
+        ${G.g==="IELTS"?ieltsMockBlock():""}
+        ${G.g==="BF"?`<div class="small muted" style="margin:8px 0">Block BFN hằng tuần mở đúng bài của session (đọc trước / làm problems). Presentation có block riêng 16–22/10.</div>`:""}
+        ${ks.map(k=>kitCurHTML(k)).join("")}
+        ${G.g==="TRADE"?`<a class="btn sm" style="margin-top:8px" href="${TRADE_URL}" target="_blank" rel="noopener">Mở trang luật PP giao dịch ↗</a>`:""}
+      </div></details>`;
+  }).join("");
+  el.innerHTML=`
+  <div class="card" style="margin-top:4px">
+    <div style="font-weight:700;font-size:15.5px">📚 Study Kit</div>
+    <div class="small muted" style="margin-top:3px">Mỗi block có giáo trình trong lịch sẽ tự hiện đúng buổi kế tiếp. Lỡ buổi nào thì buổi đó tự lùi sang block sau — không mất bài.</div>
+    ${todayS.length?`<div class="list" style="margin-top:10px">${todayS.map(x=>rowHTML(x.b,t)).join("")}</div>`:'<div class="small muted" style="margin-top:8px">Hôm nay không có buổi học theo giáo trình.</div>'}
+  </div>
+  <div class="row wrap" style="gap:7px;margin-top:10px">
+    <button class="btn grow" onclick="openPromptBuilder()">✨ Prompt học với AI</button>
+    <button class="btn grow primary" onclick="openAIChange()">🤖 Đổi app bằng AI</button></div>
+  <div class="sec-h"><h2>📥 Tài liệu tải về</h2><div class="rule"></div><button class="act" onclick="loadKitFiles(true);toast('Đang tải lại danh sách…')">Làm mới</button></div>
+  ${kitFilesHTML()}
+  <div class="sec-h"><h2>Giáo trình</h2><div class="rule"></div><span class="small muted">bấm để mở</span></div>
+  ${groups}
+  <div class="note" style="margin-top:14px">Muốn thêm/sửa buổi học, đổi giờ, thêm môn mới… mà không cần sửa code: bấm <b>🤖 Đổi app bằng AI</b> → mô tả bằng lời → copy prompt sang ChatGPT/Claude/Gemini → dán (hoặc tải file .json) kết quả vào lại.</div>`;
+}
+function kitCurHTML(k){
+  const def=curDef(k), cm=curMap(), dn=cdone(), S=def.sessions; let lastPh="";
+  const nd=S.filter(s=>dn[s.id]).length, nx=nextSess(k);
+  return `<div style="margin-top:12px"><div class="row" style="align-items:baseline"><b style="font-size:13.5px">${h(def.name)}</b><span class="small muted" style="margin-left:auto">${nd}/${S.length}</span></div>
+    ${nx?`<div class="small" style="margin:3px 0 6px">Kế tiếp: <b>${h(nx.s.t)}</b> · ${nx.date?fmtFull(nx.date):"chưa có chỗ trên lịch"}</div>`:'<div class="small" style="color:var(--green);font-weight:600">✓ Xong cả giáo trình</div>'}
+    <details class="acc" ${accA("kc-"+k)} style="margin-top:4px"><summary>Xem ${S.length} buổi</summary><div class="acc-b"><div class="list">
+    ${S.map(s=>{const d=dn[s.id], p=cm.plan[s.id], late=!d&&s.by&&p&&p>s.by;
+      const head=(s.ph&&s.ph!==lastPh)?`<div class="small muted" style="padding:8px 12px 2px;font-weight:700">${h(s.ph)}</div>`:""; lastPh=s.ph||lastPh;
+      return head+`<div class="rowit ${d?"done":""}" style="--c:${(TR[def.track]||TR.LIFE).color}">
+        <button class="tick" onclick="tgSess('${s.id}')" aria-label="Xong">${IC.check}</button>
+        <span class="tm" style="${late?"color:var(--red)":""}">${d?fmtD(d):p?WDN[dow(p)]+" "+fmtD(p):"—"}</span>
+        <div class="rt" onclick="openSess('${k}','${s.id}')"><b>${h(s.t)}</b><div class="sub">${h(s.out||"")}${late?' · <b style="color:var(--red)">trễ hạn mềm '+fmtD(s.by)+'</b>':""}</div></div></div>`}).join("")}
+    </div></div></details></div>`;
+}
+function openSess(k,id){
+  const def=curDef(k), s=def&&def.sessions.find(x=>x.id===id); if(!s) return;
+  openSheet(`<h3>${h(s.t)}</h3><div class="sh-sub">${h(def.name)}</div>${sessHTML(s,k)}
+   <div class="row wrap" style="gap:7px;margin-top:10px"><button class="btn grow" onclick="sessPrompt('${k}','${id}')">✨ Copy prompt kèm học</button></div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button>
+   <button class="btn primary" onclick="tgSess('${id}');closeSheet()">${cdone()[id]?"Bỏ đánh dấu":"✓ Đánh dấu xong hôm nay"}</button></div>`);
+}
+function kitFilesHTML(){
+  const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[];
+  if(kitFilesLoading&&!kitFiles) return `<div class="card small muted">Đang lấy danh sách file từ GitHub…</div>`;
+  const files=kitFiles||[], extra=(state.kitLinks||[]);
+  const known=meta.map(m=>{const f=fileForKey(m.key); return `<div class="rowit"><span class="tm" style="font-size:15px">${f?"📄":"⏳"}</span>
+     <div class="rt"><b>${h(m.name)}</b><div class="sub">${h(m.desc)} · ${m.pages} trang · NotebookLM: ${h(m.nlm)}</div>
+     ${f?`<div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(fileUrl(f))}" download="${h(f.name)}">⬇ Tải</a><a class="btn sm ghost" href="${h(fileUrl(f))}" target="_blank" rel="noopener">Mở ↗</a></div>`
+        :`<div class="small" style="color:var(--amber);margin-top:4px">Chưa có trên repo — kéo file PDF vào thư mục <b>study/files/if/</b> trên GitHub (tên file chứa: ${m.match.join(" + ")}).</div>`}</div></div>`}).join("");
+  const others=files.filter(f=>!meta.some(m=>fileForKey(m.key)===f)).map(f=>`<div class="rowit"><span class="tm" style="font-size:15px">📄</span>
+     <div class="rt"><b>${h(f.name)}</b><div class="sub">${h(f.folder)} · ${(f.size/1048576).toFixed(1)} MB</div>
+     <div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(fileUrl(f))}" download="${h(f.name)}">⬇ Tải</a><a class="btn sm ghost" href="${h(fileUrl(f))}" target="_blank" rel="noopener">Mở ↗</a></div></div></div>`).join("");
+  const links=extra.map((x,i)=>`<div class="rowit"><span class="tm" style="font-size:15px">🔗</span><div class="rt"><b>${h(x.name)}</b><div class="sub">${h(x.g||"")} ${h(x.desc||"")}</div>
+     <div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(x.url)}" target="_blank" rel="noopener">Mở ↗</a></div></div></div>`).join("");
+  const notes=[["IF — tóm tắt 12 chương","study/if/"],["BFN — tóm tắt theo session","study/bfn/"]];
+  return `<div class="list">${known}${others}${links}</div>
+   ${kitFilesErr?`<div class="small" style="color:var(--amber);margin-top:6px">Không lấy được danh sách file (${h(kitFilesErr)}). Mở trên mạng khác hoặc bấm Làm mới.</div>`:""}
+   <div style="display:flex;flex-direction:column;gap:7px;margin-top:9px">
+     <button class="btn sm" style="white-space:normal" onclick="copyAllLinks()">📋 Copy link mọi file (dán vào NotebookLM/Gemini)</button>
+     ${notes.map(n=>`<a class="btn sm ghost" style="white-space:normal" href="${siteBase()+n[1]}" target="_blank" rel="noopener">${n[0]} ↗</a>`).join("")}</div>
+   <details class="acc" ${accA("nlmhow")} style="margin-top:9px"><summary>Cách nạp vào NotebookLM / Gemini nhanh nhất</summary><div class="acc-b small">
+     <b>NotebookLM:</b> tạo notebook theo cột "NotebookLM" ở trên (VD "IF – Midterm") → <b>Add source → Upload</b> các PDF vừa tải (nhanh và ổn định nhất). Bài tóm tắt chương là trang web: dán link vào <b>Add source → Website</b>.<br>
+     <b>Gemini:</b> mở gemini.google.com → kẹp file (📎) → chọn nhiều PDF một lúc (tối đa ~10 file/lần).<br>
+     Testbank 339 trang rất nặng: chỉ nạp khi cần tạo đề; còn lại dùng link "#trang" trong từng buổi học để mở đúng chương.</div></details>`;
+}
+function copyAllLinks(){
+  const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[];
+  const L=(kitFiles||[]).map(f=>f.name+"\n"+fileUrl(f));
+  ["01","02","03","05","06","07","09","10","13","14","16","17"].forEach(c=>L.push("IF Ch."+(+c)+" — tóm tắt\n"+siteBase()+"study/if/ch"+c+".html"));
+  copyStr(L.join("\n\n"));
+}
+function ieltsMockBlock(){
+  const I=state.ielts, mocks=(I.mocks||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  return `<div class="row" style="margin:10px 0 4px"><b class="small">Mock log</b><button class="act" style="margin-left:auto" onclick="editMock('')">+ Thêm điểm</button></div>
+   ${mocks.length?`<div class="scroll-x"><table class="grid"><tr><th>Ngày</th><th class="n">L</th><th class="n">R</th><th class="n">W</th><th class="n">S</th><th style="text-align:right">Overall</th></tr>
+   ${mocks.slice().reverse().map(m=>`<tr onclick="editMock('${m.id}')" style="cursor:pointer"><td>${fmtD(m.date)}</td><td class="n">${m.l||"—"}</td><td class="n">${m.r||"—"}</td><td class="n">${m.w||"—"}</td><td class="n">${m.s||"—"}</td><td class="n"><b>${mockOverall(m)?mockOverall(m).toFixed(1):"—"}</b></td></tr>`).join("")}</table></div>`
+   :'<div class="small muted">Chưa có điểm. Buổi Listening/Reading đầu tiên (Cam 20 Test 1) là bài chẩn đoán — ghi điểm vào đây.</div>'}
+   <label class="fld" style="margin-top:10px"><span>Ngày thi IELTS (dự kiến cuối 12/2026 — đặt lịch khi 2 mock liên tiếp ≥ 7.0)</span><input type="date" value="${I.examDate||""}" onchange="state.ielts.examDate=this.value;save()"></label>`;
+}
+
+/* ============================ GOAL CARD ============================ */
+function goalHTML(g){
+  const c=TR[g.track]||TR.LIFE, s=goalStats(g); if(g.paused)s.verdict={c:"warn",t:"Tạm dừng — không tính tiến độ lúc này"};
+  const unit=s.bySess?" buổi":g.src==="school"?" điểm":"h";
+  return `<div class="goal">
+    <div class="goal-h"><div class="ico" style="background:${c.color}22">${c.ico}</div>
+      <div class="grow"><b style="font-size:14.5px">${h(g.name)}</b>
+        <div class="small muted">${c.name}${g.targetDate?" · mục tiêu "+fmtD(g.targetDate):" · không đặt hạn cứng"}</div></div>
+      <button class="mini-btn" onclick="editGoal('${g.id}')">${IC.more}</button></div>
+    <div class="bar tall"><i style="width:${s.st.pct}%;background:${c.color}"></i></div>
+    <div class="legend"><span>${s.st.pct}% · ${hrs(s.st.done)}/${hrs(s.st.all)}${unit}</span><span style="margin-left:auto">còn ${hrs(s.st.left)}${unit}</span></div>
+    ${s.byPoints?"":`<div class="eta"><div><span>Khung tuần cấp</span><b>${hrs(s.planned)}h/tuần</b></div>
+      <div><span>${s.bySess?"Buổi cuối theo lịch":"Theo khung tuần"}</span><b>${s.etaPlan?fmtD(s.etaPlan)+" · "+Math.max(0,Math.ceil(dbet(todayISO(),s.etaPlan)/7))+" tuần":"—"}</b></div></div>`}
+    ${s.verdict?`<div class="verdict ${s.verdict.c}">${s.verdict.t}</div>`:""}
+    ${g.note?`<div class="note" style="margin-top:10px">${h(g.note)}</div>`:""}
+  </div>`;
+}
+
+/* ============================ NHẬT KÝ (Chốt ngày) ============================ */
+function dayDoneHours(date){
+  const o={}; let tot=0;
+  dayItems(date).forEach(x=>{ if(x.rest||!isDone(x,date)) return; const hh=((x.kind==="task"?taskEnd(x):x.end)-x.start)/60; o[x.track]=(o[x.track]||0)+hh; tot+=hh; });
+  return {o,tot};
+}
+function dayDoneList(date){
+  return dayItems(date).filter(x=>!x.rest&&isDone(x,date)).map(x=>{const s=x.kind==="rout"?sessionAt(x,date):null; return (TR[x.track]||TR.LIFE).short+": "+(s?s.t:(x.t||x.label));});
+}
+function openReview(date){
+  const top=topTasks(date), open=tasksOn(date).filter(isOpen).sort((a,b)=>a.start-b.start);
+  const r=(state.review||{})[date]||{}, en=(state.energy||{})[date], dh=dayDoneHours(date);
+  const missed=routineOn(date).filter(b=>!b.rest&&!b.fixed&&!isDone(b,date));
+  openSheet(`<h3>🌙 Chốt ngày — ${fmtFull(date)}</h3><div class="sh-sub">3–5 phút. Ghi lại để tuần sau nhìn lại được.</div>
+   <div class="mblk"><span class="mlab">Đã làm được (tự tính)</span><b>${hrs(dh.tot)}h</b> · ${Object.keys(dh.o).map(k=>(TR[k]||TR.LIFE).short+" "+hrs(dh.o[k])+"h").join(" · ")||"chưa đánh dấu gì"}
+     ${missed.length?`<div class="small muted" style="margin-top:6px">Block chưa xong (buổi học sẽ tự lùi sang block sau): ${missed.map(b=>h(b.label)).join(" · ")}</div>`:""}</div>
+   <div class="mblk"><span class="mlab">Top 3</span>${top.length?top.map(x=>`<div class="kv"><span>${h(x.t)}</span><b style="color:var(--${x.status==="done"?"green":"red"})">${x.status==="done"?"✓":"✗"}</b></div>`).join(""):'<div class="small muted">Hôm nay không chọn Top 3.</div>'}</div>
+   <div class="mblk"><span class="mlab">Việc chưa xong — chốt từng việc</span>
+    ${open.length?open.map(x=>`<div class="kv" style="align-items:center"><span>${h(x.t)}<div class="small muted">${hrs((x.dur||60)/60)}h${x.progress?" · "+x.progress+"%":""}</div></span>
+      <span class="row" style="gap:5px;flex-shrink:0"><button class="btn sm" onclick="reviewAct('${x.id}','next','${date}')">Mai</button>
+      <button class="btn sm" onclick="reviewAct('${x.id}','split','${date}')">Chia đôi</button>
+      <button class="btn sm danger" onclick="reviewAct('${x.id}','drop','${date}')">Bỏ</button></span></div>`).join(""):'<div class="small" style="color:var(--green);font-weight:600">Không còn việc nào treo.</div>'}</div>
+   <div class="mblk"><span class="mlab">Năng lượng cuối ngày</span><div class="pill-row">${[1,2,3,4,5].map(n=>`<button class="pill ${r.en===n?"on":""}" onclick="reviewEn('${date}',${n})">${n}</button>`).join("")}</div></div>
+   <label class="fld"><span>Điều làm tốt nhất hôm nay</span><input type="text" id="rvWin" value="${h(r.win||"")}"></label>
+   <label class="fld"><span>1 điều học được (kiến thức / về bản thân)</span><input type="text" id="rvLearn" value="${h(r.learn||"")}"></label>
+   <label class="fld"><span>Năng lượng rò rỉ vào đâu?</span><textarea id="rvLeak" placeholder="VD: lướt TikTok 40'">${h(r.leak||"")}</textarea></label>
+   <label class="fld"><span>Mai làm khác đi điều gì? (việc #1 ngày mai)</span><input type="text" id="rvNext" value="${h(r.next||"")}"></label>
+   <label class="fld"><span>Ghi chú tự do</span><textarea id="rvNote">${h(r.note||"")}</textarea></label>
+   ${en?`<div class="small muted">Sáng nay bạn chấm năng lượng ${en}/5.</div>`:""}
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn primary" onclick="saveReview('${date}')">Chốt</button></div>`);
+}
+function rvRead(date){ state.review=state.review||{}; const r=state.review[date]=state.review[date]||{};
+  ["leak","next","win","learn","note"].forEach(k=>{const e=document.getElementById("rv"+k[0].toUpperCase()+k.slice(1)); if(e) r[k]=e.value;}); return r; }
+function reviewEn(date,n){ const r=rvRead(date); r.en=n; lsSave(); openReview(date); }
+function reviewAct(id,act,date){
+  const x=state.tasks.find(t=>t.id===id); if(!x)return; rvRead(date);
+  if(act==="drop"){x.status="skipped"}
+  else if(act==="next"){const s=nextFreeSlot(addD(date,1),0,x.dur||60,x.id); if(s){x.date=s.date;x.start=s.start}}
+  else if(act==="split"){
+    const half=Math.max(15,Math.round((x.dur||60)/2/15)*15), base=x.t.replace(/ \(phần \d\/2\)$/,"");
+    const y=Object.assign({},x,{id:"x"+uid(),t:base+" (phần 2/2)",dur:half,progress:0});
+    x.t=base+" (phần 1/2)"; x.dur=half;
+    const s1=nextFreeSlot(addD(date,1),0,half,x.id); if(s1){x.date=s1.date;x.start=s1.start}
+    state.tasks.push(y);
+    const s2=nextFreeSlot(addD(x.date,1),0,half,y.id); if(s2){y.date=s2.date;y.start=s2.start}
+  }
+  save(); openReview(date);
+}
+function saveReview(date){ const r=rvRead(date); const dh=dayDoneHours(date); r.hours=Math.round(dh.tot*10)/10; r.by=dh.o; r.done=dayDoneList(date); r.at=new Date().toISOString(); closeSheet(); save(); toast("Đã chốt ngày. Nghỉ thật đi."); }
+function journalText(days){
+  const t=todayISO(), out=[];
+  for(let i=days-1;i>=0;i--){ const d=addD(t,-i), r=(state.review||{})[d]; const dh=dayDoneHours(d);
+    if(!r&&!dh.tot) continue;
+    out.push(`## ${fmtFull(d)} — ${hrs(dh.tot)}h (${Object.keys(dh.o).map(k=>(TR[k]||TR.LIFE).short+" "+hrs(dh.o[k])).join(", ")})`+
+      (r?`\n- Năng lượng: ${r.en||"—"}/5 · Làm tốt: ${r.win||"—"}\n- Học được: ${r.learn||"—"}\n- Rò rỉ: ${r.leak||"—"}\n- Mai: ${r.next||"—"}${r.note?"\n- Ghi chú: "+r.note:""}`:"")+
+      `\n- Đã xong: ${dayDoneList(d).join(" | ")||"—"}`);
+  }
+  return out.join("\n\n");
+}
+function copyJournalReview(){
+  const p=`Đây là nhật ký học/làm 7 ngày qua của tôi (Sơn, sinh viên năm cuối tài chính, mục tiêu 40–45h tự học/tuần chưa tính lớp; đang sửa 5 thói quen: thiếu kiên nhẫn, ôm đồm, làm không tới nơi tới chốn, giao du chưa chọn lọc, không giữ năng lượng).
+Hãy review như một mentor thẳng thắn:
+1. Tổng giờ thật theo từng mảng so với kế hoạch; mảng nào đang bị bỏ rơi.
+2. 3 mẫu hành vi lặp lại (tốt và xấu) có bằng chứng từ nhật ký.
+3. 1 thay đổi DUY NHẤT cho tuần tới (cụ thể, đo được).
+Trả lời bằng tiếng Việt, ngắn gọn.
+
+${journalText(7)}`;
+  copyStr(p);
+}
+function journalAcc(){
+  const t=todayISO(), rows=[];
+  for(let i=0;i<30;i++){ const d=addD(t,-i), r=(state.review||{})[d]; const dh=dayDoneHours(d); if(!r&&!dh.tot) continue;
+    rows.push(`<div class="kv" style="align-items:flex-start"><span><b>${fmtFull(d)}</b>${r&&r.learn?`<div class="small">💡 ${h(r.learn)}</div>`:""}${r&&r.win?`<div class="small muted">✓ ${h(r.win)}</div>`:""}${r&&r.note?`<div class="small muted">${h(r.note)}</div>`:""}</span>
+      <b class="small">${hrs(dh.tot)}h${r&&r.en?" · ⚡"+r.en:""}</b></div>`); }
+  return `<details class="acc" ${accA("journal",true)}><summary>📓 Nhật ký 30 ngày<span class="chip" style="margin-left:auto">${rows.length} ngày</span></summary>
+   <div class="acc-b">${rows.join("")||'<div class="empty">Chưa có ngày nào được chốt. Tối nay bấm 🌙 Chốt ngày ở tab Hôm nay.</div>'}
+   <div class="row wrap" style="gap:7px;margin-top:10px"><button class="btn sm grow" onclick="copyJournalReview()">📋 Copy nhật ký 7 ngày + prompt review</button>
+   <button class="btn sm grow ghost" onclick="copyStr(journalText(30))">Copy 30 ngày (thô)</button></div></div></details>`;
+}
+
+/* ============================ XUẤT / NHẬP FILE ============================ */
+function downloadText(name,text,type){
+  const blob=new Blob([text],{type:type||"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+}
+function exportJSON(){
+  const d=todayISO(), payload={app:"son-study-os",kind:"backup",version:8,exportedAt:new Date().toISOString(),state};
+  openSheet(`<h3>Xuất / Nhập dữ liệu</h3><div class="sh-sub">Bản GitHub lưu riêng từng máy. Chuyển máy: Xuất file ở máy này → Nhập file ở máy kia.</div>
+   <button class="btn primary" style="width:100%" onclick="downloadText('son-study-os_${d}.json',JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">⬇ Tải file backup (.json)</button>
+   <button class="btn" style="width:100%;margin-top:8px" onclick="copyStr(JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">📋 Copy dữ liệu (dán sang máy kia)</button>
+   <div class="sec-h" style="margin:16px 0 8px"><h2>Nhập</h2><div class="rule"></div></div>
+   <label class="btn" style="width:100%;display:block;text-align:center">📂 Chọn file .json (backup hoặc file AI trả về)<input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importFile(this)"></label>
+   <div class="note" style="margin-top:10px">Lần cuối xuất: ${state.lastExport?fmtFull(state.lastExport.slice(0,10)):"chưa bao giờ"}. Nên xuất 1 lần/tuần (Review CN).</div>
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
+  state.lastExport=new Date().toISOString(); lsSave();
+}
+function importFile(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>{ aiInput=String(r.result||""); aiPreview(); }; r.readAsText(f);
+}
+
+/* ============================ ĐỔI APP BẰNG AI ============================ */
+const TRACK_ALIAS={if:"IF",econ3014:"IF",bf:"BF",bfn:"BF",banking:"BF",finc3022:"BF",ielts:"IELTS",macro:"MACRO","vĩ mô":"MACRO",vimo:"MACRO",trade:"TRADE","giao dịch":"TRADE",giaodich:"TRADE",
+  ch:"CH",kenh:"CH","kênh":"CH",channel:"CH",tiktok:"CH",youtube:"CH",brk:"BRK",broker:"BRK",work:"WORK","công ty":"WORK",congty:"WORK",base:"BASE","nền":"BASE",news:"BASE",soc:"SOC",love:"SOC",
+  life:"LIFE","khác":"LIFE",zh:"ZH","trung":"ZH",da:"DA"};
+let aiReq="", aiInput="", aiScope="all", aiLast=null;
+function normTrack(x){ if(!x) return null; const s=String(x).trim(); if(TR[s.toUpperCase()]) return s.toUpperCase(); return TRACK_ALIAS[s.toLowerCase()]||null; }
+function normTime(x){
+  if(x==null||x==="") return null;
+  if(typeof x==="number"){ if(x>=0&&x<24*60&&x>24) return hhmm(x); if(x>=0&&x<24) return hhmm(Math.round(x*60)); return null; }
+  let s=String(x).trim().toLowerCase().replace(/\s+/g,"");
+  let m=s.match(/^(\d{1,2})[:h.](\d{2})?(sáng|trưa|chiều|tối|am|pm)?$/)||s.match(/^(\d{1,2})(sáng|trưa|chiều|tối|am|pm)?$/);
+  if(!m) return null; let hh=+m[1], mi=+(m[2]&&/^\d+$/.test(m[2])?m[2]:0); const p=(m[3]||(!/^\d+$/.test(m[2]||"0")?m[2]:"")||"");
+  if((p==="chiều"||p==="tối"||p==="pm")&&hh<12) hh+=12; if(hh>23||mi>59) return null; return hhmm(hh*60+mi);
+}
+function normDate(x){
+  if(!x) return null; const s=String(x).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return isNaN(D(s))?null:s;
+  let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+  if(m){ let y=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):+todayISO().slice(0,4); const d=iso(new Date(y,+m[2]-1,+m[1])); return d; }
+  if(/^(hôm nay|today)$/i.test(s)) return todayISO(); if(/^(mai|ngày mai|tomorrow)$/i.test(s)) return addD(todayISO(),1);
+  return null;
+}
+function normDay(x){
+  if(x==null) return null; if(typeof x==="number") return x>=1&&x<=7?x:(x===0?7:null);
+  const s=String(x).trim().toLowerCase().replace(/\s+/g,"");
+  if(/^[1-7]$/.test(s)) return +s;
+  const map={t2:1,"thứ2":1,thu2:1,mon:1,monday:1,t3:2,"thứ3":2,thu3:2,tue:2,tuesday:2,t4:3,"thứ4":3,thu4:3,wed:3,wednesday:3,t5:4,"thứ5":4,thu5:4,thu:4,thursday:4,t6:5,"thứ6":5,thu6:5,fri:5,friday:5,t7:6,"thứ7":6,thu7:6,sat:6,saturday:6,cn:7,"chủnhật":7,chunhat:7,sun:7,sunday:7};
+  return map[s]||null;
+}
+function normDur(x){
+  if(x==null||x==="") return null; if(typeof x==="number") return x>0&&x<=12?Math.round(x*60):Math.round(x);
+  const s=String(x).toLowerCase().replace(/\s+/g,"").replace(",",".");
+  let m=s.match(/^(\d+(?:\.\d+)?)(h|giờ|tiếng)(\d{1,2})?(p|ph|phút|m)?$/); if(m) return Math.round(+m[1]*60+(+m[3]||0));
+  m=s.match(/^(\d+)(p|ph|phút|m|min|mins|minutes)?$/); if(m) return +m[1];
+  return null;
+}
+function parseLoose(txt){
+  let s=String(txt||"").replace(/^﻿/,"");
+  const fence=s.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence) s=fence[1];
+  s=s.replace(/[“”„″]/g,'"').replace(/[‘’]/g,"'");
+  const a=Math.min(...["{","["].map(ch=>{const i=s.indexOf(ch);return i<0?1e9:i}));
+  const b=Math.max(s.lastIndexOf("}"),s.lastIndexOf("]")); if(a>=1e9||b<0) throw new Error("Không thấy khối JSON nào ({ … }).");
+  s=s.slice(a,b+1);
+  try{ return JSON.parse(s); }catch(e){}
+  const cleaned=s.replace(/\/\/[^\n"]*$/gm,"").replace(/\/\*[\s\S]*?\*\//g,"").replace(/,\s*([}\]])/g,"$1");
+  try{ return JSON.parse(cleaned); }catch(e){ throw new Error("JSON hỏng: "+e.message+". Bảo AI: 'Trả lại đúng 1 khối JSON hợp lệ, không chú thích'."); }
+}
+const OP_ALIAS={"add_block":"block.upsert","update_block":"block.upsert","block.add":"block.upsert","block.update":"block.upsert","upsert_block":"block.upsert",
+  "remove_block":"block.remove","delete_block":"block.remove","block.delete":"block.remove","replace_day":"day.replace",
+  "add_phase":"phase.upsert","phase.add":"phase.upsert","remove_phase":"phase.remove","phase.delete":"phase.remove",
+  "move_block":"block.move_once","skip_block":"block.skip_once",
+  "add_task":"task.add","update_task":"task.update","remove_task":"task.remove","delete_task":"task.remove","task.delete":"task.remove",
+  "add_deadline":"deadline.upsert","update_deadline":"deadline.upsert","deadline.add":"deadline.upsert","deadline.update":"deadline.upsert","remove_deadline":"deadline.remove","deadline.delete":"deadline.remove",
+  "add_curriculum":"curriculum.upsert","curriculum.add":"curriculum.upsert","replace_curriculum":"curriculum.upsert","remove_curriculum":"curriculum.remove",
+  "add_sessions":"session.add","sessions.add":"session.add","add_session":"session.add","update_session":"session.update","remove_session":"session.remove","session.delete":"session.remove",
+  "mark_done":"session.done","session.complete":"session.done","mark_undone":"session.undone",
+  "set_settings":"settings.set","settings":"settings.set","add_habit":"habit.upsert","habit.add":"habit.upsert","remove_habit":"habit.remove",
+  "add_goal":"goal.upsert","goal.add":"goal.upsert","remove_goal":"goal.remove","add_file":"file.add","link.add":"file.add","add_link":"file.add"};
+function normBlock(b,errs){
+  if(!b||typeof b!=="object"){errs.push("thiếu block");return null}
+  const o={}; o.id=b.id?String(b.id):null;
+  o.from=normTime(b.from||b.start); o.to=normTime(b.to||b.end);
+  if(!o.to&&o.from&&b.dur){ const d=normDur(b.dur); if(d) o.to=hhmm(mm(o.from)+d); }
+  if(!o.from||!o.to) errs.push("giờ không hợp lệ ("+(b.from||b.start)+"–"+(b.to||b.end)+")");
+  else if(mm(o.to)<=mm(o.from)) errs.push("giờ kết thúc phải sau giờ bắt đầu");
+  o.label=String(b.label||b.title||b.t||b.name||"").trim(); if(!o.label) errs.push("thiếu label");
+  o.track=normTrack(b.track||b.area||b.subject)||"LIFE";
+  ["cur","note","hint"].forEach(k=>{ if(b[k]!=null&&b[k]!=="") o[k]=String(b[k]); });
+  if(o.cur&&!curDef(o.cur)) errs.push("cur '"+o.cur+"' không tồn tại (có: "+curKeys().join(", ")+")");
+  ["fixed","rest","soft","news"].forEach(k=>{ if(b[k]!=null) o[k]=!!b[k]; });
+  if(o.rest&&b.soft==null) o.soft=true;
+  return o;
+}
+function normSession(s,errs){
+  if(!s||typeof s!=="object"){errs.push("buổi học rỗng");return null}
+  const o={id:String(s.id||("s"+uid())),t:String(s.t||s.title||s.name||"").trim()};
+  if(!o.t) errs.push("buổi học thiếu tên (t)");
+  if(s.ph||s.phase) o.ph=String(s.ph||s.phase);
+  const arr=x=>Array.isArray(x)?x:(x?[x]:[]);
+  o.mat=arr(s.mat||s.materials).map(m=>Array.isArray(m)?[String(m[0]||""),String(m[1]||"")]:(typeof m==="object"?[String(m.label||m.name||""),String(m.url||m.link||"")]:[String(m),""]));
+  o.how=arr(s.how||s.steps).map(String); o.q=arr(s.q||s.questions).map(String); o.out=String(s.out||s.output||"");
+  if(s.by){ const d=normDate(s.by); if(d) o.by=d; else errs.push("by không phải ngày"); }
+  return o;
+}
+function overlapIn(list,b,ignoreId){ return (list||[]).filter(x=>x.id!==ignoreId&&x.id!==b.id&&mm(b.from)<mm(x.to)&&mm(x.from)<mm(b.to)); }
+function phaseRef(p){ if(!p||p==="default"||p==="mặc định") return {tpl:state.routine.tpl,name:"khung mặc định"}; const ph=(state.routine.phases||[]).find(x=>x.id===p); return ph?{tpl:ph.tpl=ph.tpl||{},name:"giai đoạn "+(ph.name||ph.id)}:null; }
+/* kiểm tra + mô tả từng thao tác; apply=true thì thực hiện */
+function runOp(op,apply){
+  const errs=[]; let desc="";
+  const name=OP_ALIAS[String(op.op||op.type||op.action||"").toLowerCase()]||String(op.op||op.type||op.action||"").toLowerCase();
+  switch(name){
+   case "block.upsert":{ const ph=phaseRef(op.phase), day=normDay(op.day), b=normBlock(op.block||op,errs);
+     if(!ph) errs.push("không có phase '"+op.phase+"'"); if(!day) errs.push("day phải 1–7 (T2…CN)");
+     if(!errs.length){ const l0=ph.tpl[day]||[], ex0=b.id&&l0.find(x=>x.id===b.id), probe=Object.assign({},ex0||{},Object.fromEntries(Object.entries(b).filter(([k,v_])=>v_!=null)));
+       const ov=overlapIn(l0,probe,b.id); if(ov.length) errs.push(`chồng giờ với "${ov[0].label}" ${ov[0].from}–${ov[0].to} (${WDN[day]}) — sửa/dời block đó trước hoặc đổi giờ`); }
+     if(!errs.length){ const list=ph.tpl[day]=ph.tpl[day]||[], ex=b.id&&list.find(x=>x.id===b.id);
+       desc=`${ex?"Sửa":"Thêm"} block ${WDN[day]} ${b.from}–${b.to} "${b.label}" (${b.track}${b.cur?", giáo trình "+b.cur:""}) · ${ph.name}`;
+       if(apply){ if(ex) Object.keys(b).forEach(k=>{ if(b[k]!=null) ex[k]=b[k]; }); else list.push(Object.assign(b,{id:b.id||("b"+uid())})); list.sort((x,y)=>mm(x.from)-mm(y.from)); } }
+     break; }
+   case "block.remove":{ const ph=phaseRef(op.phase), day=normDay(op.day); if(!ph) errs.push("không có phase"); if(!day) errs.push("day 1–7");
+     const list=ph&&day?(ph.tpl[day]||[]):[], ex=list.find(x=>x.id===op.id); if(!ex) errs.push("không thấy block id '"+op.id+"'");
+     if(!errs.length){ desc=`Xoá block ${WDN[day]} ${ex.from} "${ex.label}" · ${ph.name}`; if(apply) ph.tpl[day]=list.filter(x=>x.id!==op.id); } break; }
+   case "day.replace":{ const ph=phaseRef(op.phase), day=normDay(op.day); if(!ph) errs.push("không có phase"); if(!day) errs.push("day 1–7");
+     const bl=(op.blocks||[]).map(b=>normBlock(b,errs)); if(!errs.length){ bl.forEach((b,i)=>{ const ov=bl.filter((x,j)=>j!==i&&mm(b.from)<mm(x.to)&&mm(x.from)<mm(b.to)); if(ov.length&&i<bl.indexOf(ov[0])) errs.push(`"${b.label}" chồng giờ "${ov[0].label}"`); }); }
+     if(!errs.length){ desc=`Thay cả ngày ${WDN[day]} (${bl.length} block) · ${ph.name}`; if(apply) ph.tpl[day]=bl.map(b=>Object.assign(b,{id:b.id||("b"+uid())})); } break; }
+   case "phase.upsert":{ const p=op.phase||op; const from=normDate(p.from), to=normDate(p.to); if(!p.id) errs.push("phase thiếu id"); if(!from||!to) errs.push("from/to phải là ngày"); else if(to<from) errs.push("to < from");
+     const tpl={}; if(p.tpl) Object.keys(p.tpl).forEach(k=>{ const d=normDay(isNaN(+k)?k:+k); if(!d){errs.push("tpl day sai: "+k);return} tpl[d]=(p.tpl[k]||[]).map(b=>Object.assign(normBlock(b,errs)||{},{})); });
+     Object.keys(tpl).forEach(d=>{ const bl=tpl[d]; bl.forEach((b,i)=>{ const ov=bl.filter((x,j)=>j>i&&mm(b.from)<mm(x.to)&&mm(x.from)<mm(b.to)); if(ov.length) errs.push(`${WDN[d]}: "${b.label}" chồng giờ "${ov[0].label}"`); }); });
+     if(!errs.length){ state.routine.phases=state.routine.phases||[]; const ex=state.routine.phases.find(x=>x.id===p.id);
+       desc=`${ex?"Sửa":"Thêm"} giai đoạn "${p.name||p.id}" ${fmtD(from)}→${fmtD(to)} (khung riêng cho ${Object.keys(tpl).map(d=>WDN[d]).join(", ")||"không ngày nào"})`;
+       if(apply){ Object.values(tpl).forEach(l=>l.forEach(b=>{b.id=b.id||("b"+uid())})); if(ex){ ex.name=p.name||ex.name; ex.from=from; ex.to=to; ex.tpl=Object.assign(ex.tpl||{},tpl); } else state.routine.phases.push({id:String(p.id),name:p.name||String(p.id),from,to,tpl}); } }
+     break; }
+   case "phase.remove":{ const ex=(state.routine.phases||[]).find(x=>x.id===op.id); if(!ex) errs.push("không thấy phase "+op.id); else { desc=`Xoá giai đoạn "${ex.name}"`; if(apply) state.routine.phases=state.routine.phases.filter(x=>x.id!==op.id); } break; }
+   case "block.move_once":{ const d=normDate(op.date), to=normDate(op.to_date||op.to||op.toDate), st=normTime(op.start);
+     if(!d||!to) errs.push("date/to_date sai"); const b=d&&tplBlocks(d).find(x=>x.id===op.id); if(d&&!b) errs.push("ngày "+op.date+" không có block "+op.id);
+     if(!errs.length&&st){ const dur=mm(b.to)-mm(b.from), hit=busy(to,null,true).filter(x=>x.iid!==op.id&&x.type!=="task"&&overlap(mm(st),mm(st)+dur,x.start,x.end)); if(hit.length) errs.push(`ngày ${fmtD(to)} lúc ${st} đã có "${hit[0].label}" — chọn giờ khác hoặc bỏ trống start để app tự tìm`); }
+     let auto=null; if(!errs.length&&!st){ auto=autoSlot(d,op.id,to); if(auto==null) errs.push(`ngày ${fmtD(to)} không còn chỗ trống ${mm(b.to)-mm(b.from)}' — chọn ngày khác, ghi start, hoặc bỏ (skip_once)`); }
+     if(!errs.length){ desc=`Dời block "${b.label}" ngày ${fmtD(d)} → ${fmtD(to)} ${st||hhmm(auto)+" (app tự chọn)"}${(()=>{const s0=st?mm(st):auto, d0=mm(b.to)-mm(b.from); return routineOn(to).some(x=>x.soft&&overlap(s0,s0+d0,x.start,x.end))?" ⚠️ lấn vào tối riêng (khoá mềm)":"";})()} (chỉ lần này)`; if(apply) moveBlock(d,op.id,to,st?mm(st):null); } break; }
+   case "block.skip_once":{ const d=normDate(op.date); const b=d&&tplBlocks(d).find(x=>x.id===op.id); if(!b) errs.push("không thấy block "+op.id+" ngày "+op.date);
+     if(!errs.length){ desc=`Bỏ block "${b.label}" ngày ${fmtD(d)}`; if(apply) skipBlock(d,op.id); } break; }
+   case "task.add":{ const t=op.task||op; const date=normDate(t.date)||todayISO(), st=normTime(t.start), dur=normDur(t.dur||t.duration)||60;
+     const tt=String(t.t||t.title||t.name||"").trim(); if(!tt) errs.push("việc thiếu tên");
+     let warn=""; if(!errs.length&&st){ const hit=conflictsAt(date,mm(st),mm(st)+dur,null); if(hit.length) warn=` ⚠️ trùng "${hit[0].label}" → app sẽ tự dời sang chỗ trống gần nhất`; }
+     if(!errs.length){ desc=`Thêm việc "${tt}" ${fmtFull(date)}${st?" "+st:" (tự tìm giờ trống)"} · ${dur}'${warn}`;
+       if(apply){ const x={id:t.id||("x"+uid()),t:tt,track:normTrack(t.track)||"LIFE",date,start:st?mm(st):null,dur,pri:Math.min(5,Math.max(1,+t.pri||3)),status:"pending",progress:0,note:t.note?String(t.note):"",locked:!!t.locked};
+         if(x.start==null){ const s=nextFreeSlot(date,0,dur,null)||{date,start:dayStart()}; x.date=s.date; x.start=s.start; } state.tasks.push(x); } }
+     break; }
+   case "task.update":{ const x=state.tasks.find(t=>t.id===op.id); if(!x) errs.push("không thấy việc "+op.id); const s=op.set||{};
+     if(!errs.length){ desc=`Sửa việc "${x.t}": ${Object.keys(s).join(", ")}`; if(apply){ if(s.t||s.title) x.t=String(s.t||s.title); if(s.date) x.date=normDate(s.date)||x.date; if(s.start) x.start=mm(normTime(s.start)||hhmm(x.start));
+       if(s.dur) x.dur=normDur(s.dur)||x.dur; if(s.track) x.track=normTrack(s.track)||x.track; if(s.pri) x.pri=+s.pri; if(s.note!=null) x.note=String(s.note); if(s.locked!=null) x.locked=!!s.locked; if(s.status) x.status=s.status; } } break; }
+   case "task.remove":{ const x=state.tasks.find(t=>t.id===op.id); if(!x) errs.push("không thấy việc "+op.id); else { desc=`Xoá việc "${x.t}"`; if(apply) state.tasks=state.tasks.filter(t=>t.id!==op.id); } break; }
+   case "deadline.upsert":{ const a=op.deadline||op; const due=a.due?normDate(a.due):null; if(a.due&&!due) errs.push("due sai"); const ex=a.id&&state.assess.find(x=>x.id===a.id);
+     if(!ex&&!a.title) errs.push("deadline mới cần title"); const sub=normTrack(a.sub||a.track)||(ex?ex.sub:"LIFE");
+     if(!errs.length){ desc=`${ex?"Sửa":"Thêm"} deadline "${a.title||ex.title}"${due?" · "+fmtD(due):""}${a.dueTime?" "+a.dueTime:""}`;
+       if(apply){ const o=ex||{id:a.id||("a"+uid()),mode:"Cá nhân",mandatory:false,mark:null,session:null,weight:0,prov:false,where:"",note:""};
+         if(a.title) o.title=String(a.title); o.sub=sub; if(due) o.due=due; if(a.dueTime!=null) o.dueTime=normTime(a.dueTime)||""; if(a.weight!=null) o.weight=+a.weight||0;
+         ["where","note"].forEach(k=>{ if(a[k]!=null) o[k]=String(a[k]); }); if(a.prov!=null) o.prov=!!a.prov; if(a.done!=null) o.done=!!a.done; if(!ex) state.assess.push(o); } } break; }
+   case "deadline.remove":{ const ex=state.assess.find(x=>x.id===op.id); if(!ex) errs.push("không thấy deadline "+op.id); else { desc=`Xoá deadline "${ex.title}"`; if(apply) state.assess=state.assess.filter(x=>x.id!==op.id); } break; }
+   case "curriculum.upsert":{ const k=String(op.key||"").trim(), d=op.def||op.curriculum||{}; if(!/^[a-zA-Z][\w-]{1,30}$/.test(k)) errs.push("key giáo trình không hợp lệ");
+     const ses=(d.sessions||[]).map(s=>normSession(s,errs)); const ids=new Set(); ses.forEach(s=>{ if(s){ if(ids.has(s.id)) errs.push("trùng id buổi "+s.id); ids.add(s.id);} });
+     if(!errs.length){ const ex=curDef(k); desc=`${ex?"Thay":"Tạo"} giáo trình "${d.name||k}" (${ses.length} buổi)`;
+       if(apply){ state.curOver=state.curOver||{}; state.curOver[k]={name:String(d.name||(ex&&ex.name)||k),g:String(d.g||(ex&&ex.g)||normTrack(d.track)||"LIFE"),track:normTrack(d.track)||(ex&&ex.track)||"LIFE",sessions:ses}; } } break; }
+   case "curriculum.remove":{ if(!state.curOver||!state.curOver[op.key]) errs.push("chỉ xoá được giáo trình do AI tạo/thay (key "+op.key+")"); else { desc=`Bỏ bản sửa giáo trình "${op.key}" (về bản gốc nếu có)`; if(apply) delete state.curOver[op.key]; } break; }
+   case "session.add":case "session.update":case "session.remove":{
+     const k=op.key, base=curDef(k); if(!base) { errs.push("không có giáo trình '"+k+"'"); break; }
+     const copy={name:base.name,g:base.g,track:base.track,sessions:base.sessions.map(s=>Object.assign({},s))};
+     if(name==="session.add"){ const ses=(op.sessions||[op.session]).filter(Boolean).map(s=>normSession(s,errs)); ses.forEach(s=>{ if(s&&copy.sessions.some(x=>x.id===s.id)) errs.push("id buổi đã tồn tại: "+s.id); });
+       let at=copy.sessions.length; if(op.after==="start") at=0; else if(op.after){ const i=copy.sessions.findIndex(x=>x.id===op.after); if(i<0) errs.push("không thấy buổi after="+op.after); else at=i+1; }
+       if(!errs.length){ desc=`Thêm ${ses.length} buổi vào "${base.name}"${op.after?" sau "+op.after:""}`; copy.sessions.splice(at,0,...ses); } }
+     else if(name==="session.update"){ const s=copy.sessions.find(x=>x.id===op.id); if(!s) errs.push("không thấy buổi "+op.id);
+       else { const n=normSession(Object.assign({},s,op.set||{},{id:s.id}),errs); if(!errs.length){ desc=`Sửa buổi "${s.t}"`; Object.assign(s,n); } } }
+     else { const s=copy.sessions.find(x=>x.id===op.id); if(!s) errs.push("không thấy buổi "+op.id); else { desc=`Xoá buổi "${s.t}" khỏi "${base.name}"`; copy.sessions=copy.sessions.filter(x=>x.id!==op.id); } }
+     if(!errs.length&&apply){ state.curOver=state.curOver||{}; state.curOver[k]=copy; } break; }
+   case "session.done":case "session.undone":{ const f=sessById(op.id); if(!f) errs.push("không thấy buổi "+op.id);
+     if(!errs.length){ desc=`${name==="session.done"?"Đánh dấu xong":"Bỏ đánh dấu"} "${f.s.t}"`; if(apply){ if(name==="session.done") cdone()[op.id]=normDate(op.date)||todayISO(); else delete cdone()[op.id]; } } break; }
+   case "settings.set":{ const s=op.set||{}; const ch=[];
+     if(s.dayStart){ const t=normTime(s.dayStart); if(t) ch.push(["dayStart",t]); else errs.push("dayStart sai"); }
+     if(s.dayEnd){ const t=normTime(s.dayEnd); if(t) ch.push(["dayEnd",t]); else errs.push("dayEnd sai"); }
+     if(s.ieltsExamDate){ const d=normDate(s.ieltsExamDate); if(d) ch.push(["ieltsExamDate",d]); else errs.push("ieltsExamDate sai"); }
+     if(s.ieltsAim){ ch.push(["ieltsAim",+s.ieltsAim]); }
+     if(!errs.length){ desc="Cài đặt: "+ch.map(x=>x[0]+" = "+x[1]).join(", "); if(apply) ch.forEach(([k,v_])=>{ if(k==="ieltsExamDate") state.ielts.examDate=v_; else if(k==="ieltsAim") state.ielts.aim=v_; else state.settings[k]=v_; }); } break; }
+   case "habit.upsert":{ const hb=op.habit||op; const ex=hb.id&&state.habits.find(x=>x.id===hb.id); if(!ex&&!hb.label) errs.push("thói quen mới cần label");
+     if(!errs.length){ desc=`${ex?"Sửa":"Thêm"} thói quen "${hb.label||ex.label}"`; if(apply){ const o=ex||{id:hb.id||("h"+uid()),log:{}}; if(hb.label) o.label=String(hb.label); o.track=normTrack(hb.track)||o.track||"BASE"; if(hb.rule!=null) o.rule=String(hb.rule); if(hb.paused!=null) o.paused=!!hb.paused; if(!ex) state.habits.push(o); } } break; }
+   case "habit.remove":{ const ex=state.habits.find(x=>x.id===op.id); if(!ex) errs.push("không thấy thói quen "+op.id); else { desc=`Xoá thói quen "${ex.label}"`; if(apply) state.habits=state.habits.filter(x=>x.id!==op.id); } break; }
+   case "goal.upsert":{ const g=op.goal||op; const ex=g.id&&state.goals.find(x=>x.id===g.id); if(!ex&&!g.name) errs.push("goal mới cần name");
+     if(!errs.length){ desc=`${ex?"Sửa":"Thêm"} goal "${g.name||ex.name}"`; if(apply){ const o=ex||{id:g.id||("g"+uid()),track:"LIFE"}; if(g.name) o.name=String(g.name); if(g.track) o.track=normTrack(g.track)||o.track;
+       if(g.targetDate!=null) o.targetDate=normDate(g.targetDate)||""; if(g.note!=null) o.note=String(g.note); if(g.paused!=null) o.paused=!!g.paused; if(g.src) o.src=String(g.src); if(g.totalH!=null) o.totalH=+g.totalH; if(!ex) state.goals.push(o); } } break; }
+   case "goal.remove":{ const ex=state.goals.find(x=>x.id===op.id); if(!ex) errs.push("không thấy goal "+op.id); else { desc=`Xoá goal "${ex.name}"`; if(apply) state.goals=state.goals.filter(x=>x.id!==op.id); } break; }
+   case "file.add":{ const f=op.file||op; if(!f.name||!f.url) errs.push("link cần name + url"); else if(!/^https?:\/\//.test(f.url)) errs.push("url phải bắt đầu bằng http");
+     if(!errs.length){ desc=`Thêm link "${f.name}" vào Study Kit`; if(apply){ state.kitLinks=state.kitLinks||[]; state.kitLinks.push({name:String(f.name),url:String(f.url),g:String(f.g||""),desc:String(f.desc||"")}); } } break; }
+   case "note": desc="(ghi chú) "+String(op.text||""); break;
+   default: errs.push("thao tác không hỗ trợ: '"+(op.op||op.type||"?")+"'");
+  }
+  return {name,desc,errs};
+}
+function classifyImport(o){
+  if(Array.isArray(o)) return {kind:"patch",ops:o};
+  if(o&&o.kind==="backup"&&o.state) return {kind:"backup",obj:o};
+  if(o&&o.state&&o.state.routine&&o.state.tasks) return {kind:"backup",obj:o};
+  if(o&&o.routine&&o.tasks&&o.assess) return {kind:"backup",obj:{state:o}};
+  if(o&&o.patch&&typeof o.patch==="object") return classifyImport(o.patch);
+  if(o&&Array.isArray(o.ops||o.operations||o.changes)) return {kind:"patch",ops:o.ops||o.operations||o.changes,summary:o.summary||"",questions:o.questions||[]};
+  if(o&&Array.isArray(o.steps)) return {kind:"plan",obj:o};
+  if(o&&o.op) return {kind:"patch",ops:[o]};
+  return {kind:"unknown"};
+}
+function aiPreview(){
+  let html="", ok=0, bad=0;
+  try{
+    const o=parseLoose(aiInput), c=classifyImport(o); aiLast=c;
+    if(c.kind==="backup"){ const s=c.obj.state; html=`<div class="verdict warn">Đây là FILE BACKUP (xuất ngày ${h((c.obj.exportedAt||"").slice(0,10)||"?")} · ${(s.tasks||[]).length} việc · rev ${s.rev||"?"}). Nhập sẽ THAY toàn bộ dữ liệu máy này.</div>
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="aiApplyBackup()">Thay dữ liệu bằng file này</button>`; }
+    else if(c.kind==="plan"){ html=`<div class="verdict ok">Đây là kế hoạch chia buổi (${c.obj.steps.length} buổi). Mở trình tạo mục tiêu để xếp lịch.</div>
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="aiApplyPlan()">Mở & xếp lịch</button>`; }
+    else if(c.kind==="patch"){
+      const snap=JSON.stringify(state); const rows=c.ops.map((op,i)=>{ const r=runOp(op,true); if(r.errs.length) bad++; else ok++;
+        return `<div class="kv" style="align-items:flex-start"><span>${r.errs.length?"✗":"✓"} ${h(r.desc||op.op||"?")}${r.errs.length?`<div class="small" style="color:var(--red)">${h(r.errs.join(" · "))}</div>`:""}</span><b class="small">#${i+1}</b></div>`; }).join("");
+      state=JSON.parse(snap); _cm=null;   // chỉ chạy thử trên bản sao
+      html=`${c.summary?`<div class="mblk"><span class="mlab">AI tóm tắt</span>${h(c.summary)}</div>`:""}
+        ${(c.questions||[]).length?`<div class="warnbox" style="margin-bottom:8px"><b>AI hỏi lại:</b><br>${c.questions.map(q=>"• "+h(q)).join("<br>")}</div>`:""}
+        <div class="mblk"><span class="mlab">${ok} thao tác hợp lệ · ${bad} lỗi</span>${rows||'<div class="small muted">Không có thao tác nào.</div>'}</div>
+        ${bad?`<button class="btn sm" style="width:100%;margin-bottom:8px" onclick="copyFixPrompt()">📋 Copy lỗi để AI sửa lại</button>`:""}
+        ${ok?`<button class="btn primary" style="width:100%" onclick="aiApplyPatch()">Áp dụng ${ok} thay đổi${bad?" (bỏ qua "+bad+" lỗi)":""}</button>`:""}`;
+    } else html=`<div class="verdict bad">Không nhận ra định dạng. Cần có "ops": [ … ] (bản vá), "kind":"backup" hoặc "steps": [ … ].</div>`;
+  }catch(e){ aiLast=null; html=`<div class="verdict bad">${h(e.message||String(e))}</div>`; }
+  openAIChange(html);
+}
+function copyFixPrompt(){
+  const rows=(aiLast&&aiLast.ops||[]).map((op,i)=>{const snap=JSON.stringify(state);const r=runOp(op,true);state=JSON.parse(snap);_cm=null;return r.errs.length?`#${i+1} ${JSON.stringify(op)} → LỖI: ${r.errs.join("; ")}`:""}).filter(Boolean);
+  copyStr("App báo các thao tác sau bị lỗi. Sửa lại và trả về NGUYÊN khối JSON bản vá (đủ mọi thao tác, kể cả cái đúng), không giải thích:\n\n"+rows.join("\n"));
+}
+function snapshotUndo(){ try{ localStorage.setItem("son-study-os-undo",JSON.stringify({at:new Date().toISOString(),state})); }catch(e){} }
+function undoLast(){ let u=null; try{u=JSON.parse(localStorage.getItem("son-study-os-undo")||"null")}catch(e){} if(!u){toast("Không có gì để hoàn tác");return}
+  const r=state.rev; state=upgrade(u.state); state.rev=(r||1)+1; try{localStorage.removeItem("son-study-os-undo")}catch(e){} _cm=null; closeSheet(); save(); toast("Đã hoàn tác về lúc "+u.at.slice(11,16)); }
+function aiApplyPatch(){
+  if(!aiLast||aiLast.kind!=="patch") return; snapshotUndo();
+  let n=0; aiLast.ops.forEach(op=>{ const snap=JSON.stringify(state); const r=runOp(op,false); if(r.errs.length) return; runOp(op,true); n++; });
+  state.routine.tplV=(state.routine.tplV||0)+1; _cm=null; aiInput=""; aiLast=null; closeSheet(); reflow(); save();
+  toast(`✓ Đã áp dụng ${n} thay đổi <button onclick="undoLast()">Hoàn tác</button>`);
+}
+function aiApplyBackup(){ if(!aiLast||aiLast.kind!=="backup") return; if(!confirm("Thay TOÀN BỘ dữ liệu máy này bằng file backup?")) return;
+  snapshotUndo(); const r=state.rev; state=upgrade(aiLast.obj.state); state.rev=Math.max(r||1,state.rev||1)+1; _cm=null; aiLast=null; closeSheet(); save(); toast("Đã nhập backup <button onclick=\"undoLast()\">Hoàn tác</button>"); }
+function aiApplyPlan(){ const o=aiLast.obj; closeSheet(); openPlanEdit(""); setTimeout(()=>{ const e=document.getElementById("pPaste"); if(e){ e.value=JSON.stringify(o); pFromPaste(); } else { pdraft.steps=normSteps(o.steps,pdraft.sess); pdraft.summary=String(o.summary||""); renderPlanSheet({c:"ok",t:"Đã nhận "+o.steps.length+" buổi — điền tên mục tiêu rồi Lưu & xếp lịch."}); } },60); }
+
+function aiSnapshot(scope){
+  const t=todayISO(), L=[];
+  const blk=b=>`${b.id} ${b.from}–${b.to} [${b.track}${b.cur?" cur="+b.cur:""}${b.fixed?" fixed":""}${b.rest?" rest":""}] ${b.label}`;
+  if(scope==="all"||scope==="routine"){
+    L.push("### KHUNG MẶC ĐỊNH (phase=\"default\")");
+    for(let d=1;d<=7;d++) L.push(`day ${d} (${WDN[d]}): `+((state.routine.tpl[d]||[]).map(blk).join(" | ")||"—"));
+    L.push("\n### GIAI ĐOẠN (phase) — ghi đè khung mặc định trong khoảng ngày, chỉ cho những day được liệt kê");
+    (state.routine.phases||[]).forEach(p=>{ L.push(`phase id="${p.id}" "${p.name}" ${p.from}→${p.to}`); Object.keys(p.tpl||{}).forEach(d=>L.push(`  day ${d} (${WDN[d]}): `+p.tpl[d].map(blk).join(" | "))); });
+    L.push("\n### LỊCH THỰC TẾ 14 NGÀY TỚI (đã áp phase + dời/bỏ; dùng 'id' này cho block.move_once / block.skip_once với date = ngày gốc)");
+    for(let i=0;i<14;i++){ const d=addD(t,i), ph=phaseOf(d); L.push(`${d} ${WDN[dow(d)]}${ph?" [phase "+ph.id+"]":""}: `+routineOn(d).filter(b=>!b.rest).map(b=>{const s_=sessionAt(b,d);return `${b.moved?b.odate+"|":""}${b.id} ${hhmm(b.start)}–${hhmm(b.end)} ${b.track}${s_?" «"+s_.id+"»":""}`}).join(" | ")); }
+    const bx=Object.keys(state.bx||{}).filter(k=>k.slice(0,10)>=addD(t,-1)); if(bx.length){ L.push("\n### DỜI/BỎ RIÊNG TỪNG NGÀY"); bx.forEach(k=>L.push(k+" → "+JSON.stringify(state.bx[k]))); }
+  }
+  if(scope==="all"||scope==="cur"){
+    L.push("\n### GIÁO TRÌNH (key: tên — buổi chưa xong theo thứ tự, kèm ngày dự kiến)"); const cm=curMap(), dn=cdone();
+    curKeys().forEach(k=>{ const d=curDef(k); if(!d||!d.sessions||!d.sessions.length) return; const p=d.sessions.filter(s=>!dn[s.id]);
+      L.push(`${k}: ${d.name} [group ${d.g}] — ${d.sessions.length-p.length}/${d.sessions.length} xong`); p.forEach(s=>L.push(`  ${s.id} | ${cm.plan[s.id]||"chưa xếp"} | ${s.t}${s.by?" | by "+s.by:""}`)); });
+  }
+  if(scope==="all"||scope==="tasks"){
+    L.push("\n### DEADLINE"); state.assess.forEach(a=>L.push(`${a.id} | ${a.sub} | ${a.title} | due ${a.due||"—"} ${a.dueTime||""}${a.weight?" | "+a.weight+"%":""}${a.prov?" | tạm tính":""}${aDone(a)?" | XONG":""}`));
+    L.push("\n### VIỆC LẺ (chưa xong, từ hôm nay)"); state.tasks.filter(x=>isOpen(x)&&x.date>=addD(t,-3)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,80).forEach(x=>L.push(`${x.id} | ${x.date} ${hhmm(x.start)} | ${x.dur}' | ${x.track} | ${x.t}`));
+    L.push("\n### THÓI QUEN / GOAL"); state.habits.forEach(x=>L.push(`habit ${x.id} | ${x.label}${x.paused?" (tạm dừng)":""} | ${x.rule||""}`)); state.goals.forEach(x=>L.push(`goal ${x.id} | ${x.name} | ${x.track} | ${x.targetDate||"—"}${x.paused?" (tạm dừng)":""}`));
+  }
+  L.push(`\n### CÀI ĐẶT\ndayStart ${state.settings.dayStart} · dayEnd ${state.settings.dayEnd} · IELTS aim ${state.ielts.aim} · ngày thi IELTS ${state.ielts.examDate||"chưa đặt"}`);
+  const wl=weekLoad(); L.push(`Tải tuần này: tự học ${hrs(wl.self)}h (+ cố định ${hrs(wl.fixed)}h) — `+TKEYS.filter(k=>wl[k]>0).map(k=>k+" "+hrs(wl[k])+"h").join(", "));
+  return L.join("\n");
+}
+const AI_CTX_DEFAULT=`- Tôi: Sơn, SV năm cuối tài chính. Mục tiêu 40–45h tự học/tuần (chưa tính lớp, chưa tính 8h công ty).
+- Đi làm T3 + T4 08:00–12:00 (block fixed, track WORK). Ngày khác bắt đầu từ 09:00. Đọc báo khoá 30'/ngày (track BASE, news:true).
+- Tối T2, T4, T6, T7, CN 18:30–22:30 là "Tối riêng" (rest:true = khoá MỀM): KHÔNG thêm block học vào đó trừ khi tôi yêu cầu rõ. Tối T3, T5 được học nhẹ.
+- Block fixed (lớp, đi làm, thi) không được dời/xoá trừ khi tôi nói rõ.
+- Lớp FINC3022 T6 12:00–15:15, ECON3014 T7 12:00–15:15 (hết lớp sau 22/11). Thi: mid IF 23/10 09:00 · final IF 29/11 13:00 · final BFN 02/12 09:00.
+- BFN (FINC3022) CẤM dùng AI trong bài chấm điểm → không tạo buổi học kiểu "dùng AI viết Report/slide BFN".
+- Track hợp lệ: IF, BF, IELTS, MACRO, TRADE, CH (kênh TikTok/YouTube), BRK (học nghề broker), WORK, BASE (nền/đọc báo), SOC (tối riêng/bạn bè), LIFE (khác), ZH (tiếng Trung — đang tạm dừng), DA (đang dừng).`;
+function aiCtx(){ return (state.aiCtx&&state.aiCtx.trim())||AI_CTX_DEFAULT; }
+function aiPrompt(req,scope){
+  return `Bạn là trợ lý chỉnh lịch cho app "Sơn Study OS" (app lịch học cá nhân). Nhiệm vụ: đọc YÊU CẦU và DỮ LIỆU HIỆN TẠI bên dưới, rồi trả về DUY NHẤT 1 khối JSON "bản vá" để app tự áp dụng. App sẽ cho người dùng xem trước từng thao tác rồi mới áp dụng, có nút hoàn tác.
+
+=== YÊU CẦU CỦA TÔI ===
+${req||"(chưa ghi — hãy hỏi lại tôi qua trường questions)"}
+
+=== BỐI CẢNH (giữ nguyên trừ khi YÊU CẦU nói khác) ===
+- Hôm nay: ${todayISO()} (${WDN[dow(todayISO())]}). Múi giờ Việt Nam. day: 1=T2, 2=T3, 3=T4, 4=T5, 5=T6, 6=T7, 7=CN.
+${aiCtx()}
+- Block có "cur" = gắn giáo trình: app tự hiện buổi kế tiếp của giáo trình đó trong block. Muốn mảng học nhanh/chậm hơn thì THÊM/BỚT block có cur, không cần sửa buổi học.
+
+=== DỮ LIỆU HIỆN TẠI ===
+${aiSnapshot(scope)}
+
+=== ĐỊNH DẠNG TRẢ VỀ (bắt buộc) ===
+Chỉ trả về 1 khối \`\`\`json … \`\`\`, không chữ nào khác ngoài khối đó:
+{
+  "app": "son-study-os", "kind": "patch", "version": 1,
+  "summary": "1–2 câu: đã đổi gì, tổng giờ tự học/tuần sau khi đổi ước tính bao nhiêu",
+  "questions": [],
+  "ops": [ … các thao tác theo thứ tự … ]
+}
+Thao tác hỗ trợ (đúng tên "op"):
+1. {"op":"block.upsert","phase":"default" hoặc id phase,"day":1-7,"block":{"id":"(giữ id cũ nếu SỬA; bỏ trống nếu THÊM)","from":"HH:MM","to":"HH:MM","label":"…","track":"IF","cur":"key giáo trình (tuỳ chọn)","note":"…","fixed":false,"rest":false}}
+   — Sửa block: chỉ cần id + các trường muốn đổi (vẫn phải có from/to/label). 
+2. {"op":"block.remove","phase":"default","day":3,"id":"a31"}
+3. {"op":"day.replace","phase":"default","day":6,"blocks":[ {block}, … ]}  — thay toàn bộ 1 ngày.
+4. {"op":"phase.upsert","phase":{"id":"tuan-on-thi","name":"…","from":"YYYY-MM-DD","to":"YYYY-MM-DD","tpl":{"1":[blocks],"2":[blocks]}}} — khung riêng cho 1 khoảng ngày; chỉ những day có trong tpl bị ghi đè, day khác dùng khung mặc định. Phase ngắn hơn được ưu tiên khi chồng nhau.
+5. {"op":"phase.remove","id":"…"}
+6. {"op":"block.move_once","date":"YYYY-MM-DD","id":"a12","to_date":"YYYY-MM-DD","start":"HH:MM"} — dời 1 lần, không đổi khung tuần.   {"op":"block.skip_once","date":"YYYY-MM-DD","id":"a12"}
+7. {"op":"task.add","task":{"t":"…","date":"YYYY-MM-DD","start":"HH:MM (bỏ trống = app tự tìm giờ trống)","dur":60,"track":"LIFE","pri":3,"note":"…"}}   {"op":"task.update","id":"…","set":{…}}   {"op":"task.remove","id":"…"}
+8. {"op":"deadline.upsert","deadline":{"id":"(giữ id cũ nếu sửa)","sub":"IF","title":"…","due":"YYYY-MM-DD","dueTime":"HH:MM","weight":40,"where":"…","note":"…","prov":false,"done":false}}   {"op":"deadline.remove","id":"…"}
+9. Giáo trình: {"op":"curriculum.upsert","key":"cfa","def":{"name":"…","g":"MACRO","track":"MACRO","sessions":[SESSION,…]}} — tạo mới hoặc thay toàn bộ.
+   {"op":"session.add","key":"macro","after":"mc305 (hoặc \\"start\\"; bỏ trống = cuối)","sessions":[SESSION,…]}   {"op":"session.update","key":"if","id":"ifm05","set":{…}}   {"op":"session.remove","key":"ch","id":"ch3d"}
+   {"op":"session.done","id":"ifm01","date":"YYYY-MM-DD"}   {"op":"session.undone","id":"…"}
+   SESSION = {"id":"duy nhất, không dấu","t":"tên buổi","ph":"giai đoạn","mat":[["nhãn tài liệu","https://link hoặc để trống"]],"how":["bước 1 (có số phút)","bước 2"],"q":["câu hỏi mang sang AI"],"out":"đầu ra đo được","by":"YYYY-MM-DD (hạn mềm, tuỳ chọn)"}
+   — Mỗi buổi vừa với độ dài block chứa nó; mỗi buổi phải có đầu ra kiểm chứng được (bài làm, điểm, file, bản ghi âm), không có buổi kiểu "tìm hiểu chung chung".
+10. {"op":"settings.set","set":{"dayStart":"09:00","dayEnd":"23:00","ieltsExamDate":"YYYY-MM-DD","ieltsAim":7}}
+11. {"op":"habit.upsert","habit":{"id":"…","label":"…","track":"BASE","rule":"…","paused":false}}   {"op":"habit.remove","id":"…"}
+12. {"op":"goal.upsert","goal":{"id":"…","name":"…","track":"IELTS","targetDate":"YYYY-MM-DD","note":"…","src":"curg:IELTS (tính tiến độ theo giáo trình của group)"}}   {"op":"goal.remove","id":"…"}
+13. {"op":"file.add","file":{"name":"…","url":"https://…","g":"IF","desc":"…"}} — thêm link tài liệu vào Study Kit.
+
+=== LUẬT ===
+- Giờ dạng "HH:MM" 24h; ngày "YYYY-MM-DD"; dur là số phút. Dùng đúng id có trong DỮ LIỆU khi sửa/xoá — không bịa id.
+- Không để block chồng giờ nhau trong cùng ngày (kể cả với block fixed). Kiểm lại từng ngày trước khi trả lời.
+- Thứ tự thao tác có ý nghĩa: app chạy lần lượt từ trên xuống. Muốn đặt block mới vào giờ đang có block cũ → đặt thao tác xoá/sửa block cũ TRƯỚC thao tác thêm.
+- Đổi cả tuần → sửa khung "default". Đổi vài ngày cụ thể → dùng phase hoặc move_once/skip_once.
+- Giữ tổng tự học 40–45h/tuần trừ khi tôi yêu cầu khác; nêu con số ước tính trong summary.
+- Yêu cầu mơ hồ hoặc thiếu thông tin quan trọng → trả "ops": [] và ghi câu hỏi vào "questions" (tối đa 3 câu).
+- Không thêm trường lạ ngoài các trường ở trên. JSON phải parse được (không comment, không dấu phẩy thừa).`;
+}
+function openAIChange(result){
+  const inner=`<h3>🤖 Đổi app bằng AI</h3><div class="sh-sub">Không cần build lại: mô tả thay đổi → copy prompt sang ChatGPT / Claude / Gemini → dán kết quả (hoặc tải file .json) vào đây → xem trước → áp dụng. Có nút hoàn tác.</div>
+   <label class="fld"><span>① Bạn muốn đổi gì? (viết tự nhiên)</span><textarea id="aiReq" placeholder="VD: Tuần sau T5 tôi bận cả ngày, dời hết sang T7 sáng · Thêm 1 buổi Writing IELTS tối T3 · Thêm giáo trình CFA Ethics 10 buổi 1h vào T7 chiều" oninput="aiReq=this.value">${h(aiReq)}</textarea></label>
+   <div class="fld"><span class="mlab">Gửi kèm dữ liệu</span><div class="pill-row">${[["all","Tất cả"],["routine","Khung tuần"],["cur","Giáo trình"],["tasks","Việc + deadline"]].map(([k,l])=>`<button type="button" class="pill ${aiScope===k?"on":""}" onclick="aiReq=v('aiReq');aiInput=v('aiIn');aiScope='${k}';openAIChange()">${l}</button>`).join("")}</div></div>
+   <details class="acc" ${accA("aictx")} style="margin-bottom:10px"><summary>Bối cảnh gửi kèm (sửa khi đời sống thay đổi: đổi việc, đổi lịch tối…)</summary><div class="acc-b">
+     <textarea id="aiCtxIn" style="min-height:150px;font-size:12px">${h(aiCtx())}</textarea>
+     <div class="row wrap" style="gap:6px;margin-top:6px"><button class="btn sm grow" onclick="state.aiCtx=v('aiCtxIn');save();toast('Đã lưu bối cảnh')">Lưu bối cảnh</button><button class="btn sm grow ghost" onclick="state.aiCtx='';save();aiReq=v('aiReq');openAIChange()">Về mặc định</button></div></div></details>
+   <div class="row wrap" style="gap:7px"><button class="btn primary grow" onclick="aiReq=v('aiReq');copyStr(aiPrompt(aiReq,aiScope))">② Copy prompt</button>
+     <a class="btn grow" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a class="btn grow" href="https://claude.ai/new" target="_blank" rel="noopener">Claude ↗</a><a class="btn grow" href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a></div>
+   <label class="fld" style="margin-top:12px"><span>③ Dán câu trả lời của AI (nguyên văn cũng được, app tự lọc phần JSON)</span><textarea id="aiIn" style="min-height:120px;font-family:var(--f-num);font-size:11.5px" oninput="aiInput=this.value">${h(aiInput)}</textarea></label>
+   <div class="row wrap" style="gap:7px"><button class="btn grow" onclick="aiInput=v('aiIn');aiReq=v('aiReq');aiPreview()">④ Xem trước</button>
+     <label class="btn grow" style="text-align:center">📂 Tải file .json<input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="aiReq=v('aiReq');importFile(this)"></label></div>
+   ${result?`<div style="margin-top:12px">${result}</div>`:""}
+   <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn ghost" onclick="undoLast()">↶ Hoàn tác lần áp dụng trước</button></div>`;
+  openSheet(inner);
+}
+
+/* ============================ TABS / RENDER ============================ */
+IC.kit='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7h8M8 11h6"/></svg>';
+TABS.length=0;
+[["today","Hôm nay",IC.today],["cal","Lịch",IC.cal],["kit","Study Kit",IC.kit],["dead","Deadline",IC.dead],["track","Mảng",IC.track],["plans","Mục tiêu",IC.target]].forEach(x=>TABS.push(x));
+function render(){
+  if(!TABS.some(x=>x[0]===tab)) tab="today";
+  document.getElementById("nav").innerHTML=TABS.map(([k,l,i])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')"><span class="glyph">${i}</span>${l}</button>`).join("");
+  ["today","cal","kit","plans","dead","track","year"].forEach(k=>{const e=document.getElementById("v-"+k);if(e)e.classList.toggle("on",tab===k)});
+  const t=todayISO(),s=sessOfWeek(mondayOf(t)), ph=phaseOf(t);
+  document.getElementById("ctxLine").textContent=fmtFull(t)+" · "+(s?("Session "+s):"Ngoài kỳ học")+(ph?" · "+ph.name:"");
+  const R={today:renderToday,cal:renderCal,kit:renderKit,plans:renderPlans,dead:renderDead,track:renderTrack};
+  (R[tab]||renderToday)();
+}
+function renderTrack(){
+  const goals=state.goals.filter(g=>!g.hidden).map(g=>goalHTML(g)).join(""), wl=weekLoad();
+  document.getElementById("v-track").innerHTML=`
+  <div class="sec-h"><h2>Tải tuần này</h2><div class="rule"></div><span class="small muted">từ lịch thật</span></div>
+  <div class="card"><div class="row"><b class="num" style="font-size:22px">${hrs(wl.self)}h</b><span class="small muted" style="margin-left:8px">tự học · + ${hrs(wl.fixed)}h cố định (lớp, công ty, thi)</span>
+    <span class="chip ${wl.self>45?'red':wl.self<40?'amber':'green'}" style="margin-left:auto">${wl.self>45?"quá 45h":wl.self<40?"dưới 40h":"40–45h ✓"}</span></div>
+    <div class="bar tall" style="margin-top:10px">${TKEYS.filter(k=>wl[k]>0).map(k=>`<i style="width:${wl[k]/wl.total*100}%;background:${TR[k].color}"></i>`).join("")}</div>
+    <div class="legend">${TKEYS.filter(k=>wl[k]>0).map(k=>`<span><b style="background:${TR[k].color}"></b>${TR[k].short} ${hrs(wl[k])}h</span>`).join("")}</div></div>
+  ${journalAcc()}
+  <div class="sec-h"><h2>Mục tiêu & thời gian đạt</h2><div class="rule"></div><button class="act" onclick="editGoal('')">+ Goal</button></div>
+  ${goals}
+  <div class="sec-h"><h2>Chi tiết</h2><div class="rule"></div><span class="small muted">bấm để mở</span></div>
+  ${schoolAcc()}${zhAcc()}${baseAcc()}${yearAcc()}`;
+}
+function yearAcc(){
+  const t=todayISO();
+  const RM=[
+   {w:"Tháng 10",d:"2026-10-01",e:"2026-10-31",h:"Mid IF + BFN present cùng ngày 23/10",p:"Từ 5/10 chạy khung mới 40–45h. 16–22/10 tuần BFN present + ôn mid dồn dập. Từ 24/10 Report BFN chiếm 2 block/tuần. Kênh: 2 tuần đầu chỉ nghiên cứu."},
+   {w:"Tháng 11",d:"2026-11-01",e:"2026-11-30",h:"Report + ôn final",p:"Report BFN nộp sớm 2 ngày trước hạn (xác nhận hạn trên Ultra). Từ 23/11 khung thi: IF + BFN dồn, IELTS giữ nhịp, tạm dừng macro/kênh/broker. Final IF CN 29/11 13:00."},
+   {w:"Tháng 12",d:"2026-12-01",e:"2026-12-31",h:"Thi BFN 2/12 → đẩy IELTS",p:"Từ 3/12 IELTS ~15h/tuần. Đặt lịch thi khi 2 mock liên tiếp ≥ 7.0 (dự kiến cuối 12). Hoàn thiện Macro Note 3 trang. Nộp hồ sơ LPBS."},
+   {w:"Q1 2027",d:"2027-01-01",e:"2027-03-31",h:"Tốt nghiệp · LPBS · tiếng Trung quay lại",p:"Tiếng Trung mở lại SAU khi thi IELTS xong. DA chỉ học để lấy chứng chỉ khi có lịch mới."},
+   {w:"Q2 2027+",d:"2027-04-01",e:"2027-12-31",h:"CCHN rồi CFA",p:"CCHN là điều kiện hành nghề — trước CFA. Hướng dài hạn: quản lý tài sản tại Việt Nam."}];
+  return `<details class="acc" ${accA("year")} style="margin-top:9px"><summary>🗺 Đường đi 12 tháng</summary><div class="acc-b"><div class="rm">${RM.map(r=>`<div class="rmi ${t>=r.d&&t<=r.e?'now':''}">
+    <div class="when">${r.w}${t>=r.d&&t<=r.e?" · đang ở đây":""}</div><h4>${r.h}</h4><p>${r.p}</p></div>`).join("")}</div>
+    <div class="note" style="margin-top:10px"><b>Vỡ trận thì cắt theo thứ tự:</b> kênh → broker → 1 buổi macro → 1 buổi IELTS. Không cắt: giấc ngủ, đọc báo 30', deadline, buổi ôn thi.</div></div></details>`;
+}
+function weekHTML(){
+  const t=todayISO(), mon=addD(mondayOf(t),weekOff*7), out=[];
+  for(let i=0;i<7;i++){
+    const d=addD(mon,i), all=dayItems(d), items=state.settings.hideDone?all.filter(x=>!isDone(x,d)):all;
+    const dl=state.assess.filter(a=>a.due===d), pg=dayProgress(d), open=openDays.has(d)||d===t, tracks=[...new Set(all.filter(x=>!x.rest).map(x=>x.track))];
+    const ph=phaseOf(d);
+    out.push(`<div class="daybox ${d===t?'today':''}" data-date="${d}" ondragover="dragOver(event)" ondrop="dropDay(event,'${d}')">
+      <button class="dayhead" onclick="tgDay2('${d}')"><b>${WDN[i+1]}</b><span class="dn2">${fmtD(d)}</span>
+        ${dl.length?`<span class="chip red">${dl.length} hạn</span>`:""}${ph?`<span class="chip">${h(ph.name.slice(0,18))}</span>`:""}
+        <span class="cnt"><span class="dots">${tracks.map(k=>`<i style="background:${(TR[k]||TR.LIFE).color}"></i>`).join("")}</span>${pg.d}/${pg.n}<span style="opacity:.5">${open?"▾":"▸"}</span></span></button>
+      ${open?`<div class="list" style="border:none;border-radius:0;border-top:1px solid var(--line)">
+        ${dl.map(a=>dlRowHTML(a)).join("")}
+        ${items.length?items.map(x=>rowHTML(x,d)).join(""):'<div class="empty">Trống — kéo việc vào đây</div>'}
+        <div class="rowit" style="justify-content:center"><button class="btn sm ghost" onclick="addTask({date:'${d}'})">+ Thêm việc ngày này</button></div>
+      </div>`:""}</div>`);
+  }
+  return `<div class="note" style="margin-bottom:8px">Máy tính: kéo thả việc/block sang ngày khác. Điện thoại: <b>nhấn giữ 0,4s</b> rồi kéo lên tiêu đề ngày khác (mở sẵn ngày đích cũng được). Hoặc bấm vào block → "Dời".</div>`+out.join("");
+}
+
+/* sửa block lặp tuần: sửa đúng khung (mặc định hoặc giai đoạn) mà block thuộc về */
+function editBlock(day,id,date){
+  const ph=date?phaseOf(date):null, src=ph&&ph.tpl[day]&&ph.tpl[day].some(x=>x.id===id)?ph:null;
+  const list=src?src.tpl[day]:(state.routine.tpl[day]||[]);
+  const b=list.find(x=>x.id===id)||{id:"",from:"09:00",to:"10:00",label:"",track:"IF",fixed:false};
+  const isNew=!b.id, keys=curKeys().filter(k=>{const d=curDef(k);return d&&d.sessions&&d.sessions.length});
+  openSheet(`<h3>${isNew?"Block lặp tuần":"Sửa block"}</h3><div class="sh-sub">${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][day]} · ${src?"chỉ trong giai đoạn "+h(src.name)+" ("+fmtD(src.from)+"–"+fmtD(src.to)+")":"lặp mọi tuần (khung mặc định)"}</div>
+   ${!isNew&&b.hint?studyLinks(b,date):""}
+   <label class="fld"><span>Nội dung</span><input type="text" id="bL" value="${h(b.label)}"></label>
+   <div class="two"><label class="fld"><span>Từ</span><input type="time" id="bF" value="${b.from}"></label><label class="fld"><span>Đến</span><input type="time" id="bT" value="${b.to}"></label></div>
+   <div class="two"><label class="fld"><span>Mảng</span><select id="bK">${trackOpts(b.track)}</select></label>
+     <label class="fld"><span>Giáo trình gắn vào</span><select id="bC"><option value="">— không —</option>${keys.map(k=>`<option value="${k}" ${b.cur===k?"selected":""}>${h(curDef(k).name)}</option>`).join("")}</select></label></div>
+   <label class="fld"><span>Đổi sang thứ</span><select id="bD">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===day?"selected":""}>${["","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"][n]}</option>`).join("")}</select></label>
+   <label class="fld"><span><input type="checkbox" id="bX" ${b.fixed?"checked":""} style="width:auto;margin-right:7px">Cố định (lớp / đi làm / thi — không dời)</span></label>
+   <label class="fld"><span><input type="checkbox" id="bR" ${b.rest?"checked":""} style="width:auto;margin-right:7px">Khoá mềm (thời gian riêng — app không tự xếp việc vào)</span></label>
+   <div class="sheet-foot">${!isNew?`<button class="btn danger" onclick="delBlock(${day},'${b.id}','${src?src.id:""}')">Xoá</button>`:""}
+     <button class="btn ghost" onclick="closeSheet()">Đóng</button><button class="btn primary" onclick="saveBlock(${day},'${b.id}','${src?src.id:""}')">Lưu</button></div>`);
+}
+function tplOf(pid){ if(!pid) return state.routine.tpl; const p=(state.routine.phases||[]).find(x=>x.id===pid); return p?p.tpl:state.routine.tpl; }
+function saveBlock(day,id,pid){
+  const T=tplOf(pid), nd=+v("bD")||day, from=v("bF")||"09:00", to=v("bT")||"10:00";
+  if(mm(to)<=mm(from)){alert("Giờ kết thúc phải sau giờ bắt đầu.");return}
+  const old=(T[day]||[]).find(x=>x.id===id)||{};
+  T[day]=(T[day]||[]).filter(x=>x.id!==id); T[nd]=T[nd]||[];
+  const nb=Object.assign({},old,{id:id||("b"+uid()),label:v("bL")||"Block",from,to,track:v("bK"),fixed:ck("bX"),rest:ck("bR"),soft:ck("bR")});
+  const c=v("bC"); if(c) nb.cur=c; else delete nb.cur;
+  T[nd].push(nb); T[nd].sort((a,b)=>mm(a.from)-mm(b.from)); state.routine.tplV=(state.routine.tplV||0)+1;
+  closeSheet(); save();
+}
+function delBlock(day,id,pid){ const T=tplOf(pid); T[day]=(T[day]||[]).filter(x=>x.id!==id); state.routine.tplV=(state.routine.tplV||0)+1; closeSheet(); save(); }
+
+/* Cài đặt: thêm Xuất/Nhập + Đổi bằng AI */
+const _openSettingsOld=openSettings;
+openSettings=function(){
+  _openSettingsOld();
+  const sh=document.getElementById("sheet"); if(!sh) return;
+  const box=document.createElement("div");
+  box.innerHTML=`<div class="sec-h" style="margin:16px 0 8px"><h2>💾 Dữ liệu & AI</h2><div class="rule"></div></div>
+   <div class="row wrap" style="gap:8px"><button class="btn sm grow" onclick="exportJSON()">Xuất / Nhập file</button><button class="btn sm grow primary" onclick="openAIChange()">🤖 Đổi app bằng AI</button><button class="btn sm grow ghost" onclick="undoLast()">↶ Hoàn tác</button></div>
+   <div class="note" style="margin-top:8px">Bản trên GitHub lưu riêng từng máy (điện thoại và laptop là 2 bản). Chuyển máy: Xuất file → gửi qua Zalo/Drive → Nhập ở máy kia.</div>`;
+  const foot=sh.querySelector(".sheet-foot"); if(foot) sh.insertBefore(box,foot); else sh.appendChild(box);
+};
+function quickAdd(){
+  openSheet(`<h3>Thêm nhanh</h3><div class="sh-sub">Chọn loại</div>
+   <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn primary" onclick="openAIChange()">🤖 Đổi lịch / thêm giáo trình bằng AI</button>
+    <button class="btn" onclick="closeSheet();addTask({date:'${todayISO()}'})">📌 Việc có ngày giờ</button>
+    <button class="btn" onclick="openPlanEdit('')">🎯 Mục tiêu dài hạn — AI chia ra từng ngày</button>
+    <button class="btn" onclick="openPromptBuilder()">✨ Tạo prompt học với AI</button>
+    <button class="btn" onclick="closeSheet();openAssess('')">🎯 Mốc chấm điểm / deadline</button>
+    <button class="btn" onclick="closeSheet();editBlock(${dow(todayISO())},'','${todayISO()}')">🔁 Block lặp mỗi tuần</button>
+    <button class="btn" onclick="editPerson('')">🤝 Người đáng đầu tư thời gian</button>
+    <button class="btn" onclick="closeSheet();openEmergency()">⚡ Lịch khẩn cấp</button>
+   </div><div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
+}
+
+/* ============================ MIGRATION → V8 ============================ */
+const OLD_SEED_TASKS=["t01","t02","t03","t04","t05","t06","t07","t08","t09","t10","t11","t12","t13","t14","t15","t16","t17","t18","t21","t22","t23","t24","t25","t26","t27","t28","t29","t30","t31","t32","t33"];
+function applyV8(s){
+  if((s.patches||[]).includes("v8-0510")) return s;
+  const prev=state; state=s;
+  try{
+    s.routine=JSON.parse(JSON.stringify(ROUTINE_V8));
+    s.settings=Object.assign(s.settings||{},{dayStart:"09:00",dayEnd:"23:00"});
+    s.cdone=s.cdone||{}; s.bx={}; s.curOver=s.curOver||{}; s.kitLinks=s.kitLinks||[];
+    const dl=s.dlog||{}; TRADE_LESSONS.forEach(L=>{ if(dl[L.d]&&dl[L.d]["tl-"+L.n]) s.cdone["tl"+L.n]=L.d; });
+    if(s.macro) s.macro.on=false; if(s.trade) s.trade.on=false;
+    /* việc cũ: bỏ việc seed đã chuyển thành giáo trình; việc của bạn chưa xong thì kéo về tương lai */
+    s.tasks=(s.tasks||[]).filter(x=>x.status==="done"||!(OLD_SEED_TASKS.includes(x.id)||OLD_SEED_TASKS.includes(String(x.id).replace(/b$/,""))));
+    const from=todayISO()>V8_START?todayISO():V8_START;
+    s.tasks.filter(x=>x.status!=="done"&&x.status!=="skipped"&&x.date<from).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).forEach(x=>{
+      const sl=nextFreeSlot(from,0,x.dur||60,x.id,60); if(sl){x.date=sl.date;x.start=sl.start} else x.date=from; });
+    const t19=s.tasks.find(x=>x.id==="t19"); if(t19&&t19.status!=="done"){ t19.t="Hồ sơ LPBS: CV + câu chuyện phỏng vấn (Macro Note + business model 1 trang làm minh chứng)"; t19.date="2026-12-04"; t19.start=mm("09:30"); }
+    const t20=s.tasks.find(x=>x.id==="t20"); if(t20&&t20.status!=="done"){ t20.t="Check Ultra: phòng thi 2 môn final (IF CN 29/11 13:00 · BFN T4 2/12 09:00) + xin nghỉ ca sáng 2/12 ở công ty"; }
+    /* deadline */
+    s.assess=(s.assess||[]).filter(a=>a.id!=="if-pres"&&!(String(a.id).indexOf("da-")===0&&!aDone(a)));
+    const A=id=>s.assess.find(a=>a.id===id);
+    if(A("bf-pres")) Object.assign(A("bf-pres"),{due:"2026-10-23",dueTime:"12:00",prov:false,session:8,where:"T6 23/10 · trên lớp FINC3022 (cùng ngày thi mid IF buổi sáng)",note:"Market Risk Regulation for G-SIBs (Ch.15 + BIS/FSB). 13–15 phút, mỗi người ≥ 2 phút. Chỉ chuẩn bị từ 16/10 (block riêng trong lịch). KHÔNG dùng AI."});
+    if(A("if-mid")) Object.assign(A("if-mid"),{due:"2026-10-23",dueTime:"09:00",where:"T6 23/10/2026 · 09:00 · phòng D401"});
+    if(A("if-final")) Object.assign(A("if-final"),{due:"2026-11-29",dueTime:"13:00"});
+    if(A("bf-final")) Object.assign(A("bf-final"),{due:"2026-12-02",dueTime:"09:00",where:"T4 2/12/2026 · 09:00 · phòng TBA — trùng ca sáng ở công ty: xin nghỉ trước"});
+    if(A("bf-report")) A("bf-report").where="Hạn đang TẠM TÍNH 22/11 23:59 — xác nhận trên Ultra (Turnitin). Làm trong block Report T3 + T6 từ 26/10.";
+    /* goal */
+    const G=id=>s.goals.find(g=>g.id===id);
+    if(G("g-ielts")) Object.assign(G("g-ielts"),{src:"curg:IELTS",targetDate:"2026-12-31",note:"Academic 7.0, thi trên máy cuối 12/2026. Xuất phát ~6.25–6.5. 10h/tuần đến 2/12, ~15h/tuần từ 3/12. Đặt lịch khi 2 mock liên tiếp ≥ 7.0."});
+    if(G("g-macro")) Object.assign(G("g-macro"),{name:"Macro → Micro (top-down + business model)",src:"curg:MACRO",targetDate:"2026-12-31",note:"45 buổi, 9 module. Kết thúc bằng Macro Note 3 trang + 1 đề cương research cờ vĩ mô cho hệ giao dịch."});
+    if(G("g-da")) Object.assign(G("g-da"),{paused:true,hidden:true,note:"Ngưng — chỉ học để lấy chứng chỉ khi có lịch mới."});
+    if(G("g-zh")) Object.assign(G("g-zh"),{paused:true,note:"Tạm dừng tới khi thi IELTS xong (dự kiến cuối 12/2026)."});
+    if(!G("g-ch")) s.goals.push({id:"g-ch",name:"Kênh '5 phút đọc báo'",track:"CH",src:"curg:CH",targetDate:"",note:"2 tuần nghiên cứu → 3 video/tuần. Nguồn: NSI-tin tab Tin web, không dùng nội dung Zalo kín."});
+    if(!G("g-brk")) s.goals.push({id:"g-brk",name:"Học nghề broker → quản lý tài sản",track:"BRK",src:"curg:BRK",targetDate:"",note:"2h/tuần. Mục tiêu dài hạn: quản lý tài sản & đầu tư tại Việt Nam."});
+    /* thói quen */
+    const hn=s.habits.find(x=>x.id==="hn"); if(hn){hn.label="Đọc báo 30'";hn.rule="KHOÁ 30'/ngày: 09:00 (T3/T4 12:30). Bản tin sáng NSI-tin tab Tin web → 1 dòng Macro Journal. Hết 30' là dừng.";}
+    const hz=s.habits.find(x=>x.id==="hz"); if(hz){hz.paused=true;hz.rule="Tạm dừng tới khi thi IELTS xong (cuối 12/2026).";}
+    s.confirm=s.confirm||[];
+    if(!s.confirm.find(c=>c.id==="c12")) s.confirm.push({id:"c12",t:"Report BFN: hạn nộp chính thức (app đang tạm tính 22/11 23:59)",done:false});
+    if(!s.confirm.find(c=>c.id==="c13")) s.confirm.push({id:"c13",t:"Công ty: quy định nội bộ về làm kênh TikTok/YouTube cá nhân về chứng khoán",done:false});
+    if(!s.confirm.find(c=>c.id==="c14")) s.confirm.push({id:"c14",t:"Xin nghỉ ca sáng T4 2/12 (trùng giờ thi BFN 09:00)",done:false});
+    reflow();
+    s.placed=true; s.patches=(s.patches||[]).concat("v8-0510"); patched=true;
+  }finally{ state=prev; }
+  _cm=null;
+  return s;
 }
 
 /* ================================= BOOT ================================= */
