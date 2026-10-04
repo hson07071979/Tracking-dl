@@ -2574,28 +2574,40 @@ function openSess(k,id){
    <button class="btn primary" onclick="tgSess('${id}');closeSheet()">${cdone()[id]?"Bỏ đánh dấu":"✓ Đánh dấu xong hôm nay"}</button></div>`);
 }
 function kitFilesHTML(){
-  const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[];
+  const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[], LINKS=(typeof KIT_LINKS!=="undefined"?KIT_LINKS:[]).concat((state.kitLinks||[]).map(x=>Object.assign({sec:"Link bạn thêm"},x)));
   if(kitFilesLoading&&!kitFiles) return `<div class="card small muted">Đang lấy danh sách file từ GitHub…</div>`;
-  const files=kitFiles||[], extra=(state.kitLinks||[]);
-  const known=meta.map(m=>{const f=fileForKey(m.key); return `<div class="rowit"><span class="tm" style="font-size:15px">${f?"📄":"⏳"}</span>
-     <div class="rt"><b>${h(m.name)}</b><div class="sub">${h(m.desc)} · ${m.pages} trang · NotebookLM: ${h(m.nlm)}</div>
+  const files=kitFiles||[], used=new Set();
+  const fileRow=(title,sub,f)=>`<div class="rowit"><span class="tm" style="font-size:15px">${f?"📄":"⏳"}</span>
+     <div class="rt"><b>${h(title)}</b><div class="sub">${sub}</div>
      ${f?`<div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(fileUrl(f))}" download="${h(f.name)}">⬇ Tải</a><a class="btn sm ghost" href="${h(fileUrl(f))}" target="_blank" rel="noopener">Mở ↗</a></div>`
-        :`<div class="small" style="color:var(--amber);margin-top:4px">Chưa có trên repo — kéo file PDF vào thư mục <b>study/files/if/</b> trên GitHub (tên file chứa: ${m.match.join(" + ")}).</div>`}</div></div>`}).join("");
-  const others=files.filter(f=>!meta.some(m=>fileForKey(m.key)===f)).map(f=>`<div class="rowit"><span class="tm" style="font-size:15px">📄</span>
-     <div class="rt"><b>${h(f.name)}</b><div class="sub">${h(f.folder)} · ${(f.size/1048576).toFixed(1)} MB</div>
-     <div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(fileUrl(f))}" download="${h(f.name)}">⬇ Tải</a><a class="btn sm ghost" href="${h(fileUrl(f))}" target="_blank" rel="noopener">Mở ↗</a></div></div></div>`).join("");
-  const links=extra.map((x,i)=>`<div class="rowit"><span class="tm" style="font-size:15px">🔗</span><div class="rt"><b>${h(x.name)}</b><div class="sub">${h(x.g||"")} ${h(x.desc||"")}</div>
-     <div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(x.url)}" target="_blank" rel="noopener">Mở ↗</a></div></div></div>`).join("");
+        :`<div class="small" style="color:var(--amber);margin-top:4px">Chưa có trên repo (thư mục study/files/if/).</div>`}</div></div>`;
+  const secs={};
+  meta.forEach(m=>{ const f=fileForKey(m.key); if(f) used.add(f.path);
+    (secs[m.sec]=secs[m.sec]||[]).push(fileRow(m.name,[h(m.desc),m.pages?m.pages+" trang":"",f?(f.size/1048576).toFixed(1)+" MB":"","NotebookLM: "+h(m.nlm)].filter(Boolean).join(" · "),f)); });
+  files.filter(f=>!used.has(f.path)).forEach(f=>{ (secs["Khác trong study/files"]=secs["Khác trong study/files"]||[]).push(fileRow(f.name,h(f.folder)+" · "+(f.size/1048576).toFixed(1)+" MB",f)); });
+  LINKS.forEach(x=>{ (secs[x.sec]=secs[x.sec]||[]).push(`<div class="rowit"><span class="tm" style="font-size:15px">🔗</span><div class="rt"><b>${h(x.name)}</b><div class="sub">${h(x.desc||"")}</div>
+     <div class="row wrap" style="gap:6px;margin-top:6px"><a class="btn sm" href="${h(x.url)}" target="_blank" rel="noopener">Mở ↗</a></div></div></div>`); });
+  const slideN=meta.filter(m=>m.key.indexOf("SL")===0&&fileForKey(m.key)).length;
   const notes=[["IF — tóm tắt 12 chương","study/if/"],["BFN — tóm tắt theo session","study/bfn/"]];
-  return `<div class="list">${known}${others}${links}</div>
-   ${kitFilesErr?`<div class="small" style="color:var(--amber);margin-top:6px">Không lấy được danh sách file (${h(kitFilesErr)}). Mở trên mạng khác hoặc bấm Làm mới.</div>`:""}
+  return Object.keys(secs).map(k=>`<details class="acc" ${accA("fs-"+k,k.indexOf("Slide")>=0||k.indexOf("ôn thi")>=0)} style="margin-top:8px"><summary>${h(k)}<span class="chip" style="margin-left:auto">${secs[k].length}</span></summary>
+     <div class="acc-b">${k.indexOf("IF · Slide")===0&&slideN?`<button class="btn sm primary" style="width:100%;margin-bottom:8px;white-space:normal" onclick="downloadGroup('SL')">⬇ Tải tất cả ${slideN} slide IF (lần lượt từng file)</button>`:""}
+     ${k.indexOf("ôn thi")>=0?`<button class="btn sm" style="width:100%;margin-bottom:8px;white-space:normal" onclick="downloadGroup('ON')">⬇ Tải cả 5 file ôn thi IF</button>`:""}
+     ${k.indexOf("BFN")===0?`<div class="note" style="margin-bottom:8px">Slide BFN ghi rõ không được phát tán → không đưa lên repo công khai, chỉ link tới Drive của thầy (mở bằng tài khoản trường). Trong Drive: chuột phải → Tải xuống.</div>`:""}
+     <div class="list">${secs[k].join("")}</div></div></details>`).join("")+`
+   ${kitFilesErr?`<div class="small" style="color:var(--amber);margin-top:6px">Không lấy được danh sách file (${h(kitFilesErr)}). Bấm Làm mới.</div>`:""}
    <div style="display:flex;flex-direction:column;gap:7px;margin-top:9px">
      <button class="btn sm" style="white-space:normal" onclick="copyAllLinks()">📋 Copy link mọi file (dán vào NotebookLM/Gemini)</button>
      ${notes.map(n=>`<a class="btn sm ghost" style="white-space:normal" href="${siteBase()+n[1]}" target="_blank" rel="noopener">${n[0]} ↗</a>`).join("")}</div>
    <details class="acc" ${accA("nlmhow")} style="margin-top:9px"><summary>Cách nạp vào NotebookLM / Gemini nhanh nhất</summary><div class="acc-b small">
-     <b>NotebookLM:</b> tạo notebook theo cột "NotebookLM" ở trên (VD "IF – Midterm") → <b>Add source → Upload</b> các PDF vừa tải (nhanh và ổn định nhất). Bài tóm tắt chương là trang web: dán link vào <b>Add source → Website</b>.<br>
-     <b>Gemini:</b> mở gemini.google.com → kẹp file (📎) → chọn nhiều PDF một lúc (tối đa ~10 file/lần).<br>
-     Testbank 339 trang rất nặng: chỉ nạp khi cần tạo đề; còn lại dùng link "#trang" trong từng buổi học để mở đúng chương.</div></details>`;
+     <b>NotebookLM:</b> tạo notebook theo cột "NotebookLM" (VD "IF – Midterm") → <b>Add source → Upload</b> các PDF vừa tải. Nạp theo chương khi tới tuần học — nguồn càng gọn trả lời càng chính xác. Bài tóm tắt chương là trang web: dán link vào <b>Add source → Website</b>.<br>
+     <b>Gemini:</b> mở gemini.google.com → kẹp file (📎) → chọn nhiều PDF một lúc.<br>
+     Testbank 339 trang rất nặng: chỉ nạp khi cần tạo đề; còn lại dùng link "#trang" trong từng buổi học.</div></details>`;
+}
+function downloadGroup(kind){
+  const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[];
+  const list=meta.filter(m=>kind==="SL"?m.key.indexOf("SL")===0:["TN","ME","CQ","FR","TB"].includes(m.key)).map(m=>fileForKey(m.key)).filter(Boolean);
+  list.forEach((f,i)=>setTimeout(()=>{ const a=document.createElement("a"); a.href=fileUrl(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); },i*700));
+  toast(`Đang tải ${list.length} file — trình duyệt có thể hỏi "Cho phép tải nhiều file", bấm Cho phép.`);
 }
 function copyAllLinks(){
   const meta=typeof KIT_FILES!=="undefined"?KIT_FILES:[];

@@ -18,6 +18,17 @@ const KIT_FILES = [
   { key:"FR", g:"IF", match:["final","revision"],    name:"IF Final Revision",                 pages:48,  desc:"Part A: lý thuyết + MCQ theo chương · Part B: bài tính dài (trang 48)", nlm:"IF – Final" },
   { key:"TB", g:"IF", match:["testbank"],            name:"IF Testbank (Eiteman 15e, 18 chương)",pages:339,desc:"Kho MCQ theo chương — trang bắt đầu mỗi chương ghi trong từng buổi", nlm:"IF – Midterm + Final" }
 ];
+KIT_FILES.forEach(f=>f.sec=f.sec||"IF · Tài liệu ôn thi");
+[1,2,3,5,6,7,9,10,13,14,16,17].forEach(c=>KIT_FILES.push({key:"SL"+c,g:"IF",sec:"IF · Slide giảng viên (PDF)",match:["slide","ch"+c+" "],name:"Slide Ch."+c,pages:0,desc:"Slide GV (đổi sang PDF để nạp NotebookLM/Gemini)",nlm:"IF – theo chương"}));
+KIT_FILES.push({key:"DQ",g:"IF",sec:"IF · Slide giảng viên (PDF)",match:["discussion"],name:"Discussion Questions (case theo tuần)",pages:0,desc:"Câu hỏi thảo luận theo tuần",nlm:"IF – Midterm + Final"});
+KIT_FILES.push({key:"SO",g:"IF",sec:"IF · Slide giảng viên (PDF)",match:["subject","outline"],name:"Subject Outline ECON3014",pages:0,desc:"Đề cương môn: lịch, cách chấm",nlm:"—"});
+/* link ngoài (không đưa lên repo): BFN — slide GV ghi rõ không phát tán, nên chỉ link tới Drive của thầy (mở bằng tài khoản trường) */
+const KIT_LINKS=[
+  {sec:"BFN · Slide & tài liệu GV (Google Drive của thầy Tuấn)",name:"Banking and Finance S3.2026 — thư mục môn",url:"https://drive.google.com/drive/folders/17-dcLE-jjcVffLwjqrzRMZGxNqiCc4zT",desc:"Subject outline, danh sách nhóm, đề tài thuyết trình"},
+  {sec:"BFN · Slide & tài liệu GV (Google Drive của thầy Tuấn)",name:"Textbook Slides (Saunders & Cornett) — slide từng chương",url:"https://drive.google.com/drive/folders/1q-S2kwpHOCQBh0Ha4ifFQ5Lp8qlGQKo1",desc:"Tải chương cần học → File → Tải xuống PDF → nạp NotebookLM"},
+  {sec:"BFN · Slide & tài liệu GV (Google Drive của thầy Tuấn)",name:"Topics for presentation.pdf",url:"https://drive.google.com/file/d/1k_zG_zuFsxOgDQUj4bb4mEoKAAZhgaIv/view",desc:"Danh sách đề tài thuyết trình nhóm"},
+  {sec:"BFN · Slide & tài liệu GV (Google Drive của thầy Tuấn)",name:"Subject Outline FINC3022",url:"https://drive.google.com/file/d/1KOv1LVZ77t0lifxk309uhjYDQOjy2Kqr/view",desc:"Đề cương môn BFN"}
+];
 /* trang bắt đầu từng chương trong Testbank (để mở thẳng #page=) */
 const TB_PAGE = {1:1,2:20,3:38,4:62,5:80,6:100,7:119,8:142,9:155,10:173,11:190,12:206,13:223,14:245,15:270,16:288,17:307,18:323};
 
@@ -277,6 +288,11 @@ KIT.bff = { name:"BFN — ôn Final (T4 2/12 09:00)", g:"BF", track:"BF", sessio
  { id:"bff8", t:"Chữa mock + làm lại bài sai", mat:[], how:["Bài sai → làm lại 2 lần."], q:[], out:"Không còn bài đỏ" },
  { id:"bff9", t:"Đọc tờ A4, ngủ sớm", mat:[], how:["Thi 09:00 T4 2/12 — đã xin nghỉ ca sáng ở công ty."], q:[], out:"Sẵn sàng thi" }
 ]};
+
+/* gắn slide GV đúng chương vào từng buổi IF; gắn Drive BFN vào buổi ôn final BFN */
+KIT.if.sessions.forEach(s=>{ const chs=[...new Set([...(s.t.matchAll(/Ch\.(\d+)/g))].map(m=>+m[1]).concat([...s.t.matchAll(/Ch\.(\d+)\s*\+\s*Ch\.(\d+)/g)].map(m=>+m[2])))].filter(c=>[1,2,3,5,6,7,9,10,13,14,16,17].includes(c));
+  s.mat=chs.map(c=>["Slide GV Ch."+c+" (PDF)","@SL"+c]).concat(s.mat||[]); });
+KIT.bff.sessions.forEach(s=>{ if(!/A4|ngủ|Mock|mock|Chữa/.test(s.t)) s.mat=[["Textbook Slides BFN (Drive của thầy)","https://drive.google.com/drive/folders/1q-S2kwpHOCQBh0Ha4ifFQ5Lp8qlGQKo1"]].concat(s.mat||[]); });
 
 /* ===== IELTS — 6 hàng đợi, mỗi hàng gắn với 1 loại block trong tuần ===== */
 (function(){
