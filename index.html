@@ -831,7 +831,7 @@ function upgrade(old){
     if(!s.patches.includes("v7d-trade")){   // trading-method lessons Mon/Wed 16:15 → re-place tasks around them
       s.placed=false; s.patches=s.patches.concat("v7d-trade"); patched=true;
     }
-    return applyV8(s);
+    return applyV9(applyV8(s));
   }
   // v5 → v6: carry progress by id
   patched=true;
@@ -843,7 +843,7 @@ function upgrade(old){
     s.ielts.aim=old.ielts.aim||7; s.ielts.examDate=old.ielts.examDate||""; s.ielts.mocks=old.ielts.mocks||[];
     s.ielts.phases.forEach(p=>{const op=byId(old.ielts.phases,p.id); if(op)p.units.forEach(u=>{const ou=byId(op.units,u.id); if(ou&&ou.done){u.done=true;u.at=ou.at}});});
   }
-  return applyV8(s);
+  return applyV9(applyV8(s));
 }
 function save(){
   state.rev=(state.rev||1)+1; lsSave(); render();
@@ -3045,8 +3045,8 @@ function aiSnapshot(scope){
   const wl=weekLoad(); L.push(`Tải tuần này: tự học ${hrs(wl.self)}h (+ cố định ${hrs(wl.fixed)}h) — `+TKEYS.filter(k=>wl[k]>0).map(k=>k+" "+hrs(wl[k])+"h").join(", "));
   return L.join("\n");
 }
-const AI_CTX_DEFAULT=`- Tôi: Sơn, SV năm cuối tài chính. Mục tiêu 40–45h tự học/tuần (chưa tính lớp, chưa tính 8h công ty).
-- Đi làm T3 + T4 08:00–12:00 (block fixed, track WORK). Ngày khác bắt đầu từ 09:00. Đọc báo khoá 30'/ngày (track BASE, news:true).
+const AI_CTX_DEFAULT=`- Tôi: Sơn, SV năm cuối tài chính. Mục tiêu 40–45h tự học/tuần (chưa tính lớp).
+- Đã nghỉ làm ở công ty (không còn ca T3/T4). Ngày bắt đầu từ 09:00. Sáng T3/T4 09:30–11:00 xem YouTube/TikTok học làm kênh (CH, khoá mềm). Đọc báo khoá 30'/ngày (track BASE, news:true).
 - Tối T2, T4, T6, T7, CN 18:30–22:30 là "Tối riêng" (rest:true = khoá MỀM): KHÔNG thêm block học vào đó trừ khi tôi yêu cầu rõ. Tối T3, T5 được học nhẹ.
 - Block fixed (lớp, đi làm, thi) không được dời/xoá trừ khi tôi nói rõ.
 - Lớp FINC3022 T6 12:00–15:15, ECON3014 T7 12:00–15:15 (hết lớp sau 22/11). Thi: mid IF 23/10 09:00 · final IF 29/11 13:00 · final BFN 02/12 09:00.
@@ -3237,6 +3237,31 @@ function quickAdd(){
 
 /* ============================ MIGRATION → V8 ============================ */
 const OLD_SEED_TASKS=["t01","t02","t03","t04","t05","t06","t07","t08","t09","t10","t11","t12","t13","t14","t15","t16","t17","t18","t21","t22","t23","t24","t25","t26","t27","t28","t29","t30","t31","t32","t33"];
+/* 10/2026: nghỉ làm ở công ty → bỏ ca sáng T3/T4, đọc báo về lại 09:00, sáng trống dành cho xem YouTube/TikTok học làm kênh
+   (khoá mềm: không tính vào giờ tự học vì tuần thường đã ~43h). Tuần ôn thi cuối kỳ thì dùng sáng đó để ôn. */
+function applyV9(s){
+  if((s.patches||[]).includes("v9-nowork")||!s.routine) return s;
+  const mm=x=>{const[a,b]=x.split(":").map(Number);return a*60+b}, free=(day,f,t)=>!day.some(b=>mm(b.from)<mm(t)&&mm(b.to)>mm(f));
+  const YT=(id)=>({id,from:"09:30",to:"11:00",label:"🎬 Xem YouTube/TikTok — học cách làm kênh",track:"CH",rest:true,soft:true,
+    note:"Khoá mềm. Mỗi buổi: chọn 2–3 kênh tài chính/đọc báo đang lên → ghi lại hook 3 giây đầu, độ dài, cách mở/kết, cách dùng chữ & hình. Cuối buổi chốt 1 ý tưởng video cho kênh '5 phút đọc báo'. Không lướt feed linh tinh."});
+  const fix=(tpl,pid)=>Object.keys(tpl||{}).forEach(d=>{
+    const day=tpl[d]; if(!Array.isArray(day)||!day.some(b=>b.track==="WORK")) return;
+    let out=day.filter(b=>b.track!=="WORK");
+    out.forEach(b=>{ if(b.news&&b.from==="12:30"&&free(out.filter(x=>x!==b),"09:00","09:30")){ b.from="09:00"; b.to="09:30"; b.note="Khoá 30 phút. Đọc '3 điều cần biết' + ảnh chụp vĩ mô → ghi 1 dòng vào Macro Journal."; } });
+    const sfx=(pid?pid.replace(/\W/g,""):"")+d;
+    if(pid==="wk-finals"){ if(free(out,"09:30","11:30")) out.push(d==="2"?{id:"fy"+sfx,from:"09:30",to:"11:30",label:"BFN Final",track:"BF",cur:"bff"}:{id:"fy"+sfx,from:"09:30",to:"11:30",label:"IF Final",track:"IF",cur:"if"}); }
+    else if(free(out,"09:30","11:00")) out.push(YT("yt"+sfx));
+    out.sort((a,b)=>mm(a.from)-mm(b.from)); tpl[d]=out;
+  });
+  fix(s.routine.tpl,""); (s.routine.phases||[]).forEach(p=>fix(p.tpl,p.id));
+  s.routine.tplV=(s.routine.tplV||0)+1;
+  const hn=(s.habits||[]).find(x=>x.id==="hn"); if(hn&&hn.rule) hn.rule=hn.rule.replace(" (T3/T4 12:30)","");
+  const c14=(s.confirm||[]).find(c=>c.id==="c14"); if(c14&&!c14.done){ c14.done=true; c14.t="Xin nghỉ ca sáng T4 2/12 → không cần nữa (đã nghỉ làm ở công ty)"; }
+  const bf=(s.assess||[]).find(a=>a.id==="bf-final"); if(bf&&bf.where) bf.where=bf.where.replace(" — trùng ca sáng ở công ty: xin nghỉ trước","");
+  const t20=(s.tasks||[]).find(x=>x.id==="t20"); if(t20&&t20.status!=="done") t20.t=t20.t.replace(" + xin nghỉ ca sáng 2/12 ở công ty","");
+  s.patches=(s.patches||[]).concat("v9-nowork"); patched=true; _cm=null;
+  return s;
+}
 function applyV8(s){
   if((s.patches||[]).includes("v8-0510")) return s;
   const prev=state; state=s;
