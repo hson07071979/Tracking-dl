@@ -74,6 +74,7 @@ header.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--
 .sync{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink3);font-weight:600;padding:4px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--line)}
 .sync i{width:7px;height:7px;border-radius:50%;background:var(--ink3);display:block}
 .sync.ok i{background:var(--green)}.sync.saving i{background:var(--amber)}.sync.local i{background:var(--blue)}
+.sync.err{background:var(--red-soft);color:var(--red);border-color:var(--red)}.sync.err i{background:var(--red)}
 
 main{max-width:820px;margin:0 auto;padding:16px 16px 40px}
 section.view{display:none;animation:fade .18s ease-out}
@@ -404,7 +405,7 @@ ol.steps{margin:4px 0 0;padding-left:20px}ol.steps li{margin:4px 0;font-size:14p
       <span id="ctxLine">—</span>
     </div>
     <div class="top-actions">
-      <div class="sync local" id="syncPill" title="Trạng thái lưu"><i></i><span id="syncTxt">local</span></div>
+      <div class="sync local" id="syncPill" title="Trạng thái lưu · bấm để xuất backup" onclick="exportJSON()" style="cursor:pointer"><i></i><span id="syncTxt">local</span></div>
       <button class="icon-btn" id="themeBtn" onclick="cycleTheme()" aria-label="Đổi giao diện sáng/tối" title="Giao diện">
         <svg class="ti ti-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
         <svg class="ti ti-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="20" height="20"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -735,7 +736,53 @@ patches:["v6-base","v7-load40","v7b-exams","v7c-ielts","v7d-trade"]
 let state=seed(), cloud=null, saveT=null, tab="today", weekOff=0, calMode="week", monthCur=null, patched=false;
 
 function lsLoad(){try{const s=localStorage.getItem(LS_KEY);return s?JSON.parse(s):null}catch(e){return null}}
-function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+/* lsBase = bản đã đọc/ghi gần nhất. Tab khác ghi sau đó → gộp 3 chiều thay vì ghi đè (trước đây tab cũ xoá mất task tab mới thêm). */
+let lsBase=null, lsBaseRev=null, lsFail=false, lsAt=null;
+function lsSetBase(obj){ lsBase=obj?JSON.parse(JSON.stringify(obj)):null; lsBaseRev=obj?(obj.rev||0):0; }
+const isObj=x=>x&&typeof x==="object"&&!Array.isArray(x);
+const same=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
+function merge3(b,m,t){
+  if(same(m,b)) return t; if(same(t,b)||same(m,t)) return m;
+  if(Array.isArray(m)&&Array.isArray(t)&&[m,t].every(a=>a.every(x=>isObj(x)&&x.id!=null))){
+    const B=new Map((Array.isArray(b)?b:[]).filter(isObj).map(x=>[x.id,x])), T=new Map(t.map(x=>[x.id,x])), M=new Set(m.map(x=>x.id)), out=[];
+    m.forEach(x=>{ if(T.has(x.id)) out.push(merge3(B.get(x.id),x,T.get(x.id))); else if(!B.has(x.id)) out.push(x); });   // tab kia xoá → bỏ
+    t.forEach(x=>{ if(!M.has(x.id)&&!B.has(x.id)) out.push(x); });   // tab kia thêm → giữ; mình xoá → bỏ
+    return out;
+  }
+  if(isObj(m)&&isObj(t)){ const o={}; new Set([...Object.keys(m),...Object.keys(t)]).forEach(k=>{
+      const bk=isObj(b)?b[k]:undefined;
+      if(!(k in m)){ if(!same(t[k],bk)) o[k]=t[k]; return; }
+      if(!(k in t)){ if(!same(m[k],bk)) o[k]=m[k]; return; }
+      o[k]=merge3(bk,m[k],t[k]); }); return o; }
+  return m;   // cùng sửa một chỗ → bản của tab đang thao tác thắng
+}
+function lsSave(){
+  try{
+    const cur=lsLoad();
+    if(cur&&lsBaseRev!=null&&(cur.rev||0)!==lsBaseRev){   // tab/cửa sổ khác đã lưu sau lần mình đọc
+      const r=Math.max(cur.rev||0,state.rev||0)+1; state=merge3(lsBase,state,cur); state.rev=r; _cm=null;
+    }
+    const str=JSON.stringify(state); localStorage.setItem(LS_KEY,str);
+    if(localStorage.getItem(LS_KEY)!==str) throw new Error("verify");
+    lsSetBase(state); lsAt=new Date();
+    if(lsFail){ lsFail=false; toast("Đã lưu lại được."); } if(!cloud) setSync("local","đã lưu "+hhmm(lsAt.getHours()*60+lsAt.getMinutes()));
+  }catch(e){
+    lsFail=true; setSync("err","KHÔNG LƯU ĐƯỢC");
+    toast("⚠️ Không lưu được vào máy (bộ nhớ đầy / trình duyệt chặn / tab ẩn danh). <button onclick=\"exportJSON()\">Xuất file ngay</button>");
+  }
+}
+/* tab khác lưu (hoặc quay lại tab cũ để nền lâu) → lấy bản mới nhất, không giữ bản cũ trong bộ nhớ */
+function lsPull(){
+  const cur=lsLoad(); if(!cur||lsBaseRev==null||(cur.rev||0)===lsBaseRev) return;
+  state=upgrade(cur); state.rev=cur.rev; lsSetBase(cur); _cm=null; patched=false; render();
+  if(!cloud) setSync("local","đã cập nhật "+hhmm(nowMin()));
+}
+window.addEventListener("storage",e=>{ if(e.key===LS_KEY||e.key===null) lsPull(); });
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") lsPull(); });
+window.addEventListener("pageshow",e=>{ if(e.persisted) lsPull(); });
+window.addEventListener("focus",lsPull);
+/* xin trình duyệt giữ dữ liệu lâu dài (Safari/Chrome có thể tự xoá dữ liệu web ít dùng) */
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){}
 function setSync(c,t){const p=document.getElementById("syncPill");if(!p)return;p.className="sync "+c;document.getElementById("syncTxt").textContent=t}
 
 /* merge saved progress onto a fresh seed → new content arrives, progress survives */
@@ -808,11 +855,11 @@ function save(){
   },700);
 }
 async function initCloud(){
-  const local=lsLoad(); state=local?upgrade(local):upgrade(seed());
+  const local=lsLoad(); state=local?upgrade(local):upgrade(seed()); lsSetBase(local);
   if(normalizeOnce()) patched=true;
   render(); if(patched) lsSave();
   let c=null; try{ if(typeof claude!=="undefined"&&claude&&claude.use) c=await claude.use("db"); }catch(e){c=null}
-  if(!c){ setSync("local","lưu máy này"); return; }
+  if(!c){ if(!lsFail) setSync("local",local?"lưu máy này":"máy này · chưa có dữ liệu"); return; }
   cloud=c;
   try{
     const snap=await cloud.doc("state/main").get(); const d=snap.exists?snap.data():null;
@@ -1016,6 +1063,8 @@ function renderToday(){
 
   document.getElementById("v-today").innerHTML=`
   ${cf.length?`<div class="banner">${cf.length} việc chồng giờ<button class="btn sm" style="margin-left:auto" onclick="doReflow()">Dồn lại</button></div>`:""}
+  ${lsFail?`<div class="banner" style="background:var(--red-soft);border-color:var(--red)">⚠️ Máy này đang KHÔNG lưu được dữ liệu. Đừng thoát app.<button class="btn sm" style="margin-left:auto" onclick="exportJSON()">Xuất file</button></div>`:""}
+  ${!cloud&&(backupDays()==null||backupDays()>=3)?`<div class="banner">💾 ${backupDays()==null?"Chưa xuất backup lần nào":backupDays()+" ngày chưa xuất backup"} · dữ liệu chỉ nằm trong trình duyệt này<button class="btn sm" style="margin-left:auto" onclick="exportJSON()">Xuất file</button></div>`:""}
   ${late.length?`<div class="banner" style="background:var(--red-soft);border-color:var(--red)">${late.length} việc quá hạn<button class="btn sm" style="margin-left:auto" onclick="pullOverdue()">Kéo về hôm nay</button></div>`:""}
 
   <div class="qa"><input id="qaIn" type="text" enterkeyhint="done" autocomplete="off" placeholder="Thêm việc: Gửi mail thầy mai 9h 30p #if"
@@ -2732,14 +2781,15 @@ function downloadText(name,text,type){
 function exportJSON(){
   const d=todayISO(), payload={app:"son-study-os",kind:"backup",version:8,exportedAt:new Date().toISOString(),state};
   openSheet(`<h3>Xuất / Nhập dữ liệu</h3><div class="sh-sub">Bản GitHub lưu riêng từng máy. Chuyển máy: Xuất file ở máy này → Nhập file ở máy kia.</div>
-   <button class="btn primary" style="width:100%" onclick="downloadText('son-study-os_${d}.json',JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">⬇ Tải file backup (.json)</button>
-   <button class="btn" style="width:100%;margin-top:8px" onclick="copyStr(JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">📋 Copy dữ liệu (dán sang máy kia)</button>
+   <button class="btn primary" style="width:100%" onclick="markExport();downloadText('son-study-os_${d}.json',JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">⬇ Tải file backup (.json)</button>
+   <button class="btn" style="width:100%;margin-top:8px" onclick="markExport();copyStr(JSON.stringify({app:'son-study-os',kind:'backup',version:8,exportedAt:new Date().toISOString(),state}))">📋 Copy dữ liệu (dán sang máy kia)</button>
    <div class="sec-h" style="margin:16px 0 8px"><h2>Nhập</h2><div class="rule"></div></div>
    <label class="btn" style="width:100%;display:block;text-align:center">📂 Chọn file .json (backup hoặc file AI trả về)<input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importFile(this)"></label>
    <div class="note" style="margin-top:10px">Lần cuối xuất: ${state.lastExport?fmtFull(state.lastExport.slice(0,10)):"chưa bao giờ"}. Nên xuất 1 lần/tuần (Review CN).</div>
    <div class="sheet-foot"><button class="btn ghost" onclick="closeSheet()">Đóng</button></div>`);
-  state.lastExport=new Date().toISOString(); lsSave();
 }
+function markExport(){ state.lastExport=new Date().toISOString(); lsSave(); render(); }
+function backupDays(){ return state.lastExport?Math.floor((Date.now()-Date.parse(state.lastExport))/864e5):null; }
 function importFile(inp){
   const f=inp.files&&inp.files[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>{ aiInput=String(r.result||""); aiPreview(); }; r.readAsText(f);
