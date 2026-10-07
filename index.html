@@ -1790,7 +1790,7 @@ function bestStart(d,dur,pref,after){
   });
   return best;
 }
-/* place every unfinished step on the calendar: one session per allowed day, weekly cap, preferred time first */
+/* place every unfinished step on the calendar: p.perDay sessions (default 1) per allowed day, weekly cap, preferred time first */
 function schedulePlan(p,from){
   state.tasks=state.tasks.filter(t=>!(t.plan===p.id&&t.status!=="done"));
   const t=todayISO(), days=(p.days&&p.days.length)?p.days:[1,2,3,4,5,6,7];
@@ -1804,17 +1804,17 @@ function schedulePlan(p,from){
     guard++;
     if(days.includes(dow(d))){
       const wk=mondayOf(d); used[wk]=used[wk]||0;
-      const cur=todo[i], allot=Math.min(cur.left,sess,cap-used[wk]);
-      if(allot>=15){
-        const after=d===t?Math.ceil(nowMin()/15)*15:0;
-        const st=bestStart(d,allot,pref,after);
-        if(st!=null){
-          cur.k++;
-          state.tasks.push({id:"p"+uid(),t:cur.s.t+(cur.parts>1||cur.k>1?` · phần ${cur.k}`:""),track:p.track,date:d,start:st,dur:allot,
-            pri:p.pri||4,status:"pending",progress:0,plan:p.id,step:cur.s.id,note:cur.s.how||"",out:cur.s.out||""});
-          used[wk]+=allot; cur.left-=allot; placed++; last=d;
-          if(cur.left<15) i++;
-        }
+      let after=d===t?Math.ceil(nowMin()/15)*15:0;
+      for(let n=0;n<Math.max(1,+p.perDay||1)&&i<todo.length;n++){
+        const cur=todo[i], allot=Math.min(cur.left,sess,cap-used[wk]);
+        if(allot<15) break;
+        const st=bestStart(d,allot,Math.max(pref,after),after);
+        if(st==null) break;
+        cur.k++;
+        state.tasks.push({id:"p"+uid(),t:cur.s.t+(cur.parts>1||cur.k>1?` · phần ${cur.k}`:""),track:p.track,date:d,start:st,dur:allot,
+          pri:p.pri||4,status:"pending",progress:0,plan:p.id,step:cur.s.id,note:cur.s.how||"",out:cur.s.out||""});
+        used[wk]+=allot; cur.left-=allot; placed++; last=d; after=st+allot;
+        if(cur.left<15) i++;
       }
     }
     d=addD(d,1);
@@ -1894,7 +1894,7 @@ function openPlanEdit(id){
 function readPlanForm(){
   const d=pdraft; if(!d||!document.getElementById("pN"))return;
   d.name=v("pN").trim(); d.why=v("pW"); d.ctx=v("pC"); d.track=v("pK"); d.due=v("pD");
-  d.hpw=Math.max(0.5,+v("pH")||3); d.sess=+v("pS")||45; d.time=v("pT")||"20:00"; d.from=v("pF")||todayISO();
+  d.hpw=Math.max(0.5,+v("pH")||3); d.sess=+v("pS")||45; d.time=v("pT")||"20:00"; d.from=v("pF")||todayISO(); d.perDay=+v("pPD")||1;
   document.querySelectorAll(".stT").forEach(e=>{const s=d.steps[+e.dataset.i]; if(s)s.t=e.value});
   document.querySelectorAll(".stM").forEach(e=>{const s=d.steps[+e.dataset.i]; if(s)s.min=Math.max(5,+e.value||d.sess)});
 }
@@ -1918,6 +1918,7 @@ function renderPlanSheet(msg){
      <label class="fld"><span>Mỗi buổi (phút)</span><select id="pS">${[20,30,45,60,90,120].map(n=>`<option value="${n}" ${+d.sess===n?"selected":""}>${n}</option>`).join("")}</select></label></div>
    <div class="two"><label class="fld"><span>Giờ ưa thích</span><input type="time" id="pT" value="${d.time}"></label>
      <label class="fld"><span>Bắt đầu từ</span><input type="date" id="pF" value="${d.from||todayISO()}"></label></div>
+   <label class="fld"><span>Số buổi tối đa mỗi ngày</span><select id="pPD">${[1,2,3].map(n=>`<option value="${n}" ${(+d.perDay||1)===n?"selected":""}>${n}${n>1?" (liền nhau)":""}</option>`).join("")}</select></label>
    <div class="fld"><span class="mlab">Ngày trong tuần</span><div class="pill-row">${[1,2,3,4,5,6,7].map(n=>`<button type="button" class="pill ${d.days.includes(n)?"on":""}" onclick="pDay(${n})">${WD[n]}</button>`).join("")}</div>
      <div class="small muted" style="margin-top:6px">≈ ${av.perWk} buổi/tuần${d.due?` · ${av.weeks} tuần tới hạn`:""} — kiên nhẫn: nhịp đều quan trọng hơn nhồi nhiều.</div></div>
    <div class="sec-h" style="margin:18px 0 8px"><h2>Chia thành từng buổi</h2><div class="rule"></div></div>
@@ -1990,7 +1991,7 @@ function pSave(){
   state.plans=state.plans||[];
   let p=planById(d.id);
   if(!p){p={id:"pl"+uid(),created:todayISO(),status:"on"};state.plans.push(p)}
-  ["name","why","ctx","track","due","hpw","sess","time","from","days","steps","tips","summary"].forEach(k=>p[k]=d[k]);
+  ["name","why","ctx","track","due","hpw","sess","time","from","days","perDay","steps","tips","summary"].forEach(k=>p[k]=d[k]);
   const r=(p.status!=="off"&&p.steps.some(s=>!s.done))?schedulePlan(p,p.from):null;
   save(); pdraft=null;
   if(!r){closeSheet();return}
@@ -3237,12 +3238,12 @@ function quickAdd(){
 
 /* ============================ MIGRATION → V8 ============================ */
 const OLD_SEED_TASKS=["t01","t02","t03","t04","t05","t06","t07","t08","t09","t10","t11","t12","t13","t14","t15","t16","t17","t18","t21","t22","t23","t24","t25","t26","t27","t28","t29","t30","t31","t32","t33"];
-/* 10/2026: nghỉ làm ở công ty → bỏ ca sáng T3/T4, đọc báo về lại 09:00, sáng trống dành cho xem YouTube/TikTok học làm kênh
-   (khoá mềm: không tính vào giờ tự học vì tuần thường đã ~43h). Tuần ôn thi cuối kỳ thì dùng sáng đó để ôn. */
+/* 10/2026: nghỉ làm ở công ty → bỏ ca sáng T3/T4, đọc báo về lại 09:00. 09:30–11:00 trống cho việc/mục tiêu tự thêm,
+   11:00–12:00 xem YouTube/TikTok học làm kênh (khoá mềm: không tính vào giờ tự học vì tuần thường đã ~43h). Tuần ôn thi cuối kỳ thì dùng sáng đó để ôn. */
 function applyV9(s){
   if((s.patches||[]).includes("v9-nowork")||!s.routine) return s;
   const mm=x=>{const[a,b]=x.split(":").map(Number);return a*60+b}, free=(day,f,t)=>!day.some(b=>mm(b.from)<mm(t)&&mm(b.to)>mm(f));
-  const YT=(id)=>({id,from:"09:30",to:"11:00",label:"🎬 Xem YouTube/TikTok — học cách làm kênh",track:"CH",rest:true,soft:true,
+  const YT=(id)=>({id,from:"11:00",to:"12:00",label:"🎬 Xem YouTube/TikTok — học cách làm kênh",track:"CH",rest:true,soft:true,
     note:"Khoá mềm. Mỗi buổi: chọn 2–3 kênh tài chính/đọc báo đang lên → ghi lại hook 3 giây đầu, độ dài, cách mở/kết, cách dùng chữ & hình. Cuối buổi chốt 1 ý tưởng video cho kênh '5 phút đọc báo'. Không lướt feed linh tinh."});
   const fix=(tpl,pid)=>Object.keys(tpl||{}).forEach(d=>{
     const day=tpl[d]; if(!Array.isArray(day)||!day.some(b=>b.track==="WORK")) return;
@@ -3250,7 +3251,7 @@ function applyV9(s){
     out.forEach(b=>{ if(b.news&&b.from==="12:30"&&free(out.filter(x=>x!==b),"09:00","09:30")){ b.from="09:00"; b.to="09:30"; b.note="Khoá 30 phút. Đọc '3 điều cần biết' + ảnh chụp vĩ mô → ghi 1 dòng vào Macro Journal."; } });
     const sfx=(pid?pid.replace(/\W/g,""):"")+d;
     if(pid==="wk-finals"){ if(free(out,"09:30","11:30")) out.push(d==="2"?{id:"fy"+sfx,from:"09:30",to:"11:30",label:"BFN Final",track:"BF",cur:"bff"}:{id:"fy"+sfx,from:"09:30",to:"11:30",label:"IF Final",track:"IF",cur:"if"}); }
-    else if(free(out,"09:30","11:00")) out.push(YT("yt"+sfx));
+    else if(free(out,"11:00","12:00")) out.push(YT("yt"+sfx));
     out.sort((a,b)=>mm(a.from)-mm(b.from)); tpl[d]=out;
   });
   fix(s.routine.tpl,""); (s.routine.phases||[]).forEach(p=>fix(p.tpl,p.id));
