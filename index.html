@@ -381,53 +381,64 @@ function uid(){return (typeof crypto!=='undefined'&&crypto.randomUUID?crypto.ran
 function normalizeTrack(t){return t==='BF'?'BFN':t==='SOCIAL'?'VIDEO':COURSES[t]?t:'LIFE'}
 function safeState(v){if(!v||!Array.isArray(v.tasks)||!v.workspaceVersion)return null;v.study=v.study||{unitDone:{},fileSeen:{}};v.study.unitDone=v.study.unitDone||{};v.study.fileSeen=v.study.fileSeen||{};v.focus=v.focus||{records:[]};v.focus.records=Array.isArray(v.focus.records)?v.focus.records:[];v.exams=Array.isArray(v.exams)?v.exams:BASE.exams;v.videos=Array.isArray(v.videos)?v.videos:[];v.settings=v.settings||{};return v}
 function loadState(){try{const raw=localStorage.getItem(STORAGE);if(raw){const ok=safeState(JSON.parse(raw));if(ok)return ok;}}catch(e){}return JSON.parse(JSON.stringify(BASE))}
-const SPRINT_START = '2026-11-22';
+const SPRINT_START = '2026-11-23';
 const SPRINT_END = '2026-12-02';
 const SPRINT_DAYS = [
-  ['2026-11-22', [
-    ["if17", "IF", "09:00", 60, "IF · Ch.17 → Ch.16 | FDI, political risk và trade finance", "Ch.17: vẽ OLI, entry modes và hai tình huống political risk. Ch.16: tự giải thích vai trò L/C, draft và B/L từ trí nhớ. Sau đó chuyển sang Q2/Q4."],
-    ["if16", "IF", "14:00", 110, "IF · Ch.16 | Giải gốc Q2 và Q4", "Mở IF · Luyện 4 câu Final Review, chọn Số gốc. Làm Q2 và Q4, ghi tiền mặt thực dùng, số ngày, phí và chênh chi phí. Cả hai câu đều phải viết 2–3 câu nhận xét và chọn phương án."],
+  ["2026-11-23", [
+    ["liq-base", "BFN", "09:00", 90, "Liquidity Risk · Nguồn rủi ro và hai cách xử lý", "BFN Final Focus Topic 6. Vẽ 2 bảng cân đối sau cùng một khoản rút tiền: stored liquidity (dùng tiền mặt/bán tài sản) và purchased liquidity (vay thêm). Ghi ưu, nhược điểm của mỗi cách. Làm S6.1 và 8 câu trắc nghiệm."],
+    ["if17", "IF", "10:45", 60, "IF · Ch.17 → Ch.16 | FDI, political risk và trade finance", "Ch.17: vẽ OLI, entry modes và hai tình huống political risk. Ch.16: tự giải thích vai trò L/C, draft và B/L từ trí nhớ. Sau đó chuyển sang Q2/Q4."],
+    ["if16", "IF", "13:00", 110, "IF · Ch.16 | Giải gốc Q2 và Q4", "Mở IF · Luyện 4 câu Final Review, chọn Số gốc. Làm Q2 và Q4, ghi tiền mặt thực dùng, số ngày, phí và chênh chi phí. Cả hai câu đều phải viết 2–3 câu nhận xét và chọn phương án."],
+    ["mcq1", "IF", "15:00", 80, "IF · 50 câu MCQ lượt 1 · Q1–Q25", "Mở trang “IF · 50 câu MCQ” (nút trong buổi học). Bấm 40 phút cho 25 câu, không xem đáp án. Chấm, ghi lỗi theo 4 loại: đọc quote, công thức, khái niệm, bẫy chữ. Câu ★ là câu soạn bù."],
+    ["mcq2", "IF", "19:30", 75, "IF · 50 câu MCQ lượt 1 · Q26–Q50", "Mở trang “IF · 50 câu MCQ” (nút trong buổi học). Bấm 40 phút. Chấm và ghi error log. Mục tiêu ≥40/50 cả bộ."],
   ]],
-  ['2026-11-23', [
-    ['liq-base', 'BFN', '09:00', 90, 'Liquidity Risk · Nguồn rủi ro và hai cách xử lý', 'BFN Final Focus Topic 6. Vẽ 2 bảng cân đối sau cùng một khoản rút tiền: stored liquidity (dùng tiền mặt/bán tài sản) và purchased liquidity (vay thêm). Ghi ưu, nhược điểm của mỗi cách. Làm S6.1 và 8 câu trắc nghiệm.'],
-    ["if14", "IF", "13:30", 115, "IF · Ch.14 → Ch.13 | Nợ ngoại tệ và chi phí vốn", "Giải gốc Q1: viết công thức tỷ giá, trục dòng tiền CHF/USD 0–3 và IRR; làm lại Q1 bộ A. Ch.13: 20 phút ôn CAPM/WACC và giải thích segmentation. Cuối buổi nhắc lại mẫu số đúng cho Q2/Q4."],
+  ["2026-11-24", [
+    ["liq-measures", "BFN", "13:00", 105, "Liquidity Risk · Index, net position và funding", "Làm S6.2–S6.5 trong Problems.docx. Tính liquidity index theo trọng số; đọc dấu của net liquidity position; phân biệt financing gap với financing requirement. Vẽ luồng từ core deposits và loans đến nhu cầu vốn. Ghi đơn vị từng ô."],
+    ["if14", "IF", "15:00", 115, "IF · Ch.14 → Ch.13 | Nợ ngoại tệ và chi phí vốn", "Giải gốc Q1: viết công thức tỷ giá, trục dòng tiền CHF/USD 0–3 và IRR; làm lại Q1 bộ A. Ch.13: 20 phút ôn CAPM/WACC và giải thích segmentation. Cuối buổi nhắc lại mẫu số đúng cho Q2/Q4."],
+    ["mcq3", "IF", "19:30", 60, "IF · 50 câu MCQ lượt 2 · chỉ làm lại câu sai", "Mở trang “IF · 50 câu MCQ” (nút trong buổi học). Bật bộ lọc “Câu đã sai”, làm lại từ giấy trắng rồi mới mở giải thích. Đọc lại phần Bẫy hay gặp."],
   ]],
-  ['2026-11-24', [
-    ['liq-measures', 'BFN', '09:00', 105, 'Liquidity Risk · Index, net position và funding', 'Làm S6.2–S6.5 trong Problems.docx. Tính liquidity index theo trọng số; đọc dấu của net liquidity position; phân biệt financing gap với financing requirement. Vẽ luồng từ core deposits và loans đến nhu cầu vốn. Ghi đơn vị từng ô.'],
-    ["if10", "IF", "13:30", 115, "IF · Ch.10 → Ch.9 | Hedge khoản phải thu và dự báo FX", "Làm gốc Q3. Đưa 4 phương án về cùng ngày đáo hạn, chọn giữa 2 quote forward và dựng bảng 3 spot cho put. Cuối buổi ôn Ch.9: phân biệt forecast với khoản thu đã khóa và ghi điều kiện khuyến nghị."],
+  ["2026-11-25", [
+    ["rates", "BFN", "13:00", 110, "Interest Rate Risk · Repricing, duration và forward", "Problems.docx S3–S4 + Final Focus Topic 3. Làm 1 bảng RSA/RSL → GAP/CGAP → ΔNII, 1 bài D/modified D → DGAP → ΔE, 1 bài forward rate và chiều hợp đồng. Luyện cả trường hợp ΔR tài sản và nợ khác nhau."],
+    ["if10", "IF", "15:00", 115, "IF · Ch.10 → Ch.9 | Hedge khoản phải thu và dự báo FX", "Làm gốc Q3. Đưa 4 phương án về cùng ngày đáo hạn, chọn giữa 2 quote forward và dựng bảng 3 spot cho put. Cuối buổi ôn Ch.9: phân biệt forecast với khoản thu đã khóa và ghi điều kiện khuyến nghị."],
+    ["liq-theory", "BFN", "19:30", 50, "Liquidity + Liability Management · Luyện trắc nghiệm", "Làm 12 MCQ từ Topic 6–7 và slide. Ghép sản phẩm tiền gửi với xác suất rút hoặc rollover risk; so sánh nguồn hụt thanh khoản của commercial banks, savings banks, insurers và securities firms."],
   ]],
-  ['2026-11-25', [
-    ['rates', 'BFN', '09:00', 110, 'Interest Rate Risk · Repricing, duration và forward', 'Problems.docx S3–S4 + Final Focus Topic 3. Làm 1 bảng RSA/RSL → GAP/CGAP → ΔNII, 1 bài D/modified D → DGAP → ΔE, 1 bài forward rate và chiều hợp đồng. Luyện cả trường hợp ΔR tài sản và nợ khác nhau.'],
-    ['liq-theory', 'BFN', '14:00', 50, 'Liquidity + Liability Management · Luyện trắc nghiệm', 'Làm 12 MCQ từ Topic 6–7 và slide. Ghép sản phẩm tiền gửi với xác suất rút hoặc rollover risk; so sánh nguồn hụt thanh khoản của commercial banks, savings banks, insurers và securities firms.'],
-    ["if7", "IF", "11:20", 110, "IF · Ch.7 → Ch.6 → Ch.5 | Option, parity, đọc quote", "Dùng Q3 bộ A để kiểm strike/premium, quyền bán và chi phí phí ở ngày đáo hạn. Ôn PPP/IRP và cách đọc USD/EUR, bid/ask, spot/forward. Giải thích thành tiếng vì sao phải thu ngoại tệ thì bán kỳ hạn; tự nhẩm lại chiều quote trong Q1."],
+  ["2026-11-26", [
+    ["if7", "IF", "09:00", 110, "IF · Ch.7 → Ch.6 → Ch.5 | Option, parity, đọc quote", "Dùng Q3 bộ A để kiểm strike/premium, quyền bán và chi phí phí ở ngày đáo hạn. Ôn PPP/IRP và cách đọc USD/EUR, bid/ask, spot/forward. Giải thích thành tiếng vì sao phải thu ngoại tệ thì bán kỳ hạn; tự nhẩm lại chiều quote trong Q1."],
+    ["market", "BFN", "11:00", 95, "Market Risk · Bond/FX, DEAR và T-day VaR", "Problems.docx S5 + VAR.xlsx. Làm lại ví dụ trên lớp: zero-coupon 20 triệu, 6 năm, yield 10%, shock 20 bp. Tính giá thị trường → modified duration → %ΔP → DEAR → 10-day VaR. Làm thêm 1 bài volatility/VaR của vị thế FX."],
+    ["if3", "IF", "13:30", 55, "IF · Ch.3 → Ch.2 → Ch.1 | Ôn hết lượt cuốn chiếu", "Ch.3: 4 giao dịch BOP, credit/debit và J-curve. Ch.2: vẽ impossible trinity và nhắc lại fixed/floating. Ch.1: lợi thế so sánh, market imperfections và MNE. Dành khoảng 15 phút mỗi chương, cuối buổi tự nêu 1 ý dễ nhầm mỗi chương."],
+    ["ifmock-a", "IF", "14:40", 120, "IF · Mock A | 4 câu đổi số, 100 điểm", "Dùng bộ A trong Workspace. 4 câu × 25 điểm; chia 25 phút Q1, 25 phút Q2, 35 phút Q3, 25 phút Q4 và 10 phút soát. Làm kín lời giải. Ghi thời gian và chấm theo điểm từng ý. Đây là mock của Final Review."],
+    ["ifgaps", "IF", "19:30", 75, "IF · Lấp phần MCQ chưa có trong lịch: ADR, bond quốc tế, translation, swap", "Từ 50 câu: ADR Level I/II/III + bundling ratio; Yankee/Samurai/Bulldog vs Eurobond; translation (current-rate → CTA) vs transaction vs economic exposure; interest rate/currency swap; L/C, BA, forfaiting. Viết 1 dòng định nghĩa + 1 ví dụ cho mỗi khái niệm."],
   ]],
-  ['2026-11-26', [
-    ['market', 'BFN', '09:00', 95, 'Market Risk · Bond/FX, DEAR và T-day VaR', 'Problems.docx S5 + VAR.xlsx. Làm lại ví dụ trên lớp: zero-coupon 20 triệu, 6 năm, yield 10%, shock 20 bp. Tính giá thị trường → modified duration → %ΔP → DEAR → 10-day VaR. Làm thêm 1 bài volatility/VaR của vị thế FX.'],
-    ["if3", "IF", "11:00", 55, "IF · Ch.3 → Ch.2 → Ch.1 | Ôn hết lượt cuốn chiếu", "Ch.3: 4 giao dịch BOP, credit/debit và J-curve. Ch.2: vẽ impossible trinity và nhắc lại fixed/floating. Ch.1: lợi thế so sánh, market imperfections và MNE. Dành khoảng 15 phút mỗi chương, cuối buổi tự nêu 1 ý dễ nhầm mỗi chương."],
-    ["ifmock-a", "IF", "13:30", 120, "IF · Mock A | 4 câu đổi số, 100 điểm", "Dùng bộ A trong Workspace. 4 câu × 25 điểm; chia 25 phút Q1, 25 phút Q2, 35 phút Q3, 25 phút Q4 và 10 phút soát. Làm kín lời giải. Ghi thời gian và chấm theo điểm từng ý. Đây là mock của Final Review."],
-  ]],
-  ['2026-11-27', [
-    ['credit', 'BFN', '09:00', 105, 'Credit Risk · Default, khoản vay và danh mục', 'Problems.docx S6 + Final Focus Topic 5. Mỗi dạng làm ít nhất 1 câu: Altman Z-score, linear probability, chi phí và expected return khoản vay, ER/SD danh mục 2 và 3 khoản. Kiểm dấu, trọng số và covariance.'],
+  ["2026-11-27", [
+    ["credit", "BFN", "09:00", 105, "Credit Risk · Default, khoản vay và danh mục", "Problems.docx S6 + Final Focus Topic 5. Mỗi dạng làm ít nhất 1 câu: Altman Z-score, linear probability, chi phí và expected return khoản vay, ER/SD danh mục 2 và 3 khoản. Kiểm dấu, trọng số và covariance."],
+    ["liab", "BFN", "11:00", 50, "BM · Liability Management (Topic 7)", "BFN Final Focus Topic 7: các nguồn vốn (demand, NOW, MMDA, savings, time deposits, fed funds, repo, CDs), chi phí vs rủi ro rút/rollover. Làm MCQ Topic 7 và ghép thuật ngữ."],
     ["ifrepair", "IF", "13:00", 115, "IF · Chữa mock A và làm lại phần mất điểm", "Chữa theo bốn loại lỗi: chọn mô hình, dòng tiền/đơn vị, bấm máy và trình bày. Làm lại Q sai nhiều nhất từ giấy trắng sau khi gấp lời giải. Kiểm 4 mẫu: timeline Q1, mẫu số Q2/Q4, bảng payoff Q3, khuyến nghị có điều kiện."],
+    ["ifsa", "IF", "15:05", 55, "IF · Short answer theo rubric", "Làm 2 câu short answer 25 phút/câu: nêu mô hình → tính → giải thích kinh tế → khuyến nghị có điều kiện. Tự chấm theo rubric (problem solving, economic logic, policy, evaluation)."],
+    ["mcq4", "IF", "19:30", 75, "IF · 50 câu lượt 3 · bấm 60 phút cả bộ", "Mở trang “IF · 50 câu MCQ” (nút trong buổi học). Làm lại cả 50 câu trong 60 phút (≈70 giây/câu, sát nhịp thi). Mục tiêu ≥45/50."],
   ]],
-  ['2026-11-28', [
-    ['bfn-sheet-draft', 'BFN', '10:30', 75, 'BM · Basel, FI Risks và nháp cheat sheet', 'Final Focus Topics 1, 2 và 8. Làm 10 câu ghép thuật ngữ; so Basel I–III và ghi đúng 3 trụ cột Basel II. Dựng nháp A4 hai mặt: công thức/bài tính ở mặt 1, lý thuyết và bẫy nhập số ở mặt 2.'],
+  ["2026-11-28", [
     ["ifmock-b", "IF", "08:15", 120, "IF · Mock B | Kiểm tra DI–HD trước ngày thi", "Bấm đủ 120 phút với bộ B, dùng cùng cách chấm 100 điểm. Mục tiêu luyện DI ≥75, HD ≥85 và mỗi Q ≥18/25. So hai mock để xem lỗi cũ có tái diễn."],
-    ["iflast", "IF", "12:00", 40, "IF · Chốt 4 mẫu giải và mốc thi", "Tự viết lại 4 khung bài từ giấy trắng. Làm lại tối đa 2 phép tính mất điểm từ mock B. Kiểm tra Ultra: giờ, phòng và quy định vật dụng."],
+    ["mockbfix", "IF", "10:30", 60, "IF · Chữa Mock B", "Chỉ sửa lỗi lặp lại so với Mock A. Làm lại từ giấy trắng câu mất nhiều điểm nhất."],
+    ["iflast", "IF", "11:45", 40, "IF · Chốt 4 mẫu giải và mốc thi", "Tự viết lại 4 khung bài từ giấy trắng. Làm lại tối đa 2 phép tính mất điểm từ mock B. Kiểm tra Ultra: giờ, phòng và quy định vật dụng."],
+    ["ifnight", "IF", "19:30", 45, "IF · Tối trước thi: 4 khung bài + công thức", "Chép lại 4 khung bài và bảng công thức parity/option/BA từ trí nhớ, so với tài liệu. Ngủ trước 23:00."],
   ]],
-  ['2026-11-29', [
+  ["2026-11-29", [
     ["ifexam", "IF", "10:00", 30, "Ngày thi IF · Rà nhanh Final Review", "Rà chiều quote, 360/days, net proceeds, premium t₀/tₙ và logic khuyến nghị. Mốc Workspace là 13:00, cần đối chiếu Ultra."],
+    ["bfn-sheet-draft", "BFN", "17:00", 75, "BM · Basel, FI Risks và nháp cheat sheet", "Final Focus Topics 1, 2 và 8. Làm 10 câu ghép thuật ngữ; so Basel I–III và ghi đúng 3 trụ cột Basel II. Dựng nháp A4 hai mặt: công thức/bài tính ở mặt 1, lý thuyết và bẫy nhập số ở mặt 2."],
   ]],
-  ['2026-11-30', [
-    ['liq-mock', 'BFN', '09:00', 100, 'Liquidity Risk · Set 24 MCQ + điền số', 'Ghép 24 câu từ Topic 6–7 của hai artifact và câu ôn trong slide, ưu tiên Topic 6; đổi câu trùng bằng câu trong tài liệu. Bấm 45 phút, mục tiêu luyện DI ≥18/24, HD ≥21/24, rồi làm lại S6.4–S6.5 và ô nhập số.'],
-    ['bfn-link', 'BFN', '14:00', 55, 'BM · Ghép thuật ngữ và tra nhanh cheat sheet', 'Tập linking cho Topics 1, 2, 6, 7, 8. Ghi vị trí công thức và chạy lại 1 bài dài có nhiều ô số.'],
+  ["2026-11-30", [
+    ["liq-mock", "BFN", "09:00", 100, "Liquidity Risk · Set 24 MCQ + điền số", "Ghép 24 câu từ Topic 6–7 của hai artifact và câu ôn trong slide, ưu tiên Topic 6; đổi câu trùng bằng câu trong tài liệu. Bấm 45 phút, mục tiêu luyện DI ≥18/24, HD ≥21/24, rồi làm lại S6.4–S6.5 và ô nhập số."],
+    ["rates2", "BFN", "11:00", 60, "BM · Repricing + Duration lượt 2 (không xem lời giải)", "Làm lại 1 bài GAP/ΔNII có ΔR khác nhau cho tài sản và nợ, 1 bài DGAP/ΔE. Bấm giờ 30 phút/bài, kiểm dấu và đơn vị."],
+    ["bfn-link", "BFN", "13:30", 55, "BM · Ghép thuật ngữ và tra nhanh cheat sheet", "Tập linking cho Topics 1, 2, 6, 7, 8. Ghi vị trí công thức và chạy lại 1 bài dài có nhiều ô số."],
+    ["mc2", "BFN", "14:45", 90, "BM · Market + Credit lượt 2", "1 bài DEAR → VaR (√T), 1 bài lãi suất cho vay/expected return, 1 Altman Z. Ghi lỗi nhập số vào tờ A4."],
+    ["a4v2", "BFN", "19:30", 60, "BM · A4 bản 2: sắp lại theo thứ tự đề", "Viết lại A4 nháp: mặt 1 công thức theo thứ tự Topic 3→6, mặt 2 lý thuyết + bẫy nhập số. Gạch bỏ thứ đã thuộc."],
   ]],
-  ['2026-12-01', [
-    ['bfn-mock', 'BFN', '09:00', 120, 'BM · Thi thử 120 phút', 'Tự ghép khoảng 40 câu từ hai artifact và Problems.docx. Mẫu tập: 24 MCQ / 8 ô điền số / 8 mục ghép. Chia 40 / 55 / 15 phút và 10 phút soát. Dùng bản A4 viết tay khi bấm giờ. Sau khi chấm theo số mục đúng trên tổng số mục, lấy 75% (DI) và 85% (HD) làm mốc tự luyện.'],
-    ['bfn-final-sheet', 'BFN', '14:00', 70, 'BM · Chữa mock và chốt A4 viết tay', 'Làm lại từng ô sai vì dấu, số lẻ, % hay sai đơn vị. Chốt 1 tờ A4 viết tay hai mặt có họ tên + MSSV. Rà phòng và giờ thi trên Ultra.'],
+  ["2026-12-01", [
+    ["bfn-mock", "BFN", "13:00", 120, "BM · Thi thử 120 phút", "Tự ghép khoảng 40 câu từ hai artifact và Problems.docx. Mẫu tập: 24 MCQ / 8 ô điền số / 8 mục ghép. Chia 40 / 55 / 15 phút và 10 phút soát. Dùng bản A4 viết tay khi bấm giờ. Sau khi chấm theo số mục đúng trên tổng số mục, lấy 75% (DI) và 85% (HD) làm mốc tự luyện."],
+    ["bfn-final-sheet", "BFN", "15:15", 70, "BM · Chữa mock và chốt A4 viết tay", "Làm lại từng ô sai vì dấu, số lẻ, % hay sai đơn vị. Chốt 1 tờ A4 viết tay hai mặt có họ tên + MSSV. Rà phòng và giờ thi trên Ultra."],
+    ["bfnnight", "BFN", "19:30", 45, "BM · Tối trước thi: rà A4 + chuẩn bị đồ", "Rà A4 một lượt, soạn calculator, thẻ SV, A4 có tên + MSSV. Ngủ trước 22:30."],
   ]],
-  ['2026-12-02', [
-    ['bfn-day', 'BFN', '07:45', 25, 'Ngày thi BM · Rà 5 bẫy nhập số', 'Rà dấu âm, dấu chấm thập phân, %, bp và đơn vị nghìn/triệu. Nhẩm lại stored/purchased và chuỗi DEAR → VaR. Mang A4 viết tay; kiểm tra thiết bị được phép. Mốc hiện có là 09:00, chờ xác nhận trên Ultra.'],
+  ["2026-12-02", [
+    ["bfn-day", "BFN", "07:45", 25, "Ngày thi BM · Rà 5 bẫy nhập số", "Rà dấu âm, dấu chấm thập phân, %, bp và đơn vị nghìn/triệu. Nhẩm lại stored/purchased và chuỗi DEAR → VaR. Mang A4 viết tay; kiểm tra thiết bị được phép. Mốc hiện có là 09:00, chờ xác nhận trên Ultra."],
   ]],
 ];
 
@@ -435,18 +446,23 @@ const sprintTaskId = (key, track) => (track === 'IF' ? 'nsi-if-1122-' : 'nsi-spr
 const scheduledSprintIds = new Set(SPRINT_DAYS.flatMap(([, blocks]) =>
   blocks.map(([key, track]) => sprintTaskId(key, track))));
 
+/* v2 (22/11 tối): dời IF + BM bắt đầu 23/11, tăng tải, né giờ làm T3/T4 08–12 và lịch quay video.
+   Buổi đã xong giữ nguyên; buổi chưa xong được cập nhật ngày/giờ; buổi bỏ khỏi lịch thì lưu trữ. */
 function installStudySprint() {
-  if (state.studySprintNov22DiHd) return;
+  if (state.studySprintNov23v2) return;
   const previousIds = new Set(NSI_EXAM_TASKS.map(task => task.id));
-  const existingIds = new Set(state.tasks.map(task => task.id));
+  const byId = new Map(state.tasks.map(task => [task.id, task]));
   for (const task of state.tasks) {
-    const superseded = previousIds.has(task.id) || task.id.startsWith('nsi-sprint-1123-if-');
-    if (superseded && task.status !== 'done') task.archived = true;
+    const isSprint = /^(nsi-if-1122-|nsi-sprint-1123-)/.test(task.id);
+    if ((previousIds.has(task.id) || (isSprint && !scheduledSprintIds.has(task.id))) && task.status !== 'done') task.archived = true;
   }
   for (const [date, blocks] of SPRINT_DAYS) {
     for (const [key, track, time, duration, t, note] of blocks) {
       const id = sprintTaskId(key, track);
-      if (!existingIds.has(id)) {
+      const ex = byId.get(id);
+      if (ex) {
+        if (ex.status !== 'done') Object.assign(ex, {date, time, duration, t, note, archived: false});
+      } else {
         state.tasks.push({id, t, track, date, time, duration, note, pri: 5,
           status: 'todo', reminder: 15, archived: false, examSprint: true});
       }
@@ -455,6 +471,7 @@ function installStudySprint() {
   state.phaseStart = SPRINT_START;
   state.phaseEnd = SPRINT_END;
   state.studySprintNov22DiHd = true;
+  state.studySprintNov23v2 = true;
   save();
 }
 
@@ -470,12 +487,13 @@ function renderSprintPlan() {
     return name + ' ' + shortDate(e.date) + (e.time ? ' lúc ' + e.time : '') + (e.verified ? '' : ' (chờ xác nhận)');
   }).join(' · ');
   return `<section id="nsi-sprint-plan" class="card cardpad nsi-sprint">
-    <div class="section-head"><h2>Lịch ôn 22/11 – 02/12</h2><span class="pill done">${planned.filter(t => t.status === 'done').length}/${planned.length} buổi xong</span></div>
+    <div class="section-head"><h2>Lịch ôn 23/11 – 02/12</h2><span class="pill done">${planned.filter(t => t.status === 'done').length}/${planned.length} buổi xong</span></div>
     <p class="hintline">${esc(examText)}. Đối chiếu mốc thi trên Ultra. Lịch ôn theo ngày có thể chỉnh trong từng buổi.</p>
-    <p><b>IF 22/11</b> · 17 → 16 → 14 → 13 → 10 → 9 → 7 → 6 → 5 → 3 → 2 → 1. Đây là 12 chapter có slide trong ZIP. Bấm link trong buổi học để mở đúng chương trong Final Review hoặc Final Revision.</p>
+    <p><b>IF 23/11</b> · 17 → 16 → 14 → 13 → 10 → 9 → 7 → 6 → 5 → 3 → 2 → 1. Đây là 12 chapter có slide trong ZIP. Bấm link trong buổi học để mở đúng chương trong Final Review hoặc Final Revision.</p>
     <p><b>BM 23/11</b> · Liquidity Risk là trọng tâm. Mục tiêu tự luyện DI ≥75%, HD ≥85%; ghi lại lỗi số, lỗi khái niệm và phần mất điểm trong mock.</p>
     <div class="nsi-sprint-sources">
       ${studyLink('IF','practice','','Mở 4 câu IF Final Review')}
+      <a class="btn btn-xs" href="if-50.html">IF · 50 câu MCQ cô cho</a>
       ${studyLink('BFN','bfn_focus','','BFN Final Focus · 8 chủ đề')}
       ${studyLink('BFN','bfn_final','','BFN Final · sơ đồ và bài giải')}
     </div>
@@ -734,6 +752,7 @@ function taskResourceLinks(task, compact = false) {
   const match = /^(?:nsi-if-1122-|nsi-sprint-1123-)(.+)$/.exec(task.id);
   const track = normalizeTrack(task.track);
   if (!match || !['IF','BFN'].includes(track)) return '';
+  if (/^mcq/.test(match[1])) return '<a class="btn btn-xs" href="if-50.html">Mở 50 câu MCQ</a>';
   const links = RESOURCE_LINKS[match[1]];
   if (!links) return '';
   if (compact) return studyLink(track, links[0][0], links[0][1], 'Mở bài học', 'btn btn-xs task-study-jump');
