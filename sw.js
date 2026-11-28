@@ -1,7 +1,7 @@
 /* Sơn Study OS — service worker.
    Network-first cho file của chính site (luôn lấy bản mới khi có mạng, offline thì dùng bản đã lưu).
    Không đụng tới request sang domain khác (đồng bộ cloud, API, font). */
-const CACHE = "study-os-v10-1127";
+const CACHE = "study-os-v11-1128";
 const CORE = ["./", "./index.html", "./kit.js", "./manifest.webmanifest", "./if-50.html", "./on-thi-if.html", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", e => {
